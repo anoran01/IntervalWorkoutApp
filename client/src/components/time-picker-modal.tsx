@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -19,9 +19,21 @@ export default function TimePickerModal({
   initialSeconds,
   showHours = true
 }: TimePickerModalProps) {
-  const [hours, setHours] = useState(Math.floor(initialSeconds / 3600));
-  const [minutes, setMinutes] = useState(Math.floor((initialSeconds % 3600) / 60));
-  const [seconds, setSeconds] = useState(initialSeconds % 60);
+  const [hours, setHours] = useState(0);
+  const [minutes, setMinutes] = useState(0);
+  const [seconds, setSeconds] = useState(0);
+
+  // Reset values when modal opens with new initial seconds
+  useEffect(() => {
+    if (isOpen && initialSeconds >= 0) {
+      const h = Math.floor(initialSeconds / 3600);
+      const m = Math.floor((initialSeconds % 3600) / 60);
+      const s = initialSeconds % 60;
+      setHours(h);
+      setMinutes(m);
+      setSeconds(s);
+    }
+  }, [isOpen, initialSeconds]);
 
   const handleConfirm = () => {
     const totalSeconds = hours * 3600 + minutes * 60 + seconds;
@@ -33,17 +45,17 @@ export default function TimePickerModal({
     const items = Array.from({ length: max + 1 }, (_, i) => i);
     
     return (
-      <div className="flex flex-col items-center">
+      <div className="flex flex-col items-center flex-1">
         <div className="text-sm font-medium mb-2 text-muted-foreground">{label}</div>
-        <div className="h-40 overflow-y-auto border border-border rounded-lg">
-          <div className="py-16"> {/* Padding to center the selected item */}
+        <div className="h-48 w-full overflow-y-auto border border-border rounded-lg bg-background">
+          <div className="py-20"> {/* Padding to center the selected item */}
             {items.map((item) => (
               <div
                 key={item}
-                className={`px-4 py-2 text-center cursor-pointer transition-colors ${
+                className={`px-4 py-3 text-center cursor-pointer transition-colors text-lg ${
                   item === value
-                    ? "bg-primary text-primary-foreground font-semibold"
-                    : "hover:bg-muted"
+                    ? "bg-primary text-primary-foreground font-bold"
+                    : "hover:bg-muted text-foreground"
                 }`}
                 onClick={() => onChange(item)}
               >

@@ -131,7 +131,9 @@ export default function QuickMenu() {
   };
 
   const getCurrentValue = () => {
-    return settings[currentEditingField as keyof QuickWorkoutSettings] as number;
+    if (!currentEditingField) return 0;
+    const value = settings[currentEditingField as keyof QuickWorkoutSettings] as number;
+    return isNaN(value) ? 0 : value;
   };
 
   return (
@@ -213,7 +215,7 @@ export default function QuickMenu() {
       </div>
 
       {/* Create Button */}
-      <div className="p-4 pt-0">
+      <div className="p-4 pt-0 pb-24">
         <Button
           className="w-full h-16 text-xl font-semibold rounded-lg"
           onClick={handleCreateWorkout}
@@ -225,6 +227,7 @@ export default function QuickMenu() {
 
       {/* Modals */}
       <TimePickerModal
+        key={`time-${currentEditingField}`}
         isOpen={showTimePicker}
         onClose={() => {
           setShowTimePicker(false);
@@ -237,6 +240,7 @@ export default function QuickMenu() {
       />
 
       <CountPickerModal
+        key={`count-${currentEditingField}`}
         isOpen={showCountPicker}
         onClose={() => {
           setShowCountPicker(false);

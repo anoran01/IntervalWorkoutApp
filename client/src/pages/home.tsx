@@ -45,7 +45,7 @@ export default function Home() {
   return (
     <div className="max-w-sm mx-auto min-h-screen relative bg-background">
       {/* Main Content */}
-      <div className="pb-20 h-screen">
+      <div className={`${currentScreen !== "workout-timer" ? "pb-20" : ""} h-screen`}>
         {currentScreen === "quick-menu" && <QuickMenu />}
         {currentScreen === "workout-list" && (
           <WorkoutList onWorkoutSelect={handleWorkoutSelect} />
