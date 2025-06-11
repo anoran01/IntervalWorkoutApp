@@ -146,8 +146,8 @@ export default function QuickCreateSettings({
               <div className="flex items-center justify-between py-3">
                 <span className="text-base">Verbal Reminder</span>
                 <Switch
-                  checked={soundSettings.vibrate} // Using vibrate as placeholder for verbal reminder
-                  onCheckedChange={(checked) => updateSoundSetting('vibrate', checked)}
+                  checked={soundSettings.verbalReminder}
+                  onCheckedChange={(checked) => updateSoundSetting('verbalReminder', checked)}
                 />
               </div>
             </div>
