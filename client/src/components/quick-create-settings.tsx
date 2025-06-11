@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ArrowLeft } from "lucide-react";
 import type { SoundSettings } from "@shared/schema";
@@ -86,76 +85,111 @@ export default function QuickCreateSettings({
             </DialogHeader>
 
             {/* Settings List */}
-            <div className="flex-1 py-6 space-y-4">
+            <div className="flex-1 py-6 space-y-6">
               {/* Dark/Light Mode */}
-              <div className="flex items-center justify-between py-3">
-                <span className="text-base">Mode</span>
-                <Button
-                  variant="outline"
-                  className="w-20"
-                  onClick={() => onDarkModeChange(!isDarkMode)}
-                >
-                  {isDarkMode ? "Dark" : "Light"}
-                </Button>
+              <div className="flex items-center justify-between py-4">
+                <span className="text-xl font-bold">Mode</span>
+                <div className="relative flex items-center">
+                  <span className="mr-3 text-lg font-medium">
+                    {isDarkMode ? 'Dark' : 'Light'}
+                  </span>
+                  <div 
+                    className={`w-20 h-10 rounded-full border-2 border-black cursor-pointer transition-colors ${
+                      isDarkMode ? 'bg-gray-600' : 'bg-gray-200'
+                    }`}
+                    onClick={() => onDarkModeChange(!isDarkMode)}
+                  >
+                    <div 
+                      className={`w-8 h-8 bg-white rounded-full border-2 border-black transition-transform duration-200 ${
+                        isDarkMode ? 'translate-x-10' : 'translate-x-0'
+                      }`}
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Beep Tone */}
-              <div className="flex items-center justify-between py-3">
-                <span className="text-base">Beep Tone</span>
+              <div className="flex items-center justify-between py-4">
+                <span className="text-xl font-bold">Beep Tone</span>
                 <Button
                   variant="outline"
-                  className="w-32"
+                  className="min-w-24 h-12 border-2 border-black rounded-lg font-bold text-lg bg-white hover:bg-gray-100 text-black"
                   onClick={() => setShowBeepToneMenu(true)}
                 >
                   {soundSettings.beepTone === "standard" ? "Standard" :
-                   soundSettings.beepTone === "high_pitch" ? "High Pitch" : "Low Pitch"}
+                   soundSettings.beepTone === "high_pitch" ? "High" : "Low"}
                 </Button>
               </div>
 
               {/* Beep Start */}
-              <div className="flex items-center justify-between py-3">
-                <span className="text-base">Beep Start</span>
+              <div className="flex items-center justify-between py-4">
+                <span className="text-xl font-bold">Beep Start</span>
                 <Button
                   variant="outline"
-                  className="w-20"
+                  className="min-w-24 h-12 border-2 border-black rounded-lg font-bold text-lg bg-white hover:bg-gray-100 text-black"
                   onClick={() => setShowBeepStartMenu(true)}
                 >
-                  {beepStart}s
+                  {beepStart} sec
                 </Button>
               </div>
 
               {/* Halfway Reminder */}
-              <div className="flex items-center justify-between py-3">
-                <span className="text-base">Halfway Reminder</span>
-                <Switch
-                  checked={soundSettings.halfwayReminder}
-                  onCheckedChange={(checked) => updateSoundSetting('halfwayReminder', checked)}
-                />
+              <div className="flex items-center justify-between py-4">
+                <span className="text-xl font-bold">Halfway Reminder</span>
+                <div 
+                  className={`w-10 h-10 border-2 border-black rounded cursor-pointer flex items-center justify-center ${
+                    soundSettings.halfwayReminder ? 'bg-black' : 'bg-white'
+                  }`}
+                  onClick={() => updateSoundSetting('halfwayReminder', !soundSettings.halfwayReminder)}
+                >
+                  {soundSettings.halfwayReminder && (
+                    <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                </div>
               </div>
 
               {/* 10 Second Reminder */}
-              <div className="flex items-center justify-between py-3">
-                <span className="text-base">10 Second Reminder</span>
-                <Switch
-                  checked={soundSettings.tenSecondWarning}
-                  onCheckedChange={(checked) => updateSoundSetting('tenSecondWarning', checked)}
-                />
+              <div className="flex items-center justify-between py-4">
+                <span className="text-xl font-bold">10 Second Reminder</span>
+                <div 
+                  className={`w-10 h-10 border-2 border-black rounded cursor-pointer flex items-center justify-center ${
+                    soundSettings.tenSecondWarning ? 'bg-black' : 'bg-white'
+                  }`}
+                  onClick={() => updateSoundSetting('tenSecondWarning', !soundSettings.tenSecondWarning)}
+                >
+                  {soundSettings.tenSecondWarning && (
+                    <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                </div>
               </div>
 
               {/* Verbal Reminder */}
-              <div className="flex items-center justify-between py-3">
-                <span className="text-base">Verbal Reminder</span>
-                <Switch
-                  checked={soundSettings.verbalReminder}
-                  onCheckedChange={(checked) => updateSoundSetting('verbalReminder', checked)}
-                />
+              <div className="flex items-center justify-between py-4">
+                <span className="text-xl font-bold">Verbal Reminder</span>
+                <div 
+                  className={`w-10 h-10 border-2 border-black rounded cursor-pointer flex items-center justify-center ${
+                    soundSettings.verbalReminder ? 'bg-black' : 'bg-white'
+                  }`}
+                  onClick={() => updateSoundSetting('verbalReminder', !soundSettings.verbalReminder)}
+                >
+                  {soundSettings.verbalReminder && (
+                    <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                </div>
               </div>
             </div>
 
             {/* Done Button */}
-            <div className="pt-4 border-t">
+            <div className="pt-6">
               <Button
-                className="w-full h-12 text-lg font-semibold"
+                className="w-full h-16 text-xl font-bold border-2 border-black rounded-lg bg-gray-200 hover:bg-gray-300 text-black"
+                variant="outline"
                 onClick={onClose}
               >
                 Done
