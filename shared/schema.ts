@@ -40,8 +40,10 @@ export type Timer = typeof timers.$inferSelect;
 
 export const soundSettingsSchema = z.object({
   beepTone: z.enum(["standard", "high_pitch", "low_pitch"]).default("standard"),
+  beepStart: z.number().min(1).max(30).default(10), // seconds before end when beeps start
   tenSecondWarning: z.boolean().default(true),
-  halfwayReminder: z.boolean().default(false),
+  halfwayReminder: z.boolean().default(true),
+  verbalReminder: z.boolean().default(true), // says "Work" or "Rest" at start of period
   vibrate: z.boolean().default(true),
 });
 

@@ -25,7 +25,7 @@ export default function QuickCreateSettings({
 }: QuickCreateSettingsProps) {
   const [showBeepToneMenu, setShowBeepToneMenu] = useState(false);
   const [showBeepStartMenu, setShowBeepStartMenu] = useState(false);
-  const [beepStart, setBeepStart] = useState(10); // Default 10 seconds
+  const [beepStart, setBeepStart] = useState(soundSettings.beepStart || 10);
 
   const updateSoundSetting = (key: keyof SoundSettings, value: any) => {
     onSoundSettingsChange({
@@ -36,6 +36,7 @@ export default function QuickCreateSettings({
 
   const handleBeepStartConfirm = (seconds: number) => {
     setBeepStart(seconds);
+    updateSoundSetting('beepStart', seconds);
     setShowBeepStartMenu(false);
   };
 
