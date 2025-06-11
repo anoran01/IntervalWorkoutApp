@@ -45,7 +45,7 @@ export default function Home() {
   return (
     <div className="max-w-sm mx-auto min-h-screen relative bg-background">
       {/* Main Content */}
-      <div className={`${currentScreen !== "workout-timer" ? "pb-20" : ""} h-screen`}>
+      <div className="h-screen">
         {currentScreen === "quick-menu" && <QuickMenu onNavigateToWorkoutList={() => setCurrentScreen("workout-list")} />}
         {currentScreen === "workout-list" && (
           <WorkoutList 
@@ -70,52 +70,6 @@ export default function Home() {
           />
         )}
       </div>
-
-      {/* Bottom Navigation */}
-      {currentScreen !== "workout-timer" && (
-        <div className="fixed bottom-0 left-0 right-0 max-w-sm mx-auto bg-muted border-t border-border">
-          <div className="flex">
-            <button
-              className={`flex-1 py-4 px-2 text-center transition-colors duration-200 ${
-                currentScreen === "quick-menu" ? "bg-muted-foreground/10" : ""
-              }`}
-              onClick={() => setCurrentScreen("quick-menu")}
-            >
-              <Plus
-                className={`w-6 h-6 mx-auto mb-1 ${
-                  currentScreen === "quick-menu" ? "text-primary" : "text-muted-foreground"
-                }`}
-              />
-              <div
-                className={`text-xs font-medium ${
-                  currentScreen === "quick-menu" ? "text-primary" : "text-muted-foreground"
-                }`}
-              >
-                Quick Create
-              </div>
-            </button>
-            <button
-              className={`flex-1 py-4 px-2 text-center transition-colors duration-200 ${
-                currentScreen === "workout-list" ? "bg-muted-foreground/10" : ""
-              }`}
-              onClick={() => setCurrentScreen("workout-list")}
-            >
-              <List
-                className={`w-6 h-6 mx-auto mb-1 ${
-                  currentScreen === "workout-list" ? "text-primary" : "text-muted-foreground"
-                }`}
-              />
-              <div
-                className={`text-xs font-medium ${
-                  currentScreen === "workout-list" ? "text-primary" : "text-muted-foreground"
-                }`}
-              >
-                Workout List
-              </div>
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Workout Complete Modal */}
       {showCompleteModal && selectedWorkout && (

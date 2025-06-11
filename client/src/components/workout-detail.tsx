@@ -4,7 +4,6 @@ import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Play, Edit3, MoreVertical } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import type { Workout, Timer } from "@shared/schema";
 
 interface WorkoutDetailProps {
@@ -27,7 +26,6 @@ export default function WorkoutDetail({ workout, timers, onBack, onStart }: Work
   });
 
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   const updateWorkoutMutation = useMutation({
     mutationFn: async (data: { name: string }) => {
@@ -47,10 +45,6 @@ export default function WorkoutDetail({ workout, timers, onBack, onStart }: Work
     },
     onSuccess: () => {
       setEditingTimer(null);
-      toast({
-        title: "Timer Updated",
-        description: "Timer name has been updated successfully!",
-      });
     },
   });
 
