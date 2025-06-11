@@ -67,7 +67,7 @@ export default function QuickCreateSettings({
 
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={onClose}>
+      <Dialog open={isOpen} onOpenChange={() => {}}>
         <DialogContent className="w-full max-w-sm h-screen m-0 rounded-none">
           <div className="flex flex-col h-full">
             {/* Header */}
@@ -85,23 +85,23 @@ export default function QuickCreateSettings({
             </DialogHeader>
 
             {/* Settings List */}
-            <div className="flex-1 py-6 space-y-6">
+            <div className="flex-1 py-4 space-y-4">
               {/* Dark/Light Mode */}
-              <div className="flex items-center justify-between py-4">
-                <span className="text-xl font-bold">Mode</span>
+              <div className="flex items-center justify-between py-2">
+                <span className="text-lg font-bold">Mode</span>
                 <div className="relative flex items-center">
-                  <span className="mr-3 text-lg font-medium">
+                  <span className="mr-3 text-base font-medium">
                     {isDarkMode ? 'Dark' : 'Light'}
                   </span>
                   <div 
-                    className={`w-20 h-10 rounded-full border-2 border-black cursor-pointer transition-colors ${
+                    className={`w-16 h-8 rounded-full border-2 border-black cursor-pointer transition-colors ${
                       isDarkMode ? 'bg-gray-600' : 'bg-gray-200'
                     }`}
                     onClick={() => onDarkModeChange(!isDarkMode)}
                   >
                     <div 
-                      className={`w-8 h-8 bg-white rounded-full border-2 border-black transition-transform duration-200 ${
-                        isDarkMode ? 'translate-x-10' : 'translate-x-0'
+                      className={`w-6 h-6 bg-white rounded-full border-2 border-black transition-transform duration-200 ${
+                        isDarkMode ? 'translate-x-8' : 'translate-x-0'
                       }`}
                     />
                   </div>
@@ -109,11 +109,11 @@ export default function QuickCreateSettings({
               </div>
 
               {/* Beep Tone */}
-              <div className="flex items-center justify-between py-4">
-                <span className="text-xl font-bold">Beep Tone</span>
+              <div className="flex items-center justify-between py-2">
+                <span className="text-lg font-bold">Beep Tone</span>
                 <Button
                   variant="outline"
-                  className="min-w-24 h-12 border-2 border-black rounded-lg font-bold text-lg bg-white hover:bg-gray-100 text-black"
+                  className="min-w-20 h-10 border-2 border-black rounded-lg font-bold text-base bg-white hover:bg-gray-100 text-black"
                   onClick={() => setShowBeepToneMenu(true)}
                 >
                   {soundSettings.beepTone === "standard" ? "Standard" :
@@ -122,11 +122,11 @@ export default function QuickCreateSettings({
               </div>
 
               {/* Beep Start */}
-              <div className="flex items-center justify-between py-4">
-                <span className="text-xl font-bold">Beep Start</span>
+              <div className="flex items-center justify-between py-2">
+                <span className="text-lg font-bold">Beep Start</span>
                 <Button
                   variant="outline"
-                  className="min-w-24 h-12 border-2 border-black rounded-lg font-bold text-lg bg-white hover:bg-gray-100 text-black"
+                  className="min-w-20 h-10 border-2 border-black rounded-lg font-bold text-base bg-white hover:bg-gray-100 text-black"
                   onClick={() => setShowBeepStartMenu(true)}
                 >
                   {beepStart} sec
@@ -134,16 +134,16 @@ export default function QuickCreateSettings({
               </div>
 
               {/* Halfway Reminder */}
-              <div className="flex items-center justify-between py-4">
-                <span className="text-xl font-bold">Halfway Reminder</span>
+              <div className="flex items-center justify-between py-2">
+                <span className="text-lg font-bold">Halfway Reminder</span>
                 <div 
-                  className={`w-10 h-10 border-2 border-black rounded cursor-pointer flex items-center justify-center ${
+                  className={`w-8 h-8 border-2 border-black rounded cursor-pointer flex items-center justify-center ${
                     soundSettings.halfwayReminder ? 'bg-black' : 'bg-white'
                   }`}
                   onClick={() => updateSoundSetting('halfwayReminder', !soundSettings.halfwayReminder)}
                 >
                   {soundSettings.halfwayReminder && (
-                    <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                     </svg>
                   )}
@@ -151,16 +151,16 @@ export default function QuickCreateSettings({
               </div>
 
               {/* 10 Second Reminder */}
-              <div className="flex items-center justify-between py-4">
-                <span className="text-xl font-bold">10 Second Reminder</span>
+              <div className="flex items-center justify-between py-2">
+                <span className="text-lg font-bold">10 Second Reminder</span>
                 <div 
-                  className={`w-10 h-10 border-2 border-black rounded cursor-pointer flex items-center justify-center ${
+                  className={`w-8 h-8 border-2 border-black rounded cursor-pointer flex items-center justify-center ${
                     soundSettings.tenSecondWarning ? 'bg-black' : 'bg-white'
                   }`}
                   onClick={() => updateSoundSetting('tenSecondWarning', !soundSettings.tenSecondWarning)}
                 >
                   {soundSettings.tenSecondWarning && (
-                    <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                     </svg>
                   )}
@@ -168,16 +168,16 @@ export default function QuickCreateSettings({
               </div>
 
               {/* Verbal Reminder */}
-              <div className="flex items-center justify-between py-4">
-                <span className="text-xl font-bold">Verbal Reminder</span>
+              <div className="flex items-center justify-between py-2">
+                <span className="text-lg font-bold">Verbal Reminder</span>
                 <div 
-                  className={`w-10 h-10 border-2 border-black rounded cursor-pointer flex items-center justify-center ${
+                  className={`w-8 h-8 border-2 border-black rounded cursor-pointer flex items-center justify-center ${
                     soundSettings.verbalReminder ? 'bg-black' : 'bg-white'
                   }`}
                   onClick={() => updateSoundSetting('verbalReminder', !soundSettings.verbalReminder)}
                 >
                   {soundSettings.verbalReminder && (
-                    <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                     </svg>
                   )}
@@ -186,9 +186,9 @@ export default function QuickCreateSettings({
             </div>
 
             {/* Done Button */}
-            <div className="pt-6">
+            <div className="pt-4">
               <Button
-                className="w-full h-16 text-xl font-bold border-2 border-black rounded-lg bg-gray-200 hover:bg-gray-300 text-black"
+                className="w-full h-14 text-lg font-bold border-2 border-black rounded-lg bg-gray-200 hover:bg-gray-300 text-black"
                 variant="outline"
                 onClick={onClose}
               >
@@ -201,7 +201,7 @@ export default function QuickCreateSettings({
 
       {/* Beep Tone Menu */}
       {showBeepToneMenu && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-4">
           <div className="bg-background border rounded-lg shadow-lg w-full max-w-sm p-6">
             <div className="flex flex-col space-y-1.5 text-center mb-4">
               <h2 className="text-lg font-semibold leading-none tracking-tight">Beep Tone</h2>
@@ -236,7 +236,7 @@ export default function QuickCreateSettings({
 
       {/* Beep Start Menu */}
       {showBeepStartMenu && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-4">
           <div className="bg-background border rounded-lg shadow-lg w-full max-w-sm p-6">
             <div className="flex flex-col space-y-1.5 text-center mb-4">
               <h2 className="text-lg font-semibold leading-none tracking-tight">Beep Start (seconds)</h2>
