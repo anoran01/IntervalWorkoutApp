@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ArrowLeft } from "lucide-react";
+import { useTheme } from "@/lib/theme-context";
 import type { SoundSettings } from "@shared/schema";
 
 interface QuickCreateSettingsProps {
@@ -10,18 +11,15 @@ interface QuickCreateSettingsProps {
   onClose: () => void;
   soundSettings: SoundSettings;
   onSoundSettingsChange: (settings: SoundSettings) => void;
-  isDarkMode: boolean;
-  onDarkModeChange: (darkMode: boolean) => void;
 }
 
 export default function QuickCreateSettings({
   isOpen,
   onClose,
   soundSettings,
-  onSoundSettingsChange,
-  isDarkMode,
-  onDarkModeChange
+  onSoundSettingsChange
 }: QuickCreateSettingsProps) {
+  const { theme, toggleTheme } = useTheme();
   const [showBeepToneMenu, setShowBeepToneMenu] = useState(false);
   const [showBeepStartMenu, setShowBeepStartMenu] = useState(false);
   const [beepStart, setBeepStart] = useState(soundSettings.beepStart || 10);
@@ -91,17 +89,17 @@ export default function QuickCreateSettings({
                 <span className="text-lg font-bold">Mode</span>
                 <div className="relative flex items-center">
                   <span className="mr-3 text-base font-medium">
-                    {isDarkMode ? 'Dark' : 'Light'}
+                    {theme === 'dark' ? 'Dark' : 'Light'}
                   </span>
                   <div 
                     className={`w-16 h-8 rounded-full border-2 border-black cursor-pointer transition-colors ${
-                      isDarkMode ? 'bg-gray-600' : 'bg-gray-200'
+                      theme === 'dark' ? 'bg-gray-600' : 'bg-gray-200'
                     }`}
-                    onClick={() => onDarkModeChange(!isDarkMode)}
+                    onClick={toggleTheme}
                   >
                     <div 
                       className={`w-6 h-6 bg-white rounded-full border-2 border-black transition-transform duration-200 ${
-                        isDarkMode ? 'translate-x-8' : 'translate-x-0'
+                        theme === 'dark' ? 'translate-x-8' : 'translate-x-0'
                       }`}
                     />
                   </div>

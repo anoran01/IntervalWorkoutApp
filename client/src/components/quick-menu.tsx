@@ -40,7 +40,6 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
     },
   });
 
-  const [isDarkMode, setIsDarkMode] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [showCountPicker, setShowCountPicker] = useState(false);
@@ -272,8 +271,6 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         onClose={() => setShowSettings(false)}
         soundSettings={settings.soundSettings}
         onSoundSettingsChange={handleSoundSettingsChange}
-        isDarkMode={isDarkMode}
-        onDarkModeChange={setIsDarkMode}
       />
     </div>
   );
