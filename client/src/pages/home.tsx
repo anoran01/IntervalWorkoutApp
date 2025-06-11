@@ -46,9 +46,12 @@ export default function Home() {
     <div className="max-w-sm mx-auto min-h-screen relative bg-background">
       {/* Main Content */}
       <div className={`${currentScreen !== "workout-timer" ? "pb-20" : ""} h-screen`}>
-        {currentScreen === "quick-menu" && <QuickMenu />}
+        {currentScreen === "quick-menu" && <QuickMenu onNavigateToWorkoutList={() => setCurrentScreen("workout-list")} />}
         {currentScreen === "workout-list" && (
-          <WorkoutList onWorkoutSelect={handleWorkoutSelect} />
+          <WorkoutList 
+            onWorkoutSelect={handleWorkoutSelect} 
+            onNavigateToQuickCreate={() => setCurrentScreen("quick-menu")}
+          />
         )}
         {currentScreen === "workout-detail" && selectedWorkout && (
           <WorkoutDetail

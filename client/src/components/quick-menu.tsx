@@ -2,8 +2,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
-import { Settings } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Settings, Plus, List } from "lucide-react";
 import TimePickerModal from "./time-picker-modal";
 import CountPickerModal from "./count-picker-modal";
 import QuickCreateSettings from "./quick-create-settings";
@@ -19,7 +18,11 @@ interface QuickWorkoutSettings {
   soundSettings: SoundSettings;
 }
 
-export default function QuickMenu() {
+interface QuickMenuProps {
+  onNavigateToWorkoutList: () => void;
+}
+
+export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
   const [settings, setSettings] = useState<QuickWorkoutSettings>({
     prepare: 6,
     work: 90,
@@ -44,7 +47,6 @@ export default function QuickMenu() {
   const [currentEditingField, setCurrentEditingField] = useState<string>("");
 
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   const createWorkoutMutation = useMutation({
     mutationFn: async (data: QuickWorkoutSettings) => {
@@ -53,17 +55,12 @@ export default function QuickMenu() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/workouts"] });
-      toast({
-        title: "Workout Created",
-        description: "Your workout has been created successfully!",
-      });
+      // Navigate to workout list after successful creation
+      onNavigateToWorkoutList();
     },
     onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to create workout. Please try again.",
-        variant: "destructive",
-      });
+      // Silent error handling - no toast notifications
+      console.error("Failed to create workout");
     },
   });
 
@@ -215,14 +212,31 @@ export default function QuickMenu() {
       </div>
 
       {/* Create Button */}
-      <div className="p-4 pt-0 pb-24">
+      <div className="p-4 pt-0">
         <Button
-          className="w-full h-16 text-xl font-semibold rounded-lg"
+          className="w-full h-16 text-xl font-semibold rounded-lg mb-4"
           onClick={handleCreateWorkout}
           disabled={createWorkoutMutation.isPending}
         >
           {createWorkoutMutation.isPending ? "Creating..." : "Create"}
         </Button>
+      </div>
+
+      {/* Bottom Navigation */}
+      <div className="border-t border-border bg-muted">
+        <div className="flex">
+          <button className="flex-1 py-4 px-2 text-center bg-muted-foreground/10">
+            <Plus className="w-6 h-6 mx-auto mb-1 text-primary" />
+            <div className="text-xs font-medium text-primary">Quick Create</div>
+          </button>
+          <button 
+            className="flex-1 py-4 px-2 text-center transition-colors duration-200"
+            onClick={onNavigateToWorkoutList}
+          >
+            <List className="w-6 h-6 mx-auto mb-1 text-muted-foreground" />
+            <div className="text-xs font-medium text-muted-foreground">Workout List</div>
+          </button>
+        </div>
       </div>
 
       {/* Modals */}
