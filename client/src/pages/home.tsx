@@ -43,19 +43,9 @@ export default function Home() {
   };
 
   return (
-    <div className="max-w-sm mx-auto min-h-screen relative">
-      {/* Status Bar */}
-      <div className="status-bar flex justify-between items-center p-4 text-sm text-gray-400">
-        <span>9:41</span>
-        <div className="flex items-center space-x-2">
-          <div className="w-4 h-2 border border-gray-400 rounded-sm">
-            <div className="w-3/4 h-full bg-gray-400 rounded-sm"></div>
-          </div>
-        </div>
-      </div>
-
+    <div className="max-w-sm mx-auto min-h-screen relative bg-background">
       {/* Main Content */}
-      <div className="pb-20" style={{ minHeight: "calc(100vh - 120px)" }}>
+      <div className="pb-20 h-screen">
         {currentScreen === "quick-menu" && <QuickMenu />}
         {currentScreen === "workout-list" && (
           <WorkoutList onWorkoutSelect={handleWorkoutSelect} />
@@ -79,48 +69,50 @@ export default function Home() {
       </div>
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 max-w-sm mx-auto app-gray border-t border-gray-600">
-        <div className="flex">
-          <button
-            className={`flex-1 py-4 px-2 text-center transition-colors duration-200 ${
-              currentScreen === "quick-menu" ? "app-gray-light" : ""
-            }`}
-            onClick={() => setCurrentScreen("quick-menu")}
-          >
-            <Plus
-              className={`w-6 h-6 mx-auto mb-1 ${
-                currentScreen === "quick-menu" ? "text-orange-500" : "text-gray-400"
+      {currentScreen !== "workout-timer" && (
+        <div className="fixed bottom-0 left-0 right-0 max-w-sm mx-auto bg-muted border-t border-border">
+          <div className="flex">
+            <button
+              className={`flex-1 py-4 px-2 text-center transition-colors duration-200 ${
+                currentScreen === "quick-menu" ? "bg-muted-foreground/10" : ""
               }`}
-            />
-            <div
-              className={`text-xs font-medium ${
-                currentScreen === "quick-menu" ? "text-orange-500" : "text-gray-400"
-              }`}
+              onClick={() => setCurrentScreen("quick-menu")}
             >
-              Quick Menu
-            </div>
-          </button>
-          <button
-            className={`flex-1 py-4 px-2 text-center transition-colors duration-200 ${
-              currentScreen === "workout-list" ? "app-gray-light" : ""
-            }`}
-            onClick={() => setCurrentScreen("workout-list")}
-          >
-            <List
-              className={`w-6 h-6 mx-auto mb-1 ${
-                currentScreen === "workout-list" ? "text-orange-500" : "text-gray-400"
+              <Plus
+                className={`w-6 h-6 mx-auto mb-1 ${
+                  currentScreen === "quick-menu" ? "text-primary" : "text-muted-foreground"
+                }`}
+              />
+              <div
+                className={`text-xs font-medium ${
+                  currentScreen === "quick-menu" ? "text-primary" : "text-muted-foreground"
+                }`}
+              >
+                Quick Create
+              </div>
+            </button>
+            <button
+              className={`flex-1 py-4 px-2 text-center transition-colors duration-200 ${
+                currentScreen === "workout-list" ? "bg-muted-foreground/10" : ""
               }`}
-            />
-            <div
-              className={`text-xs font-medium ${
-                currentScreen === "workout-list" ? "text-orange-500" : "text-gray-400"
-              }`}
+              onClick={() => setCurrentScreen("workout-list")}
             >
-              Workout List
-            </div>
-          </button>
+              <List
+                className={`w-6 h-6 mx-auto mb-1 ${
+                  currentScreen === "workout-list" ? "text-primary" : "text-muted-foreground"
+                }`}
+              />
+              <div
+                className={`text-xs font-medium ${
+                  currentScreen === "workout-list" ? "text-primary" : "text-muted-foreground"
+                }`}
+              >
+                Workout List
+              </div>
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Workout Complete Modal */}
       {showCompleteModal && selectedWorkout && (
