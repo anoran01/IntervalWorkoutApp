@@ -166,38 +166,39 @@ export default function QuickCreateSettings({
       </Dialog>
 
       {/* Beep Tone Menu */}
-      <Dialog open={showBeepToneMenu} onOpenChange={setShowBeepToneMenu}>
-        <DialogContent className="w-full max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Beep Tone</DialogTitle>
-          </DialogHeader>
-          
-          <div className="py-4 space-y-2">
-            {["standard", "high_pitch", "low_pitch"].map((tone) => (
-              <Button
-                key={tone}
-                variant={soundSettings.beepTone === tone ? "default" : "outline"}
-                className="w-full justify-start"
-                onClick={() => {
-                  updateSoundSetting('beepTone', tone as any);
-                  setShowBeepToneMenu(false);
-                }}
-              >
-                {tone === "standard" ? "Standard" :
-                 tone === "high_pitch" ? "High Pitch" : "Low Pitch"}
-              </Button>
-            ))}
+      {showBeepToneMenu && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+          <div className="bg-background border rounded-lg shadow-lg w-full max-w-sm p-6">
+            <div className="flex flex-col space-y-1.5 text-center mb-4">
+              <h2 className="text-lg font-semibold leading-none tracking-tight">Beep Tone</h2>
+            </div>
+            
+            <div className="py-4 space-y-2">
+              {["standard", "high_pitch", "low_pitch"].map((tone) => (
+                <Button
+                  key={tone}
+                  variant={soundSettings.beepTone === tone ? "default" : "outline"}
+                  className="w-full justify-start"
+                  onClick={() => {
+                    updateSoundSetting('beepTone', tone as any);
+                    setShowBeepToneMenu(false);
+                  }}
+                >
+                  {tone === "standard" ? "Standard" :
+                   tone === "high_pitch" ? "High Pitch" : "Low Pitch"}
+                </Button>
+              ))}
+            </div>
+            
+            <Button
+              onClick={() => setShowBeepToneMenu(false)}
+              className="w-full mt-4"
+            >
+              Done
+            </Button>
           </div>
-          
-          <Button
-            variant="outline"
-            onClick={() => setShowBeepToneMenu(false)}
-            className="w-full mt-4"
-          >
-            Done
-          </Button>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
 
       {/* Beep Start Menu */}
       <Dialog open={showBeepStartMenu} onOpenChange={setShowBeepStartMenu}>
