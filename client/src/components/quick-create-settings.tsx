@@ -201,26 +201,25 @@ export default function QuickCreateSettings({
       )}
 
       {/* Beep Start Menu */}
-      <Dialog open={showBeepStartMenu} onOpenChange={setShowBeepStartMenu}>
-        <DialogContent className="w-full max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Beep Start (seconds)</DialogTitle>
-          </DialogHeader>
-          
-          <div className="flex justify-center py-4">
-            {createBeepStartScrollList()}
+      {showBeepStartMenu && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+          <div className="bg-background border rounded-lg shadow-lg w-full max-w-sm p-6">
+            <div className="flex flex-col space-y-1.5 text-center mb-4">
+              <h2 className="text-lg font-semibold leading-none tracking-tight">Beep Start (seconds)</h2>
+            </div>
+            
+            <div className="flex justify-center py-4">
+              {createBeepStartScrollList()}
+            </div>
+            
+            <div className="flex justify-center pt-4">
+              <Button onClick={() => handleBeepStartConfirm(beepStart)} className="w-full">
+                Confirm
+              </Button>
+            </div>
           </div>
-          
-          <div className="flex gap-2 pt-4">
-            <Button variant="outline" onClick={() => setShowBeepStartMenu(false)} className="flex-1">
-              Cancel
-            </Button>
-            <Button onClick={() => handleBeepStartConfirm(beepStart)} className="flex-1">
-              Done
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
     </>
   );
 }
