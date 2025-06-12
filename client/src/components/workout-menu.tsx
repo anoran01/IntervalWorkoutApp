@@ -175,9 +175,9 @@ export default function WorkoutMenu({
   };
 
   return (
-    <div className="flex flex-col h-screen bg-background">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b-2 border-black">
+    <div className="flex flex-col h-screen bg-background relative">
+      {/* Fixed Header */}
+      <div className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between p-4 border-b-2 border-black bg-background">
         <Button
           variant="ghost"
           size="sm"
@@ -222,32 +222,33 @@ export default function WorkoutMenu({
         </Button>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 p-4 space-y-6">
-        {/* Play Button */}
-        <Button
-          onClick={onStart}
-          className="w-full h-16 text-xl font-bold bg-background border-2 border-black hover:bg-gray-100 dark:hover:bg-gray-800 text-black dark:text-white rounded-lg"
+      {/* Fixed Add Timer Button - positioned in middle of screen */}
+      <div className="fixed top-1/2 left-0 right-0 z-30 flex items-center px-4 transform -translate-y-1/2">
+        <button
+          onClick={() => handleAddTimer(Math.floor(timers.length / 2))}
+          className="w-8 h-8 rounded-full border-2 border-black bg-background flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shadow-lg"
         >
-          Play
-        </Button>
+          <Plus className="w-4 h-4" />
+        </button>
+        <div className="flex-1 h-0.5 bg-black ml-3"></div>
+      </div>
 
-        {/* Timer List */}
-        <div className="space-y-3">
-          {/* Add button at the top */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => handleAddTimer(0)}
-              className="w-8 h-8 rounded-full border-2 border-black bg-background flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-            </button>
-            <div className="flex-1 h-0.5 bg-black"></div>
-          </div>
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto pt-20 pb-4">
+        <div className="p-4 space-y-6">
+          {/* Play Button */}
+          <Button
+            onClick={onStart}
+            className="w-full h-16 text-xl font-bold bg-background border-2 border-black hover:bg-gray-100 dark:hover:bg-gray-800 text-black dark:text-white rounded-lg"
+          >
+            Play
+          </Button>
 
-          {timers.map((timer, index) => (
-            <div key={timer.id}>
+          {/* Timer List */}
+          <div className="space-y-3">
+            {timers.map((timer, index) => (
               <div
+                key={timer.id}
                 className={`border-2 rounded-lg p-4 transition-all duration-200 ${getTimerColor(timer.name, index)} ${
                   draggedItem === timer.id ? 'opacity-50' : ''
                 } ${
@@ -287,19 +288,8 @@ export default function WorkoutMenu({
                   </span>
                 </div>
               </div>
-
-              {/* Add button after each timer */}
-              <div className="flex items-center gap-3 mt-3">
-                <button
-                  onClick={() => handleAddTimer(index + 1)}
-                  className="w-8 h-8 rounded-full border-2 border-black bg-background flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-                <div className="flex-1 h-0.5 bg-black"></div>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 
