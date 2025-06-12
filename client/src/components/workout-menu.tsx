@@ -34,6 +34,8 @@ export default function WorkoutMenu({
   const [isEditingWorkoutName, setIsEditingWorkoutName] = useState(false);
   const [workoutNameInput, setWorkoutNameInput] = useState(workout.name);
   const [showSettings, setShowSettings] = useState(false);
+  const [showAddTimer, setShowAddTimer] = useState(false);
+  const [insertPosition, setInsertPosition] = useState(0);
   const [draggedItem, setDraggedItem] = useState<number | null>(null);
   const [draggedOver, setDraggedOver] = useState<number | null>(null);
 
@@ -47,6 +49,29 @@ export default function WorkoutMenu({
         },
       });
       if (!response.ok) throw new Error('Failed to reorder timers');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/workouts', workout.id, 'timers'] });
+      onTimersReordered();
+    },
+  });
+
+  const addTimerMutation = useMutation({
+    mutationFn: async ({ type, duration, position }: { type: string; duration: number; position: number }) => {
+      const response = await fetch(`/api/workouts/${workout.id}/timers/insert`, {
+        method: 'POST',
+        body: JSON.stringify({
+          name: type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' '),
+          type,
+          duration,
+          position
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) throw new Error('Failed to add timer');
       return response.json();
     },
     onSuccess: () => {
@@ -113,6 +138,16 @@ export default function WorkoutMenu({
     setDraggedOver(null);
   };
 
+  const handleAddTimer = (position: number) => {
+    setInsertPosition(position);
+    setShowAddTimer(true);
+  };
+
+  const handleAddTimerConfirm = (type: string, duration: number) => {
+    addTimerMutation.mutate({ type, duration, position: insertPosition });
+    setShowAddTimer(false);
+  };
+
   const getTimerColor = (timerName: string, index: number) => {
     const name = timerName.toLowerCase();
     if (name.includes('prepare')) return 'border-yellow-500 bg-yellow-100 dark:bg-yellow-900/30';
@@ -130,28 +165,14 @@ export default function WorkoutMenu({
     return colors[index % colors.length];
   };
 
-  if (showSettings) {
-    // Provide default sound settings if none exist
-    const defaultSoundSettings: SoundSettings = {
-      beepTone: "standard",
-      beepStart: 10,
-      tenSecondWarning: true,
-      halfwayReminder: true,
-      verbalReminder: true,
-      vibrate: true
-    };
-
-    const currentSoundSettings = workout.soundSettings as SoundSettings || defaultSoundSettings;
-
-    return (
-      <WorkoutSettings
-        workoutName={workout.name}
-        soundSettings={currentSoundSettings}
-        onSave={onUpdateSoundSettings}
-        onClose={() => setShowSettings(false)}
-      />
-    );
-  }
+  const defaultSoundSettings: SoundSettings = {
+    beepTone: "standard",
+    beepStart: 10,
+    tenSecondWarning: true,
+    halfwayReminder: true,
+    verbalReminder: true,
+    vibrate: true
+  };
 
   return (
     <div className="flex flex-col h-screen bg-background">
@@ -213,51 +234,93 @@ export default function WorkoutMenu({
 
         {/* Timer List */}
         <div className="space-y-3">
-          {timers.map((timer, index) => (
-            <div
-              key={timer.id}
-              className={`border-2 rounded-lg p-4 transition-all duration-200 ${getTimerColor(timer.name, index)} ${
-                draggedItem === timer.id ? 'opacity-50' : ''
-              } ${
-                draggedOver === timer.id ? 'transform translate-y-1 shadow-lg' : ''
-              }`}
-              draggable
-              onDragStart={(e) => handleDragStart(e, timer.id)}
-              onDragOver={(e) => handleDragOver(e, timer.id)}
-              onDragLeave={handleDragLeave}
-              onDrop={(e) => handleDrop(e, timer.id)}
+          {/* Add button at the top */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => handleAddTimer(0)}
+              className="w-8 h-8 rounded-full border-2 border-black bg-background flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <GripVertical className="w-5 h-5 text-gray-500 cursor-grab active:cursor-grabbing" />
+              <Plus className="w-4 h-4" />
+            </button>
+            <div className="flex-1 h-0.5 bg-black"></div>
+          </div>
+
+          {timers.map((timer, index) => (
+            <div key={timer.id}>
+              <div
+                className={`border-2 rounded-lg p-4 transition-all duration-200 ${getTimerColor(timer.name, index)} ${
+                  draggedItem === timer.id ? 'opacity-50' : ''
+                } ${
+                  draggedOver === timer.id ? 'transform translate-y-1 shadow-lg' : ''
+                }`}
+                draggable
+                onDragStart={(e) => handleDragStart(e, timer.id)}
+                onDragOver={(e) => handleDragOver(e, timer.id)}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, timer.id)}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <GripVertical className="w-5 h-5 text-gray-500 cursor-grab active:cursor-grabbing" />
+                    <span 
+                      className="text-lg font-bold cursor-pointer"
+                      onClick={() => {
+                        const newName = prompt('Enter timer name:', timer.name);
+                        if (newName && newName.trim() && newName !== timer.name) {
+                          onEditTimerName(timer.id, newName.trim());
+                        }
+                      }}
+                    >
+                      {timer.name}
+                    </span>
+                  </div>
                   <span 
                     className="text-lg font-bold cursor-pointer"
                     onClick={() => {
-                      const newName = prompt('Enter timer name:', timer.name);
-                      if (newName && newName.trim() && newName !== timer.name) {
-                        onEditTimerName(timer.id, newName.trim());
+                      const newDuration = prompt('Enter duration in seconds:', timer.duration.toString());
+                      if (newDuration && !isNaN(Number(newDuration)) && Number(newDuration) > 0) {
+                        onEditTimerDuration(timer.id, Number(newDuration));
                       }
                     }}
                   >
-                    {timer.name}
+                    {formatTime(timer.duration)}
                   </span>
                 </div>
-                <span 
-                  className="text-lg font-bold cursor-pointer"
-                  onClick={() => {
-                    const newDuration = prompt('Enter duration in seconds:', timer.duration.toString());
-                    if (newDuration && !isNaN(Number(newDuration)) && Number(newDuration) > 0) {
-                      onEditTimerDuration(timer.id, Number(newDuration));
-                    }
-                  }}
+              </div>
+
+              {/* Add button after each timer */}
+              <div className="flex items-center gap-3 mt-3">
+                <button
+                  onClick={() => handleAddTimer(index + 1)}
+                  className="w-8 h-8 rounded-full border-2 border-black bg-background flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 >
-                  {formatTime(timer.duration)}
-                </span>
+                  <Plus className="w-4 h-4" />
+                </button>
+                <div className="flex-1 h-0.5 bg-black"></div>
               </div>
             </div>
           ))}
         </div>
       </div>
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <WorkoutSettings
+          workoutName={workout.name}
+          soundSettings={workout.soundSettings as SoundSettings || defaultSoundSettings}
+          onSave={onUpdateSoundSettings}
+          onClose={() => setShowSettings(false)}
+        />
+      )}
+
+      {/* Add Timer Modal */}
+      {showAddTimer && (
+        <AddTimerModal
+          isOpen={showAddTimer}
+          onClose={() => setShowAddTimer(false)}
+          onConfirm={handleAddTimerConfirm}
+        />
+      )}
     </div>
   );
 }
