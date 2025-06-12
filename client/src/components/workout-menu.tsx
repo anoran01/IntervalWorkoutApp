@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Settings, Play, GripVertical, Plus } from "lucide-react";
 import { formatTime } from "@/lib/workout-utils";
@@ -38,6 +38,8 @@ export default function WorkoutMenu({
   const [insertPosition, setInsertPosition] = useState(0);
   const [draggedItem, setDraggedItem] = useState<number | null>(null);
   const [draggedOver, setDraggedOver] = useState<number | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const timerListRef = useRef<HTMLDivElement>(null);
 
   const reorderMutation = useMutation({
     mutationFn: async (timerOrders: { id: number; order: number }[]) => {
@@ -148,6 +150,110 @@ export default function WorkoutMenu({
     setShowAddTimer(false);
   };
 
+  // Snap scroll to position the horizontal bar between timers
+  const snapToPosition = () => {
+    if (!scrollContainerRef.current || !timerListRef.current || timers.length === 0) return;
+
+    const container = scrollContainerRef.current;
+    const containerRect = container.getBoundingClientRect();
+    const containerHeight = containerRect.height;
+    const middleY = containerHeight / 2;
+
+    // Get all timer elements
+    const timerElements = timerListRef.current.children;
+    if (timerElements.length === 0) return;
+
+    let bestPosition = 0;
+    let minDistance = Infinity;
+
+    // Check positions between timers
+    for (let i = 0; i <= timerElements.length; i++) {
+      let targetY: number;
+
+      if (i === 0) {
+        // Before first timer
+        const firstTimer = timerElements[0] as HTMLElement;
+        const firstTimerRect = firstTimer.getBoundingClientRect();
+        targetY = firstTimerRect.top - containerRect.top - 24; // 24px spacing
+      } else if (i === timerElements.length) {
+        // After last timer
+        const lastTimer = timerElements[timerElements.length - 1] as HTMLElement;
+        const lastTimerRect = lastTimer.getBoundingClientRect();
+        targetY = lastTimerRect.bottom - containerRect.top + 24; // 24px spacing
+      } else {
+        // Between timers
+        const prevTimer = timerElements[i - 1] as HTMLElement;
+        const nextTimer = timerElements[i] as HTMLElement;
+        const prevRect = prevTimer.getBoundingClientRect();
+        const nextRect = nextTimer.getBoundingClientRect();
+        targetY = (prevRect.bottom + nextRect.top) / 2 - containerRect.top;
+      }
+
+      const distance = Math.abs(targetY - middleY);
+      if (distance < minDistance) {
+        minDistance = distance;
+        bestPosition = i;
+      }
+    }
+
+    // Calculate the scroll adjustment needed
+    let targetScrollTop: number;
+
+    if (bestPosition === 0) {
+      // Before first timer
+      const firstTimer = timerElements[0] as HTMLElement;
+      const firstTimerRect = firstTimer.getBoundingClientRect();
+      targetScrollTop = container.scrollTop + (firstTimerRect.top - containerRect.top - 24) - middleY;
+    } else if (bestPosition === timerElements.length) {
+      // After last timer
+      const lastTimer = timerElements[timerElements.length - 1] as HTMLElement;
+      const lastTimerRect = lastTimer.getBoundingClientRect();
+      targetScrollTop = container.scrollTop + (lastTimerRect.bottom - containerRect.top + 24) - middleY;
+    } else {
+      // Between timers
+      const prevTimer = timerElements[bestPosition - 1] as HTMLElement;
+      const nextTimer = timerElements[bestPosition] as HTMLElement;
+      const prevRect = prevTimer.getBoundingClientRect();
+      const nextRect = nextTimer.getBoundingClientRect();
+      const betweenY = (prevRect.bottom + nextRect.top) / 2 - containerRect.top;
+      targetScrollTop = container.scrollTop + betweenY - middleY;
+    }
+
+    // Smooth scroll to the target position
+    container.scrollTo({
+      top: Math.max(0, targetScrollTop),
+      behavior: 'smooth'
+    });
+
+    setInsertPosition(bestPosition);
+  };
+
+  // Handle scroll events
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    let scrollTimeout: NodeJS.Timeout;
+
+    const handleScroll = () => {
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        snapToPosition();
+      }, 150); // Debounce scroll events
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+      clearTimeout(scrollTimeout);
+    };
+  }, [timers.length]);
+
+  // Initial snap on mount and when timers change
+  useEffect(() => {
+    setTimeout(() => snapToPosition(), 100);
+  }, [timers.length]);
+
   const getTimerColor = (timerName: string, index: number) => {
     const name = timerName.toLowerCase();
     if (name.includes('prepare')) return 'border-yellow-500 bg-yellow-100 dark:bg-yellow-900/30';
@@ -225,16 +331,20 @@ export default function WorkoutMenu({
       {/* Fixed Add Timer Button - positioned in middle of screen */}
       <div className="fixed top-1/2 left-0 right-0 z-30 flex items-center px-4 transform -translate-y-1/2">
         <button
-          onClick={() => handleAddTimer(Math.floor(timers.length / 2))}
+          onClick={() => handleAddTimer(insertPosition)}
           className="w-8 h-8 rounded-full border-2 border-black bg-background flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shadow-lg"
         >
           <Plus className="w-4 h-4" />
         </button>
-        <div className="flex-1 h-0.5 bg-black ml-3"></div>
+        <div className="flex-1 h-0.5 bg-black dark:bg-white ml-3"></div>
       </div>
 
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto pt-20 pb-4">
+      <div 
+        ref={scrollContainerRef}
+        className="flex-1 overflow-y-auto pt-20 pb-4"
+        style={{ scrollBehavior: 'auto' }}
+      >
         <div className="p-4 space-y-6">
           {/* Play Button */}
           <Button
@@ -245,7 +355,7 @@ export default function WorkoutMenu({
           </Button>
 
           {/* Timer List */}
-          <div className="space-y-3">
+          <div ref={timerListRef} className="space-y-3">
             {timers.map((timer, index) => (
               <div
                 key={timer.id}
