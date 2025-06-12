@@ -329,14 +329,14 @@ export default function WorkoutMenu({
       </div>
 
       {/* Fixed Add Timer Button - positioned in middle of screen */}
-      <div className="fixed top-1/2 left-0 right-0 z-30 flex items-center px-4 transform -translate-y-1/2">
+      <div className="fixed top-1/2 left-4 right-4 z-30 flex items-center transform -translate-y-1/2">
         <button
           onClick={() => handleAddTimer(insertPosition)}
           className="w-8 h-8 rounded-full border-2 border-black bg-background flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shadow-lg"
         >
           <Plus className="w-4 h-4" />
         </button>
-        <div className="flex-1 h-0.5 bg-black dark:bg-white ml-3"></div>
+        <div className="h-0.5 bg-black dark:bg-white ml-3" style={{ width: 'calc(100% - 44px)' }}></div>
       </div>
 
       {/* Scrollable Content */}
@@ -349,7 +349,7 @@ export default function WorkoutMenu({
           {/* Play Button */}
           <Button
             onClick={onStart}
-            className="w-full h-16 text-xl font-bold bg-background border-2 border-black hover:bg-gray-100 dark:hover:bg-gray-800 text-black dark:text-white rounded-lg"
+            className="w-full h-16 text-xl font-bold bg-background border-2 border-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 text-black dark:text-white rounded-lg"
           >
             Play
           </Button>
@@ -405,12 +405,14 @@ export default function WorkoutMenu({
 
       {/* Settings Modal */}
       {showSettings && (
-        <WorkoutSettings
-          workoutName={workout.name}
-          soundSettings={workout.soundSettings as SoundSettings || defaultSoundSettings}
-          onSave={onUpdateSoundSettings}
-          onClose={() => setShowSettings(false)}
-        />
+        <div className="fixed inset-0 z-50">
+          <WorkoutSettings
+            workoutName={workout.name}
+            soundSettings={workout.soundSettings as SoundSettings || defaultSoundSettings}
+            onSave={onUpdateSoundSettings}
+            onClose={() => setShowSettings(false)}
+          />
+        </div>
       )}
 
       {/* Add Timer Modal */}

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowLeft } from "lucide-react";
 import BeepStartPicker from "@/components/beep-start-picker";
 import type { SoundSettings } from "@shared/schema";
 
@@ -34,10 +35,19 @@ export default function WorkoutSettings({
   };
 
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div className="flex flex-col h-screen bg-background border-2 border-gray-300 dark:border-gray-600 rounded-lg">
       {/* Header */}
-      <div className="p-4 border-b-2 border-black">
-        <h1 className="text-2xl font-bold text-center">{workoutName} Settings</h1>
+      <div className="flex items-center justify-between p-4 border-b-2 border-black">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="p-2"
+          onClick={onClose}
+        >
+          <ArrowLeft className="w-6 h-6" />
+        </Button>
+        <h1 className="text-2xl font-bold text-center flex-1">{workoutName} Settings</h1>
+        <div className="w-10" />
       </div>
 
       {/* Settings Content */}
@@ -128,7 +138,7 @@ export default function WorkoutSettings({
       <div className="p-6">
         <Button
           onClick={handleSave}
-          className="w-full h-16 text-xl font-bold bg-background border-2 border-black hover:bg-gray-100 dark:hover:bg-gray-800 text-black dark:text-white rounded-lg"
+          className="w-full h-16 text-xl font-bold bg-background border-2 border-black dark:border-white hover:bg-gray-100 dark:hover:bg-gray-800 text-black dark:text-white rounded-lg"
         >
           Done
         </Button>

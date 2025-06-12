@@ -203,7 +203,7 @@ export default function WorkoutTimer({ workout, timers, onComplete, onStop }: Wo
           className={`w-20 h-20 rounded-lg flex items-center justify-center ${
             isRunning 
               ? 'bg-black text-white' 
-              : 'bg-white border-4 border-black text-black hover:bg-gray-50'
+              : 'bg-transparent text-white hover:bg-gray-800/20'
           }`}
         >
           {isRunning ? (
@@ -212,7 +212,7 @@ export default function WorkoutTimer({ workout, timers, onComplete, onStop }: Wo
               <div className="w-2 h-8 bg-white rounded"></div>
             </div>
           ) : (
-            <Play className="w-8 h-8 ml-1" fill="currentColor" />
+            <Play className="w-12 h-12 ml-1" fill="currentColor" />
           )}
         </Button>
         

@@ -66,10 +66,10 @@ export default function QuickCreateSettings({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={() => {}}>
-        <DialogContent className="w-full max-w-sm h-screen m-0 rounded-none">
+        <DialogContent className="w-full max-w-sm h-screen m-0 rounded-none" hideCloseButton>
           <div className="flex flex-col h-full">
             {/* Header */}
-            <DialogHeader className="flex-row items-center space-y-0 pb-4 border-b">
+            <DialogHeader className="flex-row items-center space-y-0 pb-2 border-b">
               <Button
                 variant="ghost"
                 size="sm"
@@ -83,7 +83,7 @@ export default function QuickCreateSettings({
             </DialogHeader>
 
             {/* Settings List */}
-            <div className="flex-1 py-4 space-y-4">
+            <div className="flex-1 py-2 space-y-2">
               {/* Dark/Light Mode */}
               <div className="flex items-center justify-between py-2">
                 <span className="text-lg font-bold">Mode</span>
