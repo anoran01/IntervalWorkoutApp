@@ -12,6 +12,7 @@ export const workouts = pgTable("workouts", {
   cycles: integer("cycles").notNull(),
   restBetweenCycles: integer("rest_between_cycles").notNull(), // in seconds
   soundSettings: jsonb("sound_settings").notNull(),
+  order: integer("order").notNull().default(0),
   createdAt: text("created_at").notNull(),
 });
 
@@ -27,6 +28,8 @@ export const timers = pgTable("timers", {
 export const insertWorkoutSchema = createInsertSchema(workouts).omit({
   id: true,
   createdAt: true,
+}).extend({
+  order: z.number().optional(),
 });
 
 export const insertTimerSchema = createInsertSchema(timers).omit({

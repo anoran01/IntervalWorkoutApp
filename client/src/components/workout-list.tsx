@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { Settings, Plus, List } from "lucide-react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { Settings, Plus, List, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Workout, Timer } from "@shared/schema";
 
@@ -12,8 +12,28 @@ interface WorkoutListProps {
 
 export default function WorkoutList({ onWorkoutSelect, onNavigateToQuickCreate }: WorkoutListProps) {
   const [showSettings, setShowSettings] = useState(false);
+  const [draggedItem, setDraggedItem] = useState<number | null>(null);
+  const [draggedOver, setDraggedOver] = useState<number | null>(null);
+  
   const { data: workouts = [], isLoading } = useQuery<Workout[]>({
     queryKey: ["/api/workouts"],
+  });
+
+  const reorderMutation = useMutation({
+    mutationFn: async (workoutOrders: { id: number; order: number }[]) => {
+      const response = await fetch('/api/workouts/reorder', {
+        method: 'PATCH',
+        body: JSON.stringify(workoutOrders),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) throw new Error('Failed to reorder workouts');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/workouts'] });
+    },
   });
 
 

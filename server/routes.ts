@@ -218,6 +218,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Reorder workouts
+  app.patch("/api/workouts/reorder", async (req, res) => {
+    try {
+      const schema = z.array(z.object({
+        id: z.number(),
+        order: z.number()
+      }));
+      
+      const workoutOrders = schema.parse(req.body);
+      await storage.reorderWorkouts(workoutOrders);
+      
+      res.json({ success: true });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid reorder data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to reorder workouts" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

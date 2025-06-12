@@ -7,6 +7,7 @@ export interface IStorage {
   getAllWorkouts(): Promise<Workout[]>;
   updateWorkout(id: number, workout: Partial<InsertWorkout>): Promise<Workout | undefined>;
   deleteWorkout(id: number): Promise<boolean>;
+  reorderWorkouts(workoutOrders: { id: number; order: number }[]): Promise<void>;
   
   // Timer operations
   createTimer(timer: InsertTimer): Promise<Timer>;
@@ -32,9 +33,11 @@ export class MemStorage implements IStorage {
 
   async createWorkout(insertWorkout: InsertWorkout): Promise<Workout> {
     const id = this.currentWorkoutId++;
+    const maxOrder = Math.max(...Array.from(this.workouts.values()).map(w => w.order), -1);
     const workout: Workout = { 
       ...insertWorkout, 
       id,
+      order: insertWorkout.order ?? maxOrder + 1,
       createdAt: new Date().toISOString()
     };
     this.workouts.set(id, workout);
@@ -46,9 +49,7 @@ export class MemStorage implements IStorage {
   }
 
   async getAllWorkouts(): Promise<Workout[]> {
-    return Array.from(this.workouts.values()).sort((a, b) => 
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    return Array.from(this.workouts.values()).sort((a, b) => a.order - b.order);
   }
 
   async updateWorkout(id: number, updates: Partial<InsertWorkout>): Promise<Workout | undefined> {
@@ -107,6 +108,15 @@ export class MemStorage implements IStorage {
       const timer = this.timers.get(id);
       if (timer && timer.workoutId === workoutId) {
         this.timers.set(id, { ...timer, order });
+      }
+    }
+  }
+
+  async reorderWorkouts(workoutOrders: { id: number; order: number }[]): Promise<void> {
+    for (const { id, order } of workoutOrders) {
+      const workout = this.workouts.get(id);
+      if (workout) {
+        this.workouts.set(id, { ...workout, order });
       }
     }
   }
