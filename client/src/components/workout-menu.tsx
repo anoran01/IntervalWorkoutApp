@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Settings, Play } from "lucide-react";
 import { formatTime } from "@/lib/workout-utils";
-import type { Workout, Timer } from "@shared/schema";
+import WorkoutSettings from "@/components/workout-settings";
+import type { Workout, Timer, SoundSettings } from "@shared/schema";
 
 interface WorkoutMenuProps {
   workout: Workout;
@@ -12,6 +13,7 @@ interface WorkoutMenuProps {
   onEditWorkoutName: (name: string) => void;
   onEditTimerName: (timerId: number, name: string) => void;
   onEditTimerDuration: (timerId: number, duration: number) => void;
+  onUpdateSoundSettings: (settings: SoundSettings) => void;
 }
 
 export default function WorkoutMenu({ 
@@ -21,7 +23,8 @@ export default function WorkoutMenu({
   onStart,
   onEditWorkoutName,
   onEditTimerName,
-  onEditTimerDuration
+  onEditTimerDuration,
+  onUpdateSoundSettings
 }: WorkoutMenuProps) {
   const [isEditingWorkoutName, setIsEditingWorkoutName] = useState(false);
   const [workoutNameInput, setWorkoutNameInput] = useState(workout.name);
@@ -50,6 +53,29 @@ export default function WorkoutMenu({
     ];
     return colors[index % colors.length];
   };
+
+  if (showSettings) {
+    // Provide default sound settings if none exist
+    const defaultSoundSettings: SoundSettings = {
+      beepTone: "standard",
+      beepStart: 10,
+      tenSecondWarning: true,
+      halfwayReminder: true,
+      verbalReminder: true,
+      vibrate: true
+    };
+
+    const currentSoundSettings = workout.soundSettings as SoundSettings || defaultSoundSettings;
+
+    return (
+      <WorkoutSettings
+        workoutName={workout.name}
+        soundSettings={currentSoundSettings}
+        onSave={onUpdateSoundSettings}
+        onClose={() => setShowSettings(false)}
+      />
+    );
+  }
 
   return (
     <div className="flex flex-col h-screen bg-background">

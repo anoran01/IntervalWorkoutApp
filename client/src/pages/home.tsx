@@ -5,7 +5,7 @@ import WorkoutMenu from "@/components/workout-menu";
 import WorkoutTimer from "@/components/workout-timer-new";
 import WorkoutCompleteModal from "@/components/workout-complete-modal";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { Workout, Timer } from "@shared/schema";
+import type { Workout, Timer, SoundSettings } from "@shared/schema";
 
 type Screen = "quick-menu" | "workout-list" | "workout-detail" | "workout-timer";
 
@@ -89,6 +89,21 @@ export default function Home() {
     }
   };
 
+  const handleUpdateSoundSettings = async (settings: SoundSettings) => {
+    if (!selectedWorkout) return;
+    
+    try {
+      const response = await apiRequest("PATCH", `/api/workouts/${selectedWorkout.id}`, {
+        soundSettings: settings
+      });
+      const updatedWorkout = await response.json();
+      setSelectedWorkout(updatedWorkout);
+      queryClient.invalidateQueries({ queryKey: ["/api/workouts"] });
+    } catch (error) {
+      console.error("Failed to update sound settings:", error);
+    }
+  };
+
   return (
     <div className="max-w-sm mx-auto min-h-screen relative bg-background">
       {/* Main Content */}
@@ -109,6 +124,7 @@ export default function Home() {
             onEditWorkoutName={handleEditWorkoutName}
             onEditTimerName={handleEditTimerName}
             onEditTimerDuration={handleEditTimerDuration}
+            onUpdateSoundSettings={handleUpdateSoundSettings}
           />
         )}
         {currentScreen === "workout-timer" && selectedWorkout && (
