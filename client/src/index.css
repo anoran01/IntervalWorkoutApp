@@ -66,6 +66,15 @@
   }
 }
 
+/* Custom scrollbar hiding for picker wheels */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar { 
+  display: none;  /* Safari and Chrome */
+}
+
 /* Workout app specific styles */
 .workout-app {
   background-color: var(--app-black);

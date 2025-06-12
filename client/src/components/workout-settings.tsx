@@ -81,42 +81,45 @@ export default function WorkoutSettings({
         {/* Halfway Reminder */}
         <div className="flex items-center justify-between">
           <span className="text-xl font-bold">Halfway Reminder</span>
-          <div className="w-8 h-8 border-2 border-black rounded flex items-center justify-center bg-white dark:bg-black">
-            <Checkbox
-              checked={settings.halfwayReminder}
-              onCheckedChange={(checked) => 
-                updateSetting("halfwayReminder", !!checked)
-              }
-              className="border-2 border-black data-[state=unchecked]:border-black"
-            />
+          <div 
+            className="w-8 h-8 border-2 border-black dark:border-white rounded flex items-center justify-center cursor-pointer"
+            onClick={() => updateSetting("halfwayReminder", !settings.halfwayReminder)}
+          >
+            {settings.halfwayReminder && (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                <polyline points="20,6 9,17 4,12"></polyline>
+              </svg>
+            )}
           </div>
         </div>
 
         {/* 10 Second Reminder */}
         <div className="flex items-center justify-between">
           <span className="text-xl font-bold">10 second Reminder</span>
-          <div className="w-8 h-8 border-2 border-black rounded flex items-center justify-center bg-white dark:bg-black">
-            <Checkbox
-              checked={settings.tenSecondWarning}
-              onCheckedChange={(checked) => 
-                updateSetting("tenSecondWarning", !!checked)
-              }
-              className="border-2 border-black data-[state=unchecked]:border-black"
-            />
+          <div 
+            className="w-8 h-8 border-2 border-black dark:border-white rounded flex items-center justify-center cursor-pointer"
+            onClick={() => updateSetting("tenSecondWarning", !settings.tenSecondWarning)}
+          >
+            {settings.tenSecondWarning && (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                <polyline points="20,6 9,17 4,12"></polyline>
+              </svg>
+            )}
           </div>
         </div>
 
         {/* Verbal Reminder */}
         <div className="flex items-center justify-between">
           <span className="text-xl font-bold">Verbal Reminder</span>
-          <div className="w-8 h-8 border-2 border-black rounded flex items-center justify-center bg-white dark:bg-black">
-            <Checkbox
-              checked={settings.verbalReminder}
-              onCheckedChange={(checked) => 
-                updateSetting("verbalReminder", !!checked)
-              }
-              className="border-2 border-black data-[state=unchecked]:border-black"
-            />
+          <div 
+            className="w-8 h-8 border-2 border-black dark:border-white rounded flex items-center justify-center cursor-pointer"
+            onClick={() => updateSetting("verbalReminder", !settings.verbalReminder)}
+          >
+            {settings.verbalReminder && (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                <polyline points="20,6 9,17 4,12"></polyline>
+              </svg>
+            )}
           </div>
         </div>
       </div>

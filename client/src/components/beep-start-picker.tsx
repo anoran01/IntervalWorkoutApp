@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 
 interface BeepStartPickerProps {
@@ -10,15 +10,39 @@ interface BeepStartPickerProps {
 
 export default function BeepStartPicker({ isOpen, onClose, onConfirm, initialValue }: BeepStartPickerProps) {
   const [selectedValue, setSelectedValue] = useState(initialValue);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const itemHeight = 48; // Height of each item
+  const containerHeight = 144; // Height of visible area (3 items)
 
-  if (!isOpen) return null;
+  const values = Array.from({ length: 11 }, (_, i) => i); // 0 to 10
+
+  useEffect(() => {
+    if (isOpen && scrollRef.current) {
+      // Center the initial value in the picker
+      const scrollPosition = selectedValue * itemHeight - containerHeight / 2 + itemHeight / 2;
+      scrollRef.current.scrollTop = Math.max(0, scrollPosition);
+    }
+  }, [isOpen, selectedValue]);
+
+  const handleScroll = () => {
+    if (!scrollRef.current) return;
+    
+    const scrollTop = scrollRef.current.scrollTop;
+    const centerPosition = scrollTop + containerHeight / 2;
+    const selectedIndex = Math.round(centerPosition / itemHeight);
+    const clampedIndex = Math.max(0, Math.min(values.length - 1, selectedIndex));
+    
+    if (clampedIndex !== selectedValue) {
+      setSelectedValue(clampedIndex);
+    }
+  };
 
   const handleConfirm = () => {
     onConfirm(selectedValue);
     onClose();
   };
 
-  const values = Array.from({ length: 11 }, (_, i) => i); // 0 to 10
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
@@ -27,22 +51,40 @@ export default function BeepStartPicker({ isOpen, onClose, onConfirm, initialVal
         <p className="text-center mb-6">sec</p>
         
         {/* Picker Wheel */}
-        <div className="flex justify-center mb-8">
-          <div className="border-2 border-black rounded-lg p-4 h-48 overflow-y-auto">
-            <div className="space-y-2">
+        <div className="flex justify-center mb-8 relative">
+          <div className="relative">
+            {/* Selection Bar */}
+            <div 
+              className="absolute left-0 right-0 border-2 border-black rounded-lg bg-gray-100 dark:bg-gray-800 z-10 pointer-events-none"
+              style={{ 
+                top: `${containerHeight / 2 - itemHeight / 2}px`,
+                height: `${itemHeight}px`
+              }}
+            />
+            
+            {/* Scrollable Container */}
+            <div 
+              ref={scrollRef}
+              className="border-2 border-black rounded-lg overflow-y-auto scrollbar-hide"
+              style={{ height: `${containerHeight}px`, width: '120px' }}
+              onScroll={handleScroll}
+            >
+              {/* Padding top */}
+              <div style={{ height: `${containerHeight / 2 - itemHeight / 2}px` }} />
+              
+              {/* Values */}
               {values.map((value) => (
                 <div
                   key={value}
-                  className={`text-center py-2 px-4 cursor-pointer rounded transition-colors ${
-                    selectedValue === value
-                      ? 'bg-black text-white'
-                      : 'hover:bg-gray-100 dark:hover:bg-gray-800'
-                  }`}
-                  onClick={() => setSelectedValue(value)}
+                  className="text-center flex items-center justify-center transition-colors"
+                  style={{ height: `${itemHeight}px` }}
                 >
                   <span className="text-xl font-bold">{value}</span>
                 </div>
               ))}
+              
+              {/* Padding bottom */}
+              <div style={{ height: `${containerHeight / 2 - itemHeight / 2}px` }} />
             </div>
           </div>
         </div>
