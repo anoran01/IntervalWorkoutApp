@@ -125,6 +125,12 @@ export default function Home() {
             onEditTimerName={handleEditTimerName}
             onEditTimerDuration={handleEditTimerDuration}
             onUpdateSoundSettings={handleUpdateSoundSettings}
+            onTimersReordered={() => {
+              // Refetch timers after reordering
+              if (selectedWorkout) {
+                handleWorkoutSelect(selectedWorkout, workoutTimers);
+              }
+            }}
           />
         )}
         {currentScreen === "workout-timer" && selectedWorkout && (

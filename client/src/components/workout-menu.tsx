@@ -38,13 +38,15 @@ export default function WorkoutMenu({
 
   const reorderMutation = useMutation({
     mutationFn: async (timerOrders: { id: number; order: number }[]) => {
-      return apiRequest(`/api/workouts/${workout.id}/timers/reorder`, {
+      const response = await fetch(`/api/workouts/${workout.id}/timers/reorder`, {
         method: 'PATCH',
         body: JSON.stringify(timerOrders),
         headers: {
           'Content-Type': 'application/json',
         },
       });
+      if (!response.ok) throw new Error('Failed to reorder timers');
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/workouts', workout.id, 'timers'] });
@@ -208,20 +210,32 @@ export default function WorkoutMenu({
           {timers.map((timer, index) => (
             <div
               key={timer.id}
-              className={`border-2 rounded-lg p-4 ${getTimerColor(timer.name, index)}`}
+              className={`border-2 rounded-lg p-4 transition-all duration-200 ${getTimerColor(timer.name, index)} ${
+                draggedItem === timer.id ? 'opacity-50' : ''
+              } ${
+                draggedOver === timer.id ? 'transform translate-y-1 shadow-lg' : ''
+              }`}
+              draggable
+              onDragStart={(e) => handleDragStart(e, timer.id)}
+              onDragOver={(e) => handleDragOver(e, timer.id)}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, timer.id)}
             >
               <div className="flex items-center justify-between">
-                <span 
-                  className="text-lg font-bold cursor-pointer"
-                  onClick={() => {
-                    const newName = prompt('Enter timer name:', timer.name);
-                    if (newName && newName.trim() && newName !== timer.name) {
-                      onEditTimerName(timer.id, newName.trim());
-                    }
-                  }}
-                >
-                  {timer.name}
-                </span>
+                <div className="flex items-center gap-3">
+                  <GripVertical className="w-5 h-5 text-gray-500 cursor-grab active:cursor-grabbing" />
+                  <span 
+                    className="text-lg font-bold cursor-pointer"
+                    onClick={() => {
+                      const newName = prompt('Enter timer name:', timer.name);
+                      if (newName && newName.trim() && newName !== timer.name) {
+                        onEditTimerName(timer.id, newName.trim());
+                      }
+                    }}
+                  >
+                    {timer.name}
+                  </span>
+                </div>
                 <span 
                   className="text-lg font-bold cursor-pointer"
                   onClick={() => {
