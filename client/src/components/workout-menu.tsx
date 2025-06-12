@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Settings, Play, GripVertical } from "lucide-react";
+import { ArrowLeft, Settings, Play, GripVertical, Plus } from "lucide-react";
 import { formatTime } from "@/lib/workout-utils";
 import WorkoutSettings from "@/components/workout-settings";
+import AddTimerModal from "@/components/add-timer-modal";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
 import type { Workout, Timer, SoundSettings } from "@shared/schema";

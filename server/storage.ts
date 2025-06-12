@@ -16,6 +16,7 @@ export interface IStorage {
   deleteTimer(id: number): Promise<boolean>;
   deleteTimersByWorkoutId(workoutId: number): Promise<void>;
   reorderTimers(workoutId: number, timerOrders: { id: number; order: number }[]): Promise<void>;
+  insertTimerAtPosition(workoutId: number, timer: Omit<InsertTimer, 'workoutId' | 'order'>, position: number): Promise<Timer>;
 }
 
 export class MemStorage implements IStorage {
@@ -119,6 +120,29 @@ export class MemStorage implements IStorage {
         this.workouts.set(id, { ...workout, order });
       }
     }
+  }
+
+  async insertTimerAtPosition(workoutId: number, timer: Omit<InsertTimer, 'workoutId' | 'order'>, position: number): Promise<Timer> {
+    // Get existing timers for this workout
+    const existingTimers = await this.getTimersByWorkoutId(workoutId);
+    
+    // Shift orders for timers at or after the insertion position
+    for (const existingTimer of existingTimers) {
+      if (existingTimer.order >= position) {
+        this.timers.set(existingTimer.id, { ...existingTimer, order: existingTimer.order + 1 });
+      }
+    }
+    
+    // Create new timer at the specified position
+    const id = this.currentTimerId++;
+    const newTimer: Timer = { 
+      ...timer, 
+      id,
+      workoutId,
+      order: position
+    };
+    this.timers.set(id, newTimer);
+    return newTimer;
   }
 }
 

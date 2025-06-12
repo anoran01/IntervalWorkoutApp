@@ -241,6 +241,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Insert timer at position
+  app.post("/api/workouts/:workoutId/timers/insert", async (req, res) => {
+    try {
+      const workoutId = parseInt(req.params.workoutId);
+      const schema = z.object({
+        name: z.string(),
+        duration: z.number(),
+        type: z.string(),
+        position: z.number()
+      });
+      
+      const { position, ...timerData } = schema.parse(req.body);
+      const timer = await storage.insertTimerAtPosition(workoutId, timerData, position);
+      
+      res.status(201).json(timer);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid timer data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to insert timer" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
