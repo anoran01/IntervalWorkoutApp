@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 
 interface CountPickerModalProps {
@@ -21,6 +21,31 @@ export default function CountPickerModal({
   max = 50
 }: CountPickerModalProps) {
   const [count, setCount] = useState(initialCount);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Reset count when modal opens with new initial value
+  useEffect(() => {
+    if (isOpen) {
+      setCount(initialCount);
+    }
+  }, [isOpen, initialCount]);
+
+  // Scroll to the current value when modal opens or count changes
+  useEffect(() => {
+    if (scrollRef.current && isOpen) {
+      const itemHeight = 48; // px-4 py-3 = roughly 48px height
+      const containerHeight = 256; // h-64 = 256px
+      const itemIndex = count - min;
+      const scrollTop = Math.max(0, itemIndex * itemHeight - containerHeight / 2 + itemHeight / 2);
+      
+      setTimeout(() => {
+        scrollRef.current?.scrollTo({
+          top: scrollTop,
+          behavior: 'smooth'
+        });
+      }, 100);
+    }
+  }, [count, isOpen, min]);
 
   const handleConfirm = () => {
     onConfirm(count);
@@ -32,7 +57,10 @@ export default function CountPickerModal({
     
     return (
       <div className="flex flex-col items-center w-full">
-        <div className="h-64 overflow-y-auto border border-border rounded-lg w-full max-w-24">
+        <div 
+          ref={scrollRef}
+          className="h-64 overflow-y-auto border border-border rounded-lg w-full max-w-24"
+        >
           <div className="py-20"> {/* Padding to center the selected item */}
             {items.map((item) => (
               <div

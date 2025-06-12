@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 
 interface TimePickerModalProps {
@@ -42,11 +42,31 @@ export default function TimePickerModal({
 
   const createScrollList = (max: number, value: number, onChange: (val: number) => void, label: string) => {
     const items = Array.from({ length: max + 1 }, (_, i) => i);
+    const scrollRef = useRef<HTMLDivElement>(null);
+    
+    // Scroll to the current value when component mounts or value changes
+    useEffect(() => {
+      if (scrollRef.current && isOpen) {
+        const itemHeight = 48; // px-4 py-3 = roughly 48px height
+        const containerHeight = 192; // h-48 = 192px
+        const scrollTop = Math.max(0, value * itemHeight - containerHeight / 2 + itemHeight / 2);
+        
+        setTimeout(() => {
+          scrollRef.current?.scrollTo({
+            top: scrollTop,
+            behavior: 'smooth'
+          });
+        }, 100);
+      }
+    }, [value, isOpen]);
     
     return (
       <div className="flex flex-col items-center flex-1">
         <div className="text-sm font-medium mb-2 text-muted-foreground">{label}</div>
-        <div className="h-48 w-full overflow-y-auto border border-border rounded-lg bg-background">
+        <div 
+          ref={scrollRef}
+          className="h-48 w-full overflow-y-auto border border-border rounded-lg bg-background"
+        >
           <div className="py-20"> {/* Padding to center the selected item */}
             {items.map((item) => (
               <div

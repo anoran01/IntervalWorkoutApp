@@ -23,22 +23,47 @@ interface QuickMenuProps {
 }
 
 export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
-  const [settings, setSettings] = useState<QuickWorkoutSettings>({
-    prepare: 6,
-    work: 90,
-    rest: 30,
-    rounds: 4,
-    cycles: 6,
-    restBetweenCycles: 60,
-    soundSettings: {
-      beepTone: "standard",
-      beepStart: 10,
-      tenSecondWarning: true,
-      halfwayReminder: true,
-      verbalReminder: true,
-      vibrate: true,
-    },
-  });
+  // Load settings from localStorage or use defaults
+  const loadSettings = (): QuickWorkoutSettings => {
+    try {
+      const saved = localStorage.getItem('quickCreateSettings');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (error) {
+      console.error('Failed to load settings from localStorage:', error);
+    }
+    
+    // Default values
+    return {
+      prepare: 5,
+      work: 60,
+      rest: 30,
+      rounds: 4,
+      cycles: 6,
+      restBetweenCycles: 60,
+      soundSettings: {
+        beepTone: "standard",
+        beepStart: 10,
+        tenSecondWarning: true,
+        halfwayReminder: true,
+        verbalReminder: true,
+        vibrate: true,
+      },
+    };
+  };
+
+  const [settings, setSettings] = useState<QuickWorkoutSettings>(loadSettings());
+
+  // Save settings to localStorage whenever they change
+  const updateSettings = (newSettings: QuickWorkoutSettings) => {
+    setSettings(newSettings);
+    try {
+      localStorage.setItem('quickCreateSettings', JSON.stringify(newSettings));
+    } catch (error) {
+      console.error('Failed to save settings to localStorage:', error);
+    }
+  };
 
   const [showSettings, setShowSettings] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
@@ -90,28 +115,31 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
   };
 
   const handleTimePickerConfirm = (totalSeconds: number) => {
-    setSettings(prev => ({
-      ...prev,
+    const newSettings = {
+      ...settings,
       [currentEditingField]: totalSeconds
-    }));
+    };
+    updateSettings(newSettings);
     setShowTimePicker(false);
     setCurrentEditingField("");
   };
 
   const handleCountPickerConfirm = (count: number) => {
-    setSettings(prev => ({
-      ...prev,
+    const newSettings = {
+      ...settings,
       [currentEditingField]: count
-    }));
+    };
+    updateSettings(newSettings);
     setShowCountPicker(false);
     setCurrentEditingField("");
   };
 
   const handleSoundSettingsChange = (newSoundSettings: SoundSettings) => {
-    setSettings(prev => ({
-      ...prev,
+    const newSettings = {
+      ...settings,
       soundSettings: newSoundSettings
-    }));
+    };
+    updateSettings(newSettings);
   };
 
   const getModalTitle = () => {
