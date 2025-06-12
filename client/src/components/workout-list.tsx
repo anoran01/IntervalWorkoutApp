@@ -38,6 +38,57 @@ export default function WorkoutList({ onWorkoutSelect, onNavigateToQuickCreate }
 
 
 
+  const handleDragStart = (e: React.DragEvent, workoutId: number) => {
+    setDraggedItem(workoutId);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent, workoutId: number) => {
+    e.preventDefault();
+    setDraggedOver(workoutId);
+  };
+
+  const handleDragLeave = () => {
+    setDraggedOver(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, targetWorkoutId: number) => {
+    e.preventDefault();
+    
+    if (!draggedItem || draggedItem === targetWorkoutId) {
+      setDraggedItem(null);
+      setDraggedOver(null);
+      return;
+    }
+
+    // Find the indices of the dragged and target items
+    const draggedIndex = workouts.findIndex(w => w.id === draggedItem);
+    const targetIndex = workouts.findIndex(w => w.id === targetWorkoutId);
+    
+    if (draggedIndex === -1 || targetIndex === -1) {
+      setDraggedItem(null);
+      setDraggedOver(null);
+      return;
+    }
+
+    // Create new order by moving the dragged item to the target position
+    const newWorkouts = [...workouts];
+    const [draggedWorkout] = newWorkouts.splice(draggedIndex, 1);
+    newWorkouts.splice(targetIndex, 0, draggedWorkout);
+
+    // Update orders based on new positions
+    const workoutOrders = newWorkouts.map((workout, index) => ({
+      id: workout.id,
+      order: index
+    }));
+
+    // Submit the reorder request
+    reorderMutation.mutate(workoutOrders);
+    
+    setDraggedItem(null);
+    setDraggedOver(null);
+  };
+
   const handleWorkoutClick = async (workout: Workout) => {
     try {
       const response = await apiRequest("GET", `/api/workouts/${workout.id}/timers`);
@@ -91,10 +142,26 @@ export default function WorkoutList({ onWorkoutSelect, onNavigateToQuickCreate }
             {workouts.map((workout) => (
               <div
                 key={workout.id}
-                className="border-2 border-black rounded-lg p-6 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors bg-background"
-                onClick={() => handleWorkoutClick(workout)}
+                className={`border-2 border-black rounded-lg p-6 transition-all duration-200 bg-background ${
+                  draggedItem === workout.id ? 'opacity-50' : ''
+                } ${
+                  draggedOver === workout.id ? 'transform translate-y-1 shadow-lg' : ''
+                }`}
+                draggable
+                onDragStart={(e) => handleDragStart(e, workout.id)}
+                onDragOver={(e) => handleDragOver(e, workout.id)}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, workout.id)}
               >
-                <h3 className="text-xl font-bold">{workout.name}</h3>
+                <div className="flex items-center gap-3">
+                  <GripVertical className="w-5 h-5 text-gray-500 cursor-grab active:cursor-grabbing" />
+                  <h3 
+                    className="text-xl font-bold cursor-pointer flex-1"
+                    onClick={() => handleWorkoutClick(workout)}
+                  >
+                    {workout.name}
+                  </h3>
+                </div>
               </div>
             ))}
           </div>
