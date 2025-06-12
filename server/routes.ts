@@ -221,16 +221,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Reorder workouts
   app.patch("/api/workouts/reorder", async (req, res) => {
     try {
+      console.log("Reorder request body:", req.body);
       const schema = z.array(z.object({
         id: z.number(),
         order: z.number()
       }));
       
       const workoutOrders = schema.parse(req.body);
+      console.log("Parsed workout orders:", workoutOrders);
       await storage.reorderWorkouts(workoutOrders);
       
       res.json({ success: true });
     } catch (error) {
+      console.error("Reorder error:", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid reorder data", errors: error.errors });
       }
