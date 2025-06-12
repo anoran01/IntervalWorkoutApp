@@ -123,7 +123,7 @@ export default function BeepStartPicker({ isOpen, onClose, onConfirm, initialVal
 
         <Button
           onClick={handleConfirm}
-          className="w-full h-12 text-lg font-bold bg-background border-2 border-black hover:bg-gray-100 dark:hover:bg-gray-800 text-black dark:text-white rounded-lg"
+          className="w-full h-12 text-lg font-bold bg-background border-2 border-black dark:border-white hover:bg-gray-100 dark:hover:bg-gray-800 text-black dark:text-white rounded-lg"
         >
           Done
         </Button>

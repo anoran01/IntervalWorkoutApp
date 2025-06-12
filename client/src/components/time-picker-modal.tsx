@@ -83,7 +83,7 @@ export default function TimePickerModal({
         </div>
         
         <div className="flex justify-center pt-4">
-          <Button onClick={handleConfirm} className="w-full">
+          <Button onClick={handleConfirm} className="w-full border-2 border-black dark:border-white">
             Confirm
           </Button>
         </div>

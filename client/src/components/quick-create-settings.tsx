@@ -66,7 +66,7 @@ export default function QuickCreateSettings({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={() => {}}>
-        <DialogContent className="w-full max-w-sm h-screen m-0 rounded-none" hideCloseButton>
+        <DialogContent className="w-full max-w-sm h-screen m-0 rounded-none [&>button]:hidden">
           <div className="flex flex-col h-full">
             {/* Header */}
             <DialogHeader className="flex-row items-center space-y-0 pb-2 border-b">
@@ -85,7 +85,7 @@ export default function QuickCreateSettings({
             {/* Settings List */}
             <div className="flex-1 py-2 space-y-2">
               {/* Dark/Light Mode */}
-              <div className="flex items-center justify-between py-2">
+              <div className="flex items-center justify-between py-1">
                 <span className="text-lg font-bold">Mode</span>
                 <div className="relative flex items-center">
                   <span className="mr-3 text-base font-medium">
@@ -107,7 +107,7 @@ export default function QuickCreateSettings({
               </div>
 
               {/* Beep Tone */}
-              <div className="flex items-center justify-between py-2">
+              <div className="flex items-center justify-between py-1">
                 <span className="text-lg font-bold">Beep Tone</span>
                 <Button
                   variant="outline"
@@ -120,7 +120,7 @@ export default function QuickCreateSettings({
               </div>
 
               {/* Beep Start */}
-              <div className="flex items-center justify-between py-2">
+              <div className="flex items-center justify-between py-1">
                 <span className="text-lg font-bold">Beep Start</span>
                 <Button
                   variant="outline"
@@ -132,7 +132,7 @@ export default function QuickCreateSettings({
               </div>
 
               {/* Halfway Reminder */}
-              <div className="flex items-center justify-between py-2">
+              <div className="flex items-center justify-between py-1">
                 <span className="text-lg font-bold">Halfway Reminder</span>
                 <div 
                   className={`w-8 h-8 border-2 border-black rounded cursor-pointer flex items-center justify-center ${
@@ -149,7 +149,7 @@ export default function QuickCreateSettings({
               </div>
 
               {/* 10 Second Reminder */}
-              <div className="flex items-center justify-between py-2">
+              <div className="flex items-center justify-between py-1">
                 <span className="text-lg font-bold">10 Second Reminder</span>
                 <div 
                   className={`w-8 h-8 border-2 border-black rounded cursor-pointer flex items-center justify-center ${
@@ -166,7 +166,7 @@ export default function QuickCreateSettings({
               </div>
 
               {/* Verbal Reminder */}
-              <div className="flex items-center justify-between py-2">
+              <div className="flex items-center justify-between py-1">
                 <span className="text-lg font-bold">Verbal Reminder</span>
                 <div 
                   className={`w-8 h-8 border-2 border-black rounded cursor-pointer flex items-center justify-center ${
@@ -184,9 +184,9 @@ export default function QuickCreateSettings({
             </div>
 
             {/* Done Button */}
-            <div className="pt-4">
+            <div className="pt-2">
               <Button
-                className="w-full h-14 text-lg font-bold border-2 border-black rounded-lg bg-gray-200 hover:bg-gray-300 text-black"
+                className="w-full h-12 text-lg font-bold border-2 border-black dark:border-white rounded-lg bg-gray-200 hover:bg-gray-300 text-black"
                 variant="outline"
                 onClick={onClose}
               >
@@ -224,7 +224,7 @@ export default function QuickCreateSettings({
             
             <Button
               onClick={() => setShowBeepToneMenu(false)}
-              className="w-full mt-4"
+              className="w-full mt-4 border-2 border-black dark:border-white"
             >
               Done
             </Button>
@@ -245,7 +245,7 @@ export default function QuickCreateSettings({
             </div>
             
             <div className="flex justify-center pt-4">
-              <Button onClick={() => handleBeepStartConfirm(beepStart)} className="w-full">
+              <Button onClick={() => handleBeepStartConfirm(beepStart)} className="w-full border-2 border-black dark:border-white">
                 Confirm
               </Button>
             </div>

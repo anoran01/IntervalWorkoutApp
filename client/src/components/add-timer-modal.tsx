@@ -81,7 +81,7 @@ export default function AddTimerModal({ isOpen, onClose, onConfirm }: AddTimerMo
           <Button
             onClick={onClose}
             variant="outline"
-            className="w-full"
+            className="w-full border-2 border-black dark:border-white"
           >
             Cancel
           </Button>
