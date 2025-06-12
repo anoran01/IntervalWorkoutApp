@@ -3,6 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Settings, Plus, List, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import WorkoutListSettings from "@/components/workout-list-settings";
 import type { Workout, Timer } from "@shared/schema";
 
 interface WorkoutListProps {
@@ -102,14 +103,31 @@ export default function WorkoutList({ onWorkoutSelect, onNavigateToQuickCreate }
   if (isLoading) {
     return (
       <div className="flex flex-col h-screen bg-background">
-        <div className="flex items-center justify-between p-4 border-b border-border">
+        {/* Fixed Header */}
+        <div className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between p-4 border-b-2 border-black bg-background">
+          <div className="w-10" />
           <h1 className="text-2xl font-bold text-center flex-1">Workout List</h1>
           <Button variant="ghost" size="sm" className="p-2">
             <Settings className="w-6 h-6" />
           </Button>
         </div>
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex-1 flex items-center justify-center pt-20 pb-20">
           <p className="text-muted-foreground">Loading workouts...</p>
+        </div>
+        
+        {/* Fixed Bottom Navigation */}
+        <div className="fixed bottom-0 left-0 right-0 z-20 border-t-2 border-black bg-background">
+          <div className="flex">
+            <button 
+              className="flex-1 py-6 px-4 text-center transition-colors duration-200 bg-white dark:bg-gray-900"
+              onClick={onNavigateToQuickCreate}
+            >
+              <div className="text-lg font-bold text-black dark:text-white">Quick Create</div>
+            </button>
+            <button className="flex-1 py-6 px-4 text-center bg-gray-300 dark:bg-gray-600">
+              <div className="text-lg font-bold text-black dark:text-white">Workout List</div>
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -117,8 +135,9 @@ export default function WorkoutList({ onWorkoutSelect, onNavigateToQuickCreate }
 
   return (
     <div className="flex flex-col h-screen bg-background">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border">
+      {/* Fixed Header */}
+      <div className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between p-4 border-b-2 border-black bg-background">
+        <div className="w-10" />
         <h1 className="text-2xl font-bold text-center flex-1">Workout List</h1>
         <Button
           variant="ghost"
@@ -130,8 +149,8 @@ export default function WorkoutList({ onWorkoutSelect, onNavigateToQuickCreate }
         </Button>
       </div>
 
-      {/* Workouts List */}
-      <div className="flex-1 p-4">
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto pt-20 pb-20 p-4">
         {workouts.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground mb-4">No workouts created yet</p>
@@ -168,8 +187,8 @@ export default function WorkoutList({ onWorkoutSelect, onNavigateToQuickCreate }
         )}
       </div>
 
-      {/* Bottom Navigation */}
-      <div className="border-t-2 border-black">
+      {/* Fixed Bottom Navigation */}
+      <div className="fixed bottom-0 left-0 right-0 z-20 border-t-2 border-black bg-background">
         <div className="flex">
           <button 
             className="flex-1 py-6 px-4 text-center transition-colors duration-200 bg-white dark:bg-gray-900"
@@ -182,6 +201,15 @@ export default function WorkoutList({ onWorkoutSelect, onNavigateToQuickCreate }
           </button>
         </div>
       </div>
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <div className="fixed inset-0 z-50">
+          <WorkoutListSettings
+            onClose={() => setShowSettings(false)}
+          />
+        </div>
+      )}
     </div>
   );
 }
