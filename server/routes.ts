@@ -197,6 +197,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Reorder timers
+  app.patch("/api/workouts/:workoutId/timers/reorder", async (req, res) => {
+    try {
+      const workoutId = parseInt(req.params.workoutId);
+      const schema = z.array(z.object({
+        id: z.number(),
+        order: z.number()
+      }));
+      
+      const timerOrders = schema.parse(req.body);
+      await storage.reorderTimers(workoutId, timerOrders);
+      
+      res.json({ success: true });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid reorder data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to reorder timers" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

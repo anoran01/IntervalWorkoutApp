@@ -14,6 +14,7 @@ export interface IStorage {
   updateTimer(id: number, timer: Partial<InsertTimer>): Promise<Timer | undefined>;
   deleteTimer(id: number): Promise<boolean>;
   deleteTimersByWorkoutId(workoutId: number): Promise<void>;
+  reorderTimers(workoutId: number, timerOrders: { id: number; order: number }[]): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -99,6 +100,15 @@ export class MemStorage implements IStorage {
       .map(([id]) => id);
     
     timersToDelete.forEach(id => this.timers.delete(id));
+  }
+
+  async reorderTimers(workoutId: number, timerOrders: { id: number; order: number }[]): Promise<void> {
+    for (const { id, order } of timerOrders) {
+      const timer = this.timers.get(id);
+      if (timer && timer.workoutId === workoutId) {
+        this.timers.set(id, { ...timer, order });
+      }
+    }
   }
 }
 

@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Settings, Play } from "lucide-react";
+import { ArrowLeft, Settings, Play, GripVertical } from "lucide-react";
 import { formatTime } from "@/lib/workout-utils";
 import WorkoutSettings from "@/components/workout-settings";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useMutation } from "@tanstack/react-query";
 import type { Workout, Timer, SoundSettings } from "@shared/schema";
 
 interface WorkoutMenuProps {
@@ -14,6 +16,7 @@ interface WorkoutMenuProps {
   onEditTimerName: (timerId: number, name: string) => void;
   onEditTimerDuration: (timerId: number, duration: number) => void;
   onUpdateSoundSettings: (settings: SoundSettings) => void;
+  onTimersReordered: () => void;
 }
 
 export default function WorkoutMenu({ 
@@ -24,17 +27,82 @@ export default function WorkoutMenu({
   onEditWorkoutName,
   onEditTimerName,
   onEditTimerDuration,
-  onUpdateSoundSettings
+  onUpdateSoundSettings,
+  onTimersReordered
 }: WorkoutMenuProps) {
   const [isEditingWorkoutName, setIsEditingWorkoutName] = useState(false);
   const [workoutNameInput, setWorkoutNameInput] = useState(workout.name);
   const [showSettings, setShowSettings] = useState(false);
+  const [draggedItem, setDraggedItem] = useState<number | null>(null);
+  const [draggedOver, setDraggedOver] = useState<number | null>(null);
+
+  const reorderMutation = useMutation({
+    mutationFn: async (timerOrders: { id: number; order: number }[]) => {
+      return apiRequest(`/api/workouts/${workout.id}/timers/reorder`, {
+        method: 'PATCH',
+        body: JSON.stringify(timerOrders),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/workouts', workout.id, 'timers'] });
+      onTimersReordered();
+    },
+  });
 
   const handleWorkoutNameSave = () => {
     if (workoutNameInput.trim() && workoutNameInput !== workout.name) {
       onEditWorkoutName(workoutNameInput.trim());
     }
     setIsEditingWorkoutName(false);
+  };
+
+  const handleDragStart = (e: React.DragEvent, timerId: number) => {
+    setDraggedItem(timerId);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent, timerId: number) => {
+    e.preventDefault();
+    setDraggedOver(timerId);
+  };
+
+  const handleDragLeave = () => {
+    setDraggedOver(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, targetTimerId: number) => {
+    e.preventDefault();
+    
+    if (!draggedItem || draggedItem === targetTimerId) {
+      setDraggedItem(null);
+      setDraggedOver(null);
+      return;
+    }
+
+    // Find the indices of the dragged and target items
+    const draggedIndex = timers.findIndex(t => t.id === draggedItem);
+    const targetIndex = timers.findIndex(t => t.id === targetTimerId);
+    
+    if (draggedIndex === -1 || targetIndex === -1) return;
+
+    // Create new order by moving the dragged item to the target position
+    const newTimers = [...timers];
+    const [draggedTimer] = newTimers.splice(draggedIndex, 1);
+    newTimers.splice(targetIndex, 0, draggedTimer);
+
+    // Update orders
+    const timerOrders = newTimers.map((timer, index) => ({
+      id: timer.id,
+      order: index
+    }));
+
+    reorderMutation.mutate(timerOrders);
+    
+    setDraggedItem(null);
+    setDraggedOver(null);
   };
 
   const getTimerColor = (timerName: string, index: number) => {
