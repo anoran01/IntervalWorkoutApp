@@ -119,30 +119,32 @@ export default function WorkoutTimer({ workout, timers, onComplete, onStop }: Wo
     const elapsedInCurrentTimer = maxTimeForCurrentTimer - currentTime;
 
     if (elapsedInCurrentTimer >= remainingSkip) {
-      // Skip backward within current timer
+      // Skip backward within current timer (add time back)
       setTimeRemaining(currentTime + remainingSkip);
       return;
     }
 
-    // Need to go to previous timer(s)
+    // We need to go back to previous timer(s)
+    // First, use up the elapsed time in current timer
     remainingSkip -= elapsedInCurrentTimer;
     
+    // Move to previous timer
     while (remainingSkip > 0 && currentIndex > 0) {
       currentIndex--;
       const prevTimerDuration = timers[currentIndex].duration;
       
-      if (prevTimerDuration >= remainingSkip) {
-        // Skip backward within this previous timer
+      if (remainingSkip <= prevTimerDuration) {
+        // We can fit the remaining skip within this previous timer
         setCurrentTimerIndex(currentIndex);
-        setTimeRemaining(prevTimerDuration - remainingSkip);
+        setTimeRemaining(remainingSkip);
         return;
       } else {
-        // Skip entire previous timer
+        // This previous timer is not long enough, skip it entirely
         remainingSkip -= prevTimerDuration;
       }
     }
     
-    // If we've gone back to the beginning
+    // If we've gone back to the beginning, set to start of first timer
     setCurrentTimerIndex(0);
     setTimeRemaining(timers[0].duration);
   };
