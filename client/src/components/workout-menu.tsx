@@ -328,15 +328,17 @@ export default function WorkoutMenu({
         </Button>
       </div>
 
-      {/* Fixed Add Timer Button - positioned in middle of screen */}
-      <div className="fixed top-1/2 left-4 right-4 z-30 flex items-center transform -translate-y-1/2">
+      {/* Fixed Add Timer Button - positioned between 2nd and 3rd timers */}
+      <div className="fixed left-4 right-4 z-30 flex items-center" style={{ 
+        top: `calc(20px + 80px + 48px + 72px + 12px + 36px)` // Header + Play button + spacing + 1st timer + spacing + half of 2nd timer
+      }}>
         <button
           onClick={() => handleAddTimer(insertPosition)}
-          className="w-8 h-8 rounded-full border-2 border-black bg-background flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shadow-lg"
+          className="w-8 h-8 rounded-full border-2 border-black dark:border-white bg-background flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shadow-lg"
         >
           <Plus className="w-4 h-4" />
         </button>
-        <div className="h-0.5 bg-black dark:bg-white ml-3" style={{ width: 'calc(100% - 44px)' }}></div>
+        <div className="h-0.5 bg-black dark:bg-white ml-3 mr-4"></div>
       </div>
 
       {/* Scrollable Content */}

@@ -134,9 +134,10 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
 
   return (
     <div className="flex flex-col h-screen bg-background">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border">
-        <h1 className="text-xl font-bold text-center flex-1">Quick Create</h1>
+      {/* Fixed Header */}
+      <div className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between p-4 border-b-2 border-black bg-background">
+        <div className="w-10" />
+        <h1 className="text-2xl font-bold text-center flex-1">Quick Create</h1>
         <Button
           variant="ghost"
           size="sm"
@@ -147,12 +148,12 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         </Button>
       </div>
 
-      {/* Timer List */}
-      <div className="flex-1 p-4 space-y-3">
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto pt-20 pb-20 p-4 space-y-2">
         {/* Prepare */}
         <Button
           variant="outline"
-          className="w-full h-16 flex justify-between items-center px-6 text-lg font-medium border-2 border-border rounded-lg hover:bg-muted"
+          className="w-full h-12 flex justify-between items-center px-6 text-lg font-medium border-2 border-black rounded-lg hover:bg-muted"
           onClick={() => handleTimerClick('prepare')}
         >
           <span>Prepare</span>
@@ -162,7 +163,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         {/* Work */}
         <Button
           variant="outline"
-          className="w-full h-16 flex justify-between items-center px-6 text-lg font-medium border-2 border-border rounded-lg hover:bg-muted"
+          className="w-full h-12 flex justify-between items-center px-6 text-lg font-medium border-2 border-black rounded-lg hover:bg-muted"
           onClick={() => handleTimerClick('work')}
         >
           <span>Work</span>
@@ -172,7 +173,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         {/* Rest */}
         <Button
           variant="outline"
-          className="w-full h-16 flex justify-between items-center px-6 text-lg font-medium border-2 border-border rounded-lg hover:bg-muted"
+          className="w-full h-12 flex justify-between items-center px-6 text-lg font-medium border-2 border-black rounded-lg hover:bg-muted"
           onClick={() => handleTimerClick('rest')}
         >
           <span>Rest</span>
@@ -182,7 +183,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         {/* Rounds */}
         <Button
           variant="outline"
-          className="w-full h-16 flex justify-between items-center px-6 text-lg font-medium border-2 border-border rounded-lg hover:bg-muted"
+          className="w-full h-12 flex justify-between items-center px-6 text-lg font-medium border-2 border-black rounded-lg hover:bg-muted"
           onClick={() => handleTimerClick('rounds')}
         >
           <span>Rounds</span>
@@ -192,7 +193,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         {/* Cycles */}
         <Button
           variant="outline"
-          className="w-full h-16 flex justify-between items-center px-6 text-lg font-medium border-2 border-border rounded-lg hover:bg-muted"
+          className="w-full h-12 flex justify-between items-center px-6 text-lg font-medium border-2 border-black rounded-lg hover:bg-muted"
           onClick={() => handleTimerClick('cycles')}
         >
           <span>Cycles</span>
@@ -202,7 +203,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         {/* Rest Between Cycles */}
         <Button
           variant="outline"
-          className="w-full h-16 flex justify-between items-center px-6 text-lg font-medium border-2 border-border rounded-lg hover:bg-muted"
+          className="w-full h-12 flex justify-between items-center px-6 text-lg font-medium border-2 border-black rounded-lg hover:bg-muted"
           onClick={() => handleTimerClick('restBetweenCycles')}
         >
           <span>Rest between Cycles</span>
@@ -211,9 +212,9 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
       </div>
 
       {/* Create Button */}
-      <div className="p-4 pt-0">
+      <div className="px-4 pb-4">
         <Button
-          className="w-full h-16 text-xl font-semibold rounded-lg mb-4"
+          className="w-full h-16 text-xl font-bold bg-background border-2 border-black dark:border-white hover:bg-gray-100 dark:hover:bg-gray-800 text-black dark:text-white rounded-lg"
           onClick={handleCreateWorkout}
           disabled={createWorkoutMutation.isPending}
         >
@@ -221,19 +222,17 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         </Button>
       </div>
 
-      {/* Bottom Navigation */}
-      <div className="border-t border-border bg-muted">
+      {/* Fixed Bottom Navigation */}
+      <div className="fixed bottom-0 left-0 right-0 z-20 border-t-2 border-black bg-background">
         <div className="flex">
-          <button className="flex-1 py-4 px-2 text-center bg-muted-foreground/10">
-            <Plus className="w-6 h-6 mx-auto mb-1 text-primary" />
-            <div className="text-xs font-medium text-primary">Quick Create</div>
+          <button className="flex-1 py-6 px-4 text-center bg-gray-300 dark:bg-gray-600">
+            <div className="text-lg font-bold text-black dark:text-white">Quick Create</div>
           </button>
           <button 
-            className="flex-1 py-4 px-2 text-center transition-colors duration-200"
+            className="flex-1 py-6 px-4 text-center transition-colors duration-200 bg-white dark:bg-gray-900"
             onClick={onNavigateToWorkoutList}
           >
-            <List className="w-6 h-6 mx-auto mb-1 text-muted-foreground" />
-            <div className="text-xs font-medium text-muted-foreground">Workout List</div>
+            <div className="text-lg font-bold text-black dark:text-white">Workout List</div>
           </button>
         </div>
       </div>
