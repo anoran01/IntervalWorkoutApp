@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import BeepStartPicker from "@/components/beep-start-picker";
 import type { SoundSettings } from "@shared/schema";
 
 interface WorkoutSettingsProps {
@@ -18,6 +19,7 @@ export default function WorkoutSettings({
   onClose 
 }: WorkoutSettingsProps) {
   const [settings, setSettings] = useState<SoundSettings>(soundSettings);
+  const [showBeepStartPicker, setShowBeepStartPicker] = useState(false);
 
   const handleSave = () => {
     onSave(settings);
@@ -62,40 +64,30 @@ export default function WorkoutSettings({
           </div>
         </div>
 
-        {/* Beep Start (renamed from Beep Count as per mockup) */}
+        {/* Beep Start */}
         <div className="flex items-center justify-between">
-          <span className="text-xl font-bold">Beep Count</span>
+          <span className="text-xl font-bold">Beep Start</span>
           <div className="w-32">
-            <Select
-              value={settings.beepStart.toString()}
-              onValueChange={(value: string) => 
-                updateSetting("beepStart", parseInt(value))
-              }
+            <Button
+              variant="outline"
+              className="w-full border-2 border-black rounded-lg text-left justify-start"
+              onClick={() => setShowBeepStartPicker(true)}
             >
-              <SelectTrigger className="border-2 border-black rounded-lg">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="3">3</SelectItem>
-                <SelectItem value="5">5</SelectItem>
-                <SelectItem value="10">10</SelectItem>
-                <SelectItem value="15">15</SelectItem>
-                <SelectItem value="20">20</SelectItem>
-              </SelectContent>
-            </Select>
+              {settings.beepStart}
+            </Button>
           </div>
         </div>
 
         {/* Halfway Reminder */}
         <div className="flex items-center justify-between">
           <span className="text-xl font-bold">Halfway Reminder</span>
-          <div className="w-8 h-8 border-2 border-black rounded flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-black rounded flex items-center justify-center bg-white dark:bg-black">
             <Checkbox
               checked={settings.halfwayReminder}
               onCheckedChange={(checked) => 
                 updateSetting("halfwayReminder", !!checked)
               }
-              className="border-none"
+              className="border-2 border-black data-[state=unchecked]:border-black"
             />
           </div>
         </div>
@@ -103,13 +95,13 @@ export default function WorkoutSettings({
         {/* 10 Second Reminder */}
         <div className="flex items-center justify-between">
           <span className="text-xl font-bold">10 second Reminder</span>
-          <div className="w-8 h-8 border-2 border-black rounded flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-black rounded flex items-center justify-center bg-white dark:bg-black">
             <Checkbox
               checked={settings.tenSecondWarning}
               onCheckedChange={(checked) => 
                 updateSetting("tenSecondWarning", !!checked)
               }
-              className="border-none"
+              className="border-2 border-black data-[state=unchecked]:border-black"
             />
           </div>
         </div>
@@ -117,13 +109,13 @@ export default function WorkoutSettings({
         {/* Verbal Reminder */}
         <div className="flex items-center justify-between">
           <span className="text-xl font-bold">Verbal Reminder</span>
-          <div className="w-8 h-8 border-2 border-black rounded flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-black rounded flex items-center justify-center bg-white dark:bg-black">
             <Checkbox
               checked={settings.verbalReminder}
               onCheckedChange={(checked) => 
                 updateSetting("verbalReminder", !!checked)
               }
-              className="border-none"
+              className="border-2 border-black data-[state=unchecked]:border-black"
             />
           </div>
         </div>
@@ -138,6 +130,14 @@ export default function WorkoutSettings({
           Done
         </Button>
       </div>
+
+      {/* Beep Start Picker Modal */}
+      <BeepStartPicker
+        isOpen={showBeepStartPicker}
+        onClose={() => setShowBeepStartPicker(false)}
+        onConfirm={(seconds) => updateSetting("beepStart", seconds)}
+        initialValue={settings.beepStart}
+      />
     </div>
   );
 }
