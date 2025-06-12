@@ -153,7 +153,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         {/* Prepare */}
         <Button
           variant="outline"
-          className="w-full h-12 flex justify-between items-center px-6 text-lg font-medium border-2 border-black rounded-lg hover:bg-muted"
+          className="w-full h-10 flex justify-between items-center px-6 text-base font-medium border-2 border-black rounded-lg hover:bg-muted"
           onClick={() => handleTimerClick('prepare')}
         >
           <span>Prepare</span>
@@ -163,7 +163,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         {/* Work */}
         <Button
           variant="outline"
-          className="w-full h-12 flex justify-between items-center px-6 text-lg font-medium border-2 border-black rounded-lg hover:bg-muted"
+          className="w-full h-10 flex justify-between items-center px-6 text-base font-medium border-2 border-black rounded-lg hover:bg-muted"
           onClick={() => handleTimerClick('work')}
         >
           <span>Work</span>
@@ -173,7 +173,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         {/* Rest */}
         <Button
           variant="outline"
-          className="w-full h-12 flex justify-between items-center px-6 text-lg font-medium border-2 border-black rounded-lg hover:bg-muted"
+          className="w-full h-10 flex justify-between items-center px-6 text-base font-medium border-2 border-black rounded-lg hover:bg-muted"
           onClick={() => handleTimerClick('rest')}
         >
           <span>Rest</span>
@@ -183,7 +183,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         {/* Rounds */}
         <Button
           variant="outline"
-          className="w-full h-12 flex justify-between items-center px-6 text-lg font-medium border-2 border-black rounded-lg hover:bg-muted"
+          className="w-full h-10 flex justify-between items-center px-6 text-base font-medium border-2 border-black rounded-lg hover:bg-muted"
           onClick={() => handleTimerClick('rounds')}
         >
           <span>Rounds</span>
@@ -193,7 +193,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         {/* Cycles */}
         <Button
           variant="outline"
-          className="w-full h-12 flex justify-between items-center px-6 text-lg font-medium border-2 border-black rounded-lg hover:bg-muted"
+          className="w-full h-10 flex justify-between items-center px-6 text-base font-medium border-2 border-black rounded-lg hover:bg-muted"
           onClick={() => handleTimerClick('cycles')}
         >
           <span>Cycles</span>
@@ -203,18 +203,16 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         {/* Rest Between Cycles */}
         <Button
           variant="outline"
-          className="w-full h-12 flex justify-between items-center px-6 text-lg font-medium border-2 border-black rounded-lg hover:bg-muted"
+          className="w-full h-10 flex justify-between items-center px-6 text-base font-medium border-2 border-black rounded-lg hover:bg-muted"
           onClick={() => handleTimerClick('restBetweenCycles')}
         >
           <span>Rest between Cycles</span>
           <span className="font-mono">{formatTime(settings.restBetweenCycles)}</span>
         </Button>
-      </div>
 
-      {/* Create Button */}
-      <div className="px-4 pb-4">
+        {/* Create Button */}
         <Button
-          className="w-full h-16 text-xl font-bold bg-background border-2 border-black dark:border-white hover:bg-gray-100 dark:hover:bg-gray-800 text-black dark:text-white rounded-lg"
+          className="w-full h-12 text-lg font-bold bg-background border-2 border-black dark:border-white hover:bg-gray-100 dark:hover:bg-gray-800 text-black dark:text-white rounded-lg mt-4"
           onClick={handleCreateWorkout}
           disabled={createWorkoutMutation.isPending}
         >

@@ -338,7 +338,7 @@ export default function WorkoutMenu({
         >
           <Plus className="w-4 h-4" />
         </button>
-        <div className="h-0.5 bg-black dark:bg-white ml-3 mr-4"></div>
+        <div className="flex-1 h-0.5 bg-black dark:bg-white ml-3 mr-4"></div>
       </div>
 
       {/* Scrollable Content */}

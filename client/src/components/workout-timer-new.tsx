@@ -202,14 +202,14 @@ export default function WorkoutTimer({ workout, timers, onComplete, onStop }: Wo
           size="lg"
           className={`w-20 h-20 rounded-lg flex items-center justify-center ${
             isRunning 
-              ? 'bg-transparent border-2 border-white dark:border-black text-white dark:text-black hover:bg-gray-800/20 dark:hover:bg-gray-200/20' 
+              ? 'bg-transparent border-2 border-black dark:border-white text-black dark:text-white hover:bg-gray-800/20 dark:hover:bg-gray-200/20' 
               : 'bg-white dark:bg-black text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
           }`}
         >
           {isRunning ? (
             <div className="flex space-x-1">
-              <div className="w-2 h-8 bg-white dark:bg-black rounded"></div>
-              <div className="w-2 h-8 bg-white dark:bg-black rounded"></div>
+              <div className="w-2 h-8 bg-black dark:bg-white rounded"></div>
+              <div className="w-2 h-8 bg-black dark:bg-white rounded"></div>
             </div>
           ) : (
             <Play className="w-12 h-12 ml-1" fill="currentColor" />
