@@ -88,19 +88,24 @@ export default function WorkoutMenu({
     const draggedIndex = timers.findIndex(t => t.id === draggedItem);
     const targetIndex = timers.findIndex(t => t.id === targetTimerId);
     
-    if (draggedIndex === -1 || targetIndex === -1) return;
+    if (draggedIndex === -1 || targetIndex === -1) {
+      setDraggedItem(null);
+      setDraggedOver(null);
+      return;
+    }
 
     // Create new order by moving the dragged item to the target position
     const newTimers = [...timers];
     const [draggedTimer] = newTimers.splice(draggedIndex, 1);
     newTimers.splice(targetIndex, 0, draggedTimer);
 
-    // Update orders
+    // Update orders based on new positions
     const timerOrders = newTimers.map((timer, index) => ({
       id: timer.id,
       order: index
     }));
 
+    // Submit the reorder request
     reorderMutation.mutate(timerOrders);
     
     setDraggedItem(null);

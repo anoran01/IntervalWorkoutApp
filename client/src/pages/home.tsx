@@ -125,10 +125,16 @@ export default function Home() {
             onEditTimerName={handleEditTimerName}
             onEditTimerDuration={handleEditTimerDuration}
             onUpdateSoundSettings={handleUpdateSoundSettings}
-            onTimersReordered={() => {
+            onTimersReordered={async () => {
               // Refetch timers after reordering
               if (selectedWorkout) {
-                handleWorkoutSelect(selectedWorkout, workoutTimers);
+                try {
+                  const response = await apiRequest("GET", `/api/workouts/${selectedWorkout.id}/timers`);
+                  const updatedTimers = await response.json();
+                  setWorkoutTimers(updatedTimers);
+                } catch (error) {
+                  console.error("Failed to refetch timers:", error);
+                }
               }
             }}
           />
