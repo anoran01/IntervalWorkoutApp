@@ -38,31 +38,34 @@ export default function BeepStartPicker({ isOpen, onClose, onConfirm, initialVal
     const paddingTop = containerHeight / 2 - itemHeight / 2;
     
     // Calculate which item is currently centered
-    const centerPosition = scrollTop + containerHeight / 2;
-    const itemIndex = Math.round((centerPosition - paddingTop - itemHeight / 2) / itemHeight);
+    const adjustedScrollTop = scrollTop - paddingTop;
+    const itemIndex = Math.round(adjustedScrollTop / itemHeight);
     const clampedIndex = Math.max(0, Math.min(values.length - 1, itemIndex));
     
-    if (clampedIndex !== selectedValue) {
-      setSelectedValue(clampedIndex);
-    }
+    // Update selected value without triggering scroll
+    setSelectedValue(clampedIndex);
     
     // Set timeout to snap to position after scrolling stops
     scrollTimeoutRef.current = setTimeout(() => {
       if (!scrollRef.current) return;
       
       const currentScrollTop = scrollRef.current.scrollTop;
-      const currentCenterPosition = currentScrollTop + containerHeight / 2;
-      const currentItemIndex = Math.round((currentCenterPosition - paddingTop - itemHeight / 2) / itemHeight);
+      const currentPaddingTop = containerHeight / 2 - itemHeight / 2;
+      const currentAdjustedScrollTop = currentScrollTop - currentPaddingTop;
+      const currentItemIndex = Math.round(currentAdjustedScrollTop / itemHeight);
       const currentClampedIndex = Math.max(0, Math.min(values.length - 1, currentItemIndex));
       
       // Calculate target scroll position to center the selected item
-      const targetScrollTop = currentClampedIndex * itemHeight + paddingTop;
+      const targetScrollTop = currentClampedIndex * itemHeight + currentPaddingTop;
       
-      scrollRef.current.scrollTo({
-        top: targetScrollTop,
-        behavior: 'smooth'
-      });
-    }, 150);
+      // Only snap if we're not already at the target position
+      if (Math.abs(currentScrollTop - targetScrollTop) > 2) {
+        scrollRef.current.scrollTo({
+          top: targetScrollTop,
+          behavior: 'smooth'
+        });
+      }
+    }, 200);
   };
 
   const handleConfirm = () => {
@@ -83,7 +86,7 @@ export default function BeepStartPicker({ isOpen, onClose, onConfirm, initialVal
           <div className="relative">
             {/* Selection Bar */}
             <div 
-              className="absolute left-0 right-0 border-2 border-white dark:border-black rounded-lg z-10 pointer-events-none"
+              className="absolute left-0 right-0 border-2 border-black dark:border-white rounded-lg z-10 pointer-events-none"
               style={{ 
                 top: `${containerHeight / 2 - itemHeight / 2}px`,
                 height: `${itemHeight}px`,
