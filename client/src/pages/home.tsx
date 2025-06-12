@@ -2,7 +2,7 @@ import { useState } from "react";
 import QuickMenu from "@/components/quick-menu";
 import WorkoutList from "@/components/workout-list";
 import WorkoutMenu from "@/components/workout-menu";
-import WorkoutTimer from "@/components/workout-timer";
+import WorkoutTimer from "@/components/workout-timer-new";
 import WorkoutCompleteModal from "@/components/workout-complete-modal";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Workout, Timer } from "@shared/schema";
