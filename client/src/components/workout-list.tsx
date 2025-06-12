@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { MoreVertical, Dumbbell, Pause, Plus, List } from "lucide-react";
+import { Settings, Plus, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Workout, Timer } from "@shared/schema";
 
@@ -10,29 +11,12 @@ interface WorkoutListProps {
 }
 
 export default function WorkoutList({ onWorkoutSelect, onNavigateToQuickCreate }: WorkoutListProps) {
+  const [showSettings, setShowSettings] = useState(false);
   const { data: workouts = [], isLoading } = useQuery<Workout[]>({
     queryKey: ["/api/workouts"],
   });
 
-  const formatTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    if (minutes === 0) {
-      return `0:${remainingSeconds.toString().padStart(2, '0')}`;
-    }
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
 
-  const calculateTotalDuration = (workout: Workout) => {
-    const { prepare, work, rest, rounds, cycles, restBetweenCycles } = workout;
-    
-    const cycleTime = rounds * (work + rest) - rest; // Last round doesn't have rest
-    const totalCycleTime = cycles * cycleTime;
-    const totalRestBetweenCycles = (cycles - 1) * restBetweenCycles;
-    const totalTime = prepare + totalCycleTime + totalRestBetweenCycles;
-    
-    return Math.ceil(totalTime / 60); // Convert to minutes
-  };
 
   const handleWorkoutClick = async (workout: Workout) => {
     try {
@@ -46,10 +30,15 @@ export default function WorkoutList({ onWorkoutSelect, onNavigateToQuickCreate }
 
   if (isLoading) {
     return (
-      <div className="px-4">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold mb-2 text-white">My Workouts</h1>
-          <p className="text-gray-400">Loading workouts...</p>
+      <div className="flex flex-col h-screen bg-background">
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          <h1 className="text-2xl font-bold text-center flex-1">Workout List</h1>
+          <Button variant="ghost" size="sm" className="p-2">
+            <Settings className="w-6 h-6" />
+          </Button>
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-muted-foreground">Loading workouts...</p>
         </div>
       </div>
     );
@@ -59,13 +48,14 @@ export default function WorkoutList({ onWorkoutSelect, onNavigateToQuickCreate }
     <div className="flex flex-col h-screen bg-background">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-border">
-        <h1 className="text-xl font-bold text-center flex-1">My Workouts</h1>
+        <h1 className="text-2xl font-bold text-center flex-1">Workout List</h1>
         <Button
           variant="ghost"
           size="sm"
           className="p-2"
+          onClick={() => setShowSettings(true)}
         >
-          {/* Settings placeholder */}
+          <Settings className="w-6 h-6" />
         </Button>
       </div>
 
@@ -77,42 +67,14 @@ export default function WorkoutList({ onWorkoutSelect, onNavigateToQuickCreate }
             <p className="text-sm text-muted-foreground">Use Quick Create to create your first workout</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {workouts.map((workout) => (
               <div
                 key={workout.id}
-                className="border border-border rounded-lg p-4 cursor-pointer hover:bg-muted transition-colors"
+                className="border-2 border-black rounded-lg p-6 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors bg-background"
                 onClick={() => handleWorkoutClick(workout)}
               >
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-lg">{workout.name}</h3>
-                    <p className="text-muted-foreground text-sm mt-1">
-                      {workout.rounds} rounds × {workout.cycles} cycles • {calculateTotalDuration(workout)} min total
-                    </p>
-                    <div className="flex items-center mt-2 space-x-2">
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-orange-100 text-orange-800">
-                        <Dumbbell className="w-3 h-3 mr-1" />
-                        Work {formatTime(workout.work)}
-                      </span>
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
-                        <Pause className="w-3 h-3 mr-1" />
-                        Rest {formatTime(workout.rest)}
-                      </span>
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="ml-3 p-1"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // TODO: Implement workout menu
-                    }}
-                  >
-                    <MoreVertical className="w-4 h-4" />
-                  </Button>
-                </div>
+                <h3 className="text-xl font-bold">{workout.name}</h3>
               </div>
             ))}
           </div>
@@ -120,18 +82,16 @@ export default function WorkoutList({ onWorkoutSelect, onNavigateToQuickCreate }
       </div>
 
       {/* Bottom Navigation */}
-      <div className="border-t border-border bg-muted">
+      <div className="border-t-2 border-black">
         <div className="flex">
           <button 
-            className="flex-1 py-4 px-2 text-center transition-colors duration-200"
+            className="flex-1 py-6 px-4 text-center transition-colors duration-200 bg-white dark:bg-gray-900"
             onClick={onNavigateToQuickCreate}
           >
-            <Plus className="w-6 h-6 mx-auto mb-1 text-muted-foreground" />
-            <div className="text-xs font-medium text-muted-foreground">Quick Create</div>
+            <div className="text-lg font-bold text-black dark:text-white">Quick Create</div>
           </button>
-          <button className="flex-1 py-4 px-2 text-center bg-muted-foreground/10">
-            <List className="w-6 h-6 mx-auto mb-1 text-primary" />
-            <div className="text-xs font-medium text-primary">Workout List</div>
+          <button className="flex-1 py-6 px-4 text-center bg-gray-300 dark:bg-gray-600">
+            <div className="text-lg font-bold text-black dark:text-white">Workout List</div>
           </button>
         </div>
       </div>
