@@ -59,6 +59,7 @@ export default function TimePickerModal({
               maxValue={23}
               onValueChange={setHours}
               name="Hours"
+              containerHeight={244}
             />
           )}
           <TimePickerWheel
@@ -66,19 +67,21 @@ export default function TimePickerModal({
             maxValue={59}
             onValueChange={setMinutes}
             name="Minutes"
+            containerHeight={244}
           />
           <TimePickerWheel
             value={seconds}
             maxValue={59}
             onValueChange={setSeconds}
             name="Seconds"
+            containerHeight={244}
           />
         </div>
 
         <div className="flex justify-center pt-4">
           <Button
             onClick={handleConfirm}
-            className="w-full border-2 border-black dark:border-white"
+            className="w-full h-12 text-lg font-bold bg-background border-2 border-black dark:border-white hover:bg-gray-100 dark:hover:bg-gray-800 text-black dark:text-white rounded-lg mt-4"
           >
             Confirm
           </Button>
