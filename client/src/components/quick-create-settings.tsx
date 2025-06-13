@@ -22,8 +22,7 @@ export default function QuickCreateSettings({
 }: QuickCreateSettingsProps) {
   const { theme, toggleTheme } = useTheme();
   const [showBeepToneMenu, setShowBeepToneMenu] = useState(false);
-  const [showBeepStartMenu, setShowBeepStartMenu] = useState(false);
-  const [beepStart, setBeepStart] = useState(soundSettings.beepStart || 10);
+  const [showBeepStartPicker, setShowBeepStartPicker] = useState(false);
 
   const updateSoundSetting = (key: keyof SoundSettings, value: any) => {
     onSoundSettingsChange({
@@ -32,11 +31,7 @@ export default function QuickCreateSettings({
     });
   };
 
-  const handleBeepStartConfirm = (seconds: number) => {
-    setBeepStart(seconds);
-    updateSoundSetting('beepStart', seconds);
-    setShowBeepStartMenu(false);
-  };
+
 
   return (
     <>
@@ -100,9 +95,9 @@ export default function QuickCreateSettings({
                 <Button
                   variant="outline"
                   className="min-w-20 h-10 border-2 border-black rounded-lg font-bold text-base bg-white hover:bg-gray-100 text-black"
-                  onClick={() => setShowBeepStartMenu(true)}
+                  onClick={() => setShowBeepStartPicker(true)}
                 >
-                  {beepStart} sec
+                  {soundSettings.beepStart} sec
                 </Button>
               </div>
 
@@ -209,10 +204,10 @@ export default function QuickCreateSettings({
 
       {/* Beep Start Picker */}
       <BeepStartPicker
-        isOpen={showBeepStartMenu}
-        onClose={() => setShowBeepStartMenu(false)}
-        onConfirm={handleBeepStartConfirm}
-        initialValue={beepStart}
+        isOpen={showBeepStartPicker}
+        onClose={() => setShowBeepStartPicker(false)}
+        onConfirm={(seconds) => updateSoundSetting('beepStart', seconds)}
+        initialValue={soundSettings.beepStart}
       />
     </>
   );
