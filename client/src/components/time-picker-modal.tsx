@@ -48,7 +48,6 @@ export default function TimePickerModal({
     itemHeight: number,
     containerHeight: number,
     name: string,
-    onValueChange: (value: number) => void,
   ) => {
     return (
       <TimePickerWheel
@@ -76,9 +75,9 @@ export default function TimePickerModal({
         </div>
 
         <div className="flex gap-4 py-4">
-          {showHours && createPickerWheel(hours, 23, 48, 244, "Hours", setHours)}
-          {createPickerWheel(minutes, 59, 48, 244, "Minutes", setMinutes)}
-          {createPickerWheel(seconds, 59, 48, 244, "Seconds", setSeconds)}
+          {showHours && createPickerWheel(hours, 23, 48, 244, "Hours")}
+          {createPickerWheel(minutes, 59, 48, 244, "Minutes")}
+          {createPickerWheel(seconds, 59, 48, 244, "Seconds")}
         </div>
 
         <div className="flex justify-center pt-4">
