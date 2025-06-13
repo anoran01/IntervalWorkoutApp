@@ -35,7 +35,7 @@ export default function QuickCreateSettings({
 
   return (
     <>
-      <div className="flex flex-col h-screen bg-background border-2 border-gray-300 dark:border-gray-600 rounded-lg">
+      <div className="fixed inset-0 flex flex-col h-screen bg-background border-2 border-gray-300 dark:border-gray-600 rounded-lg">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b-2 border-black">
           <Button
