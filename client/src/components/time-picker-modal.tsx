@@ -47,16 +47,23 @@ export default function TimePickerModal({
     // Scroll to the current value when component mounts or value changes
     useEffect(() => {
       if (scrollRef.current && isOpen) {
-        const itemHeight = 48; // px-4 py-3 = roughly 48px height
-        const containerHeight = 192; // h-48 = 192px
-        //const scrollTop = Math.max(0, value * itemHeight + itemHeight / 2);
-        const scrollTop = Math.max(0, value * itemHeight - containerHeight / 2 + itemHeight / 2);
-        
+        // Wait for DOM to render then calculate exact dimensions
         setTimeout(() => {
-          scrollRef.current?.scrollTo({
-            top: scrollTop,
-            behavior: 'auto'
-          });
+          if (!scrollRef.current) return;
+          
+          const container = scrollRef.current;
+          const firstItem = container.querySelector('div[data-item]') as HTMLElement;
+          
+          if (firstItem) {
+            const itemHeight = firstItem.offsetHeight;
+            const containerHeight = container.clientHeight;
+            const scrollTop = Math.max(0, value * itemHeight - containerHeight / 2 + itemHeight / 2);
+            
+            container.scrollTo({
+              top: scrollTop,
+              behavior: 'auto'
+            });
+          }
         }, 100);
       }
     }, [value, isOpen]);
@@ -72,6 +79,7 @@ export default function TimePickerModal({
             {items.map((item) => (
               <div
                 key={item}
+                data-item
                 className={`px-4 py-3 text-center cursor-pointer transition-colors text-lg ${
                   item === value
                     ? "bg-primary text-primary-foreground font-bold"
