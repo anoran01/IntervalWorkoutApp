@@ -1,7 +1,7 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ArrowLeft } from "lucide-react";
 import { useTheme } from "@/lib/theme-context";
 import BeepStartPicker from "@/components/beep-start-picker";
@@ -31,143 +31,132 @@ export default function QuickCreateSettings({
     });
   };
 
-
+  if (!isOpen) return null;
 
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={() => {}}>
-        <DialogContent className="w-full max-w-sm h-screen m-0 rounded-none [&>button]:hidden">
-          <div className="flex flex-col h-full">
-            {/* Header */}
-            <DialogHeader className="flex-row items-center space-y-0 pb-2 border-b">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="mr-2 p-1"
-                onClick={onClose}
+      <div className="flex flex-col h-screen bg-background border-2 border-gray-300 dark:border-gray-600 rounded-lg">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b-2 border-black">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="p-2"
+            onClick={onClose}
+          >
+            <ArrowLeft className="w-6 h-6" />
+          </Button>
+          <h1 className="text-2xl font-bold text-center flex-1">Settings</h1>
+          <div className="w-10" />
+        </div>
+
+        {/* Settings Content */}
+        <div className="flex-1 p-6 space-y-8">
+          {/* Dark/Light Mode */}
+          <div className="flex items-center justify-between">
+            <span className="text-xl font-bold">Mode</span>
+            <div className="relative flex items-center">
+              <span className="mr-3 text-base font-medium">
+                {theme === 'dark' ? 'Dark' : 'Light'}
+              </span>
+              <div 
+                className={`w-16 h-8 rounded-full border-2 border-black cursor-pointer transition-colors ${
+                  theme === 'dark' ? 'bg-gray-600' : 'bg-gray-200'
+                }`}
+                onClick={toggleTheme}
               >
-                <ArrowLeft className="w-5 h-5" />
-              </Button>
-              <DialogTitle className="flex-1 text-center">Settings</DialogTitle>
-              <div className="w-9"></div> {/* Spacer for centering */}
-            </DialogHeader>
-
-              {/* Settings List */}
-              <div className="flex-1 py-2 space-y-2">
-                {/* Dark/Light Mode */}
-                <div className="flex items-center justify-between py-1">
-                  <span className="text-lg font-bold">Mode</span>
-                  <div className="relative flex items-center">
-                    <span className="mr-3 text-base font-medium">
-                      {theme === 'dark' ? 'Dark' : 'Light'}
-                    </span>
-                    <div 
-                      className={`w-16 h-8 rounded-full border-2 border-black cursor-pointer transition-colors ${
-                        theme === 'dark' ? 'bg-gray-600' : 'bg-gray-200'
-                      }`}
-                      onClick={toggleTheme}
-                    >
-                      <div 
-                        className={`w-6 h-6 bg-white rounded-full border-2 border-black transition-transform duration-200 ${
-                          theme === 'dark' ? 'translate-x-8' : 'translate-x-0'
-                        }`}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Beep Tone */}
-                <div className="flex items-center justify-between py-1">
-                  <span className="text-lg font-bold">Beep Tone</span>
-                  <Button
-                    variant="outline"
-                    className="min-w-20 h-10 border-2 border-black rounded-lg font-bold text-base bg-white hover:bg-gray-100 text-black"
-                    onClick={() => setShowBeepToneMenu(true)}
-                  >
-                    {soundSettings.beepTone === "standard" ? "Standard" :
-                     soundSettings.beepTone === "high_pitch" ? "High" : "Low"}
-                  </Button>
-                </div>
-
-                {/* Beep Start */}
-                <div className="flex items-center justify-between">
-                  <span className="text-xl font-bold">Beep Start</span>
-                  <div className="w-32">
-                    <Button
-                      variant="outline"
-                      className="w-full border-2 border-black rounded-lg text-left justify-start"
-                      onClick={() => setShowBeepStartPicker(true)}
-                    >
-                      {soundSettings.beepStart}
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Halfway Reminder */}
-                <div className="flex items-center justify-between py-1">
-                  <span className="text-lg font-bold">Halfway Reminder</span>
-                  <div 
-                    className={`w-8 h-8 border-2 border-black rounded cursor-pointer flex items-center justify-center ${
-                      soundSettings.halfwayReminder ? 'bg-black' : 'bg-white'
-                    }`}
-                    onClick={() => updateSoundSetting('halfwayReminder', !soundSettings.halfwayReminder)}
-                  >
-                    {soundSettings.halfwayReminder && (
-                      <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                    )}
-                  </div>
-                </div>
-
-                {/* 10 Second Reminder */}
-                <div className="flex items-center justify-between py-1">
-                  <span className="text-lg font-bold">10 Second Reminder</span>
-                  <div 
-                    className={`w-8 h-8 border-2 border-black rounded cursor-pointer flex items-center justify-center ${
-                      soundSettings.tenSecondWarning ? 'bg-black' : 'bg-white'
-                    }`}
-                    onClick={() => updateSoundSetting('tenSecondWarning', !soundSettings.tenSecondWarning)}
-                  >
-                    {soundSettings.tenSecondWarning && (
-                      <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                    )}
-                  </div>
-                </div>
-
-                {/* Verbal Reminder */}
-                <div className="flex items-center justify-between py-1">
-                  <span className="text-lg font-bold">Verbal Reminder</span>
-                  <div 
-                    className={`w-8 h-8 border-2 border-black rounded cursor-pointer flex items-center justify-center ${
-                      soundSettings.verbalReminder ? 'bg-black' : 'bg-white'
-                    }`}
-                    onClick={() => updateSoundSetting('verbalReminder', !soundSettings.verbalReminder)}
-                  >
-                    {soundSettings.verbalReminder && (
-                      <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Done Button */}
-              <div className="pt-2">
-                <Button
-                  className="w-full h-12 text-lg font-bold border-2 border-black dark:border-white rounded-lg bg-gray-200 hover:bg-gray-300 text-black"
-                  variant="outline"
-                  onClick={onClose}
-                >
-                  Done
-                </Button>
+                <div 
+                  className={`w-6 h-6 bg-white rounded-full border-2 border-black transition-transform duration-200 ${
+                    theme === 'dark' ? 'translate-x-8' : 'translate-x-0'
+                  }`}
+                />
               </div>
             </div>
-          </DialogContent>
-        </Dialog>
+          </div>
+
+          {/* Beep Tone */}
+          <div className="flex items-center justify-between">
+            <span className="text-xl font-bold">Beep Tone</span>
+            <Button
+              variant="outline"
+              className="min-w-20 h-10 border-2 border-black rounded-lg font-bold text-base bg-white hover:bg-gray-100 text-black"
+              onClick={() => setShowBeepToneMenu(true)}
+            >
+              {soundSettings.beepTone === "standard" ? "Standard" :
+               soundSettings.beepTone === "high_pitch" ? "High" : "Low"}
+            </Button>
+          </div>
+
+          {/* Beep Start */}
+          <div className="flex items-center justify-between">
+            <span className="text-xl font-bold">Beep Start</span>
+            <div className="w-32">
+              <Button
+                variant="outline"
+                className="w-full border-2 border-black rounded-lg text-left justify-start"
+                onClick={() => setShowBeepStartPicker(true)}
+              >
+                {soundSettings.beepStart}
+              </Button>
+            </div>
+          </div>
+
+          {/* Halfway Reminder */}
+          <div className="flex items-center justify-between">
+            <span className="text-xl font-bold">Halfway Reminder</span>
+            <div 
+              className="w-8 h-8 border-2 border-black dark:border-white rounded flex items-center justify-center cursor-pointer"
+              onClick={() => updateSoundSetting('halfwayReminder', !soundSettings.halfwayReminder)}
+            >
+              {soundSettings.halfwayReminder && (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                  <polyline points="20,6 9,17 4,12"></polyline>
+                </svg>
+              )}
+            </div>
+          </div>
+
+          {/* 10 Second Reminder */}
+          <div className="flex items-center justify-between">
+            <span className="text-xl font-bold">10 second Reminder</span>
+            <div 
+              className="w-8 h-8 border-2 border-black dark:border-white rounded flex items-center justify-center cursor-pointer"
+              onClick={() => updateSoundSetting('tenSecondWarning', !soundSettings.tenSecondWarning)}
+            >
+              {soundSettings.tenSecondWarning && (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                  <polyline points="20,6 9,17 4,12"></polyline>
+                </svg>
+              )}
+            </div>
+          </div>
+
+          {/* Verbal Reminder */}
+          <div className="flex items-center justify-between">
+            <span className="text-xl font-bold">Verbal Reminder</span>
+            <div 
+              className="w-8 h-8 border-2 border-black dark:border-white rounded flex items-center justify-center cursor-pointer"
+              onClick={() => updateSoundSetting('verbalReminder', !soundSettings.verbalReminder)}
+            >
+              {soundSettings.verbalReminder && (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                  <polyline points="20,6 9,17 4,12"></polyline>
+                </svg>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Done Button */}
+        <div className="p-6">
+          <Button
+            onClick={onClose}
+            className="w-full h-16 text-xl font-bold bg-background border-2 border-black dark:border-white hover:bg-gray-100 dark:hover:bg-gray-800 text-black dark:text-white rounded-lg"
+          >
+            Done
+          </Button>
+        </div>
+      </div>
 
       {/* Beep Tone Menu */}
       {showBeepToneMenu && (
