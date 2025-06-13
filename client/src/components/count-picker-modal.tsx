@@ -46,9 +46,9 @@ export default function CountPickerModal({
 
         <div className="flex justify-center py-4">
           <TimePickerWheel
-            value={count - min}
-            maxValue={max - min}
-            onValueChange={(value) => setCount(value + min)}
+            value={count}
+            maxValue={100}
+            onValueChange={(value) => setCount(value)}
             name=""
             containerHeight={244}
           />
