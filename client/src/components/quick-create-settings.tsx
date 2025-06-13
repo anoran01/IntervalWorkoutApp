@@ -1,9 +1,10 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ArrowLeft } from "lucide-react";
 import { useTheme } from "@/lib/theme-context";
+import BeepStartPicker from "@/components/beep-start-picker";
 import type { SoundSettings } from "@shared/schema";
 
 interface QuickCreateSettingsProps {
@@ -23,8 +24,6 @@ export default function QuickCreateSettings({
   const [showBeepToneMenu, setShowBeepToneMenu] = useState(false);
   const [showBeepStartMenu, setShowBeepStartMenu] = useState(false);
   const [beepStart, setBeepStart] = useState(soundSettings.beepStart || 10);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const scrollTimeoutRef = useRef<NodeJS.Timeout>();
 
   const updateSoundSetting = (key: keyof SoundSettings, value: any) => {
     onSoundSettingsChange({
@@ -33,56 +32,10 @@ export default function QuickCreateSettings({
     });
   };
 
-  // Auto-scroll to current value when beep start menu opens
-  useEffect(() => {
-    if (showBeepStartMenu && scrollRef.current) {
-      const itemHeight = 48;
-      const containerHeight = 256; // h-64 = 256px
-      const itemIndex = beepStart - 1; // beepStart is 1-based, array is 0-based
-      const scrollTop = Math.max(0, itemIndex * itemHeight - containerHeight / 2 + itemHeight / 2);
-      
-      setTimeout(() => {
-        scrollRef.current?.scrollTo({
-          top: scrollTop,
-          behavior: 'smooth'
-        });
-      }, 100);
-    }
-  }, [showBeepStartMenu, beepStart]);
-
   const handleBeepStartConfirm = (seconds: number) => {
     setBeepStart(seconds);
     updateSoundSetting('beepStart', seconds);
     setShowBeepStartMenu(false);
-  };
-
-  const createBeepStartScrollList = () => {
-    const items = Array.from({ length: 30 }, (_, i) => i + 1); // 1-30 seconds
-    
-    return (
-      <div className="flex flex-col items-center w-full">
-        <div 
-          ref={scrollRef}
-          className="h-64 overflow-y-auto border border-border rounded-lg w-full max-w-24"
-        >
-          <div className="py-20"> {/* Padding to center the selected item */}
-            {items.map((item) => (
-              <div
-                key={item}
-                className={`px-4 py-3 text-center cursor-pointer transition-colors text-lg ${
-                  item === beepStart
-                    ? "bg-primary text-primary-foreground font-semibold"
-                    : "hover:bg-muted"
-                }`}
-                onClick={() => setBeepStart(item)}
-              >
-                {item}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
   };
 
   return (
@@ -254,26 +207,13 @@ export default function QuickCreateSettings({
         </div>
       )}
 
-      {/* Beep Start Menu */}
-      {showBeepStartMenu && (
-        <div className="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-4">
-          <div className="bg-background border rounded-lg shadow-lg w-full max-w-sm p-6">
-            <div className="flex flex-col space-y-1.5 text-center mb-4">
-              <h2 className="text-lg font-semibold leading-none tracking-tight">Beep Start (seconds)</h2>
-            </div>
-            
-            <div className="flex justify-center py-4">
-              {createBeepStartScrollList()}
-            </div>
-            
-            <div className="flex justify-center pt-4">
-              <Button onClick={() => handleBeepStartConfirm(beepStart)} className="w-full border-2 border-black dark:border-white">
-                Confirm
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Beep Start Picker */}
+      <BeepStartPicker
+        isOpen={showBeepStartMenu}
+        onClose={() => setShowBeepStartMenu(false)}
+        onConfirm={handleBeepStartConfirm}
+        initialValue={beepStart}
+      />
     </>
   );
 }
