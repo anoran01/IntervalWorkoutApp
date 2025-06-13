@@ -49,12 +49,13 @@ export default function TimePickerModal({
       if (scrollRef.current && isOpen) {
         const itemHeight = 48; // px-4 py-3 = roughly 48px height
         const containerHeight = 192; // h-48 = 192px
+        //const scrollTop = Math.max(0, value * itemHeight + itemHeight / 2);
         const scrollTop = Math.max(0, value * itemHeight - containerHeight / 2 + itemHeight / 2);
         
         setTimeout(() => {
           scrollRef.current?.scrollTo({
             top: scrollTop,
-            behavior: 'smooth'
+            behavior: 'auto'
           });
         }, 100);
       }
