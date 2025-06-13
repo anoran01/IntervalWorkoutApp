@@ -90,15 +90,17 @@ export default function QuickCreateSettings({
                 </div>
 
                 {/* Beep Start */}
-                <div className="flex items-center justify-between py-1">
-                  <span className="text-lg font-bold">Beep Start</span>
-                  <Button
-                    variant="outline"
-                    className="min-w-20 h-10 border-2 border-black rounded-lg font-bold text-base bg-white hover:bg-gray-100 text-black"
-                    onClick={() => setShowBeepStartPicker(true)}
-                  >
-                    {soundSettings.beepStart} sec
-                  </Button>
+                <div className="flex items-center justify-between">
+                  <span className="text-xl font-bold">Beep Start</span>
+                  <div className="w-32">
+                    <Button
+                      variant="outline"
+                      className="w-full border-2 border-black rounded-lg text-left justify-start"
+                      onClick={() => setShowBeepStartPicker(true)}
+                    >
+                      {soundSettings.beepStart}
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Halfway Reminder */}
