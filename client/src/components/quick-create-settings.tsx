@@ -36,7 +36,7 @@ export default function QuickCreateSettings({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={() => {}}>
-        <DialogContent className="w-full max-w-sm h-screen m-0 rounded-none [&>button]:hidden">
+        <DialogContent className={`w-full max-w-sm h-screen m-0 rounded-none [&>button]:hidden ${showBeepStartPicker ? 'pointer-events-none' : ''}`}>
           <div className="flex flex-col h-full">
             {/* Header */}
             <DialogHeader className="flex-row items-center space-y-0 pb-2 border-b">
