@@ -57,7 +57,7 @@ export default function TimePickerModal({
           if (firstItem) {
             const itemHeight = firstItem.offsetHeight;
             const containerHeight = container.clientHeight;
-            const scrollTop = Math.max(0, value * itemHeight - containerHeight / 2 + itemHeight / 2);
+            const scrollTop = Math.max(0, value * itemHeight);
             
             container.scrollTo({
               top: scrollTop,
