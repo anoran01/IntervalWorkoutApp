@@ -4,6 +4,7 @@ import { ArrowLeft, Settings, Play, GripVertical, Plus } from "lucide-react";
 import { formatTime } from "@/lib/workout-utils";
 import WorkoutSettings from "@/components/workout-settings";
 import AddTimerModal from "@/components/add-timer-modal";
+import TimePickerModal from "@/components/time-picker-modal";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
 import type { Workout, Timer, SoundSettings } from "@shared/schema";
@@ -35,6 +36,9 @@ export default function WorkoutMenu({
   const [workoutNameInput, setWorkoutNameInput] = useState(workout.name);
   const [showSettings, setShowSettings] = useState(false);
   const [showAddTimer, setShowAddTimer] = useState(false);
+  const [showTimerDurationPicker, setShowTimerDurationPicker] = useState(false);
+  const [editingTimerId, setEditingTimerId] = useState<number | null>(null);
+  const [editingTimerDuration, setEditingTimerDuration] = useState(0);
   const [insertPosition, setInsertPosition] = useState(0);
   const [draggedItem, setDraggedItem] = useState<number | null>(null);
   const [draggedOver, setDraggedOver] = useState<number | null>(null);
@@ -148,6 +152,25 @@ export default function WorkoutMenu({
   const handleAddTimerConfirm = (type: string, duration: number) => {
     addTimerMutation.mutate({ type, duration, position: insertPosition });
     setShowAddTimer(false);
+  };
+
+  const handleTimerDurationClick = (timerId: number, currentDuration: number) => {
+    setEditingTimerId(timerId);
+    setEditingTimerDuration(currentDuration);
+    setShowTimerDurationPicker(true);
+  };
+
+  const handleTimerDurationConfirm = (newDuration: number) => {
+    if (editingTimerId !== null && newDuration > 0) {
+      onEditTimerDuration(editingTimerId, newDuration);
+    }
+    setShowTimerDurationPicker(false);
+    setEditingTimerId(null);
+  };
+
+  const handleTimerDurationPickerClose = () => {
+    setShowTimerDurationPicker(false);
+    setEditingTimerId(null);
   };
 
   // Snap scroll to position the horizontal bar between timers
@@ -389,12 +412,7 @@ export default function WorkoutMenu({
                   </div>
                   <span 
                     className="text-lg font-bold cursor-pointer"
-                    onClick={() => {
-                      const newDuration = prompt('Enter duration in seconds:', timer.duration.toString());
-                      if (newDuration && !isNaN(Number(newDuration)) && Number(newDuration) > 0) {
-                        onEditTimerDuration(timer.id, Number(newDuration));
-                      }
-                    }}
+                    onClick={() => handleTimerDurationClick(timer.id, timer.duration)}
                   >
                     {formatTime(timer.duration)}
                   </span>
@@ -423,6 +441,18 @@ export default function WorkoutMenu({
           isOpen={showAddTimer}
           onClose={() => setShowAddTimer(false)}
           onConfirm={handleAddTimerConfirm}
+        />
+      )}
+
+      {/* Timer Duration Picker Modal */}
+      {showTimerDurationPicker && (
+        <TimePickerModal
+          isOpen={showTimerDurationPicker}
+          onClose={handleTimerDurationPickerClose}
+          onConfirm={handleTimerDurationConfirm}
+          title="Edit Timer Duration"
+          initialSeconds={editingTimerDuration}
+          showHours={true}
         />
       )}
     </div>
