@@ -27,9 +27,9 @@ export default function QuickCreateSettings({
     onClose();
   };
 
-  const updateSoundSetting = (key: keyof SoundSettings, value: any) => {
+  const updateSetting = (key: keyof SoundSettings, value: any) => {
     setSettings({
-      ...soundSettings,
+      ...settings,
       [key]: value
     });
   };
@@ -51,7 +51,7 @@ export default function QuickCreateSettings({
       </div>
 
       {/* Settings Content */}
-      <div className="flex-1 p-6 space-y-8">
+      <div className="flex-1 p-6 space-y-4">
         {/* Dark/Light Mode */}
         <div className="flex items-center justify-between">
           <span className="text-xl font-bold">Mode</span>
@@ -169,8 +169,8 @@ export default function QuickCreateSettings({
       <BeepStartPicker
         isOpen={showBeepStartPicker}
         onClose={() => setShowBeepStartPicker(false)}
-        onConfirm={(seconds) => updateSoundSetting("beepStart", seconds)}
-        initialValue={soundSettings.beepStart}
+        onConfirm={(seconds) => updateSetting("beepStart", seconds)}
+        initialValue={settings.beepStart}
       />
     </div>
   );

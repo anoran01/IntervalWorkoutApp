@@ -1,21 +1,25 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 
-interface BeepStartPickerProps {
+interface TimePickerProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (seconds: number) => void;
   initialValue: number;
+  maxValue: number;
+  itemHeight: number;
+  containerHeight: number;
+  name: string;
 }
 
-export default function BeepStartPicker({ isOpen, onClose, onConfirm, initialValue }: BeepStartPickerProps) {
+export default function TimePicker({ isOpen, onClose, onConfirm, initialValue, maxValue, itemHeight, containerHeight, name }: TimePickerProps) {
   const [selectedValue, setSelectedValue] = useState(initialValue);
   const scrollRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout>();
-  const itemHeight = 48; // Height of each item
-  const containerHeight = 244; // Height of visible area (3 items)
+  //const itemHeight = 48; // Height of each item
+  //const containerHeight = 244; // Height of visible area (3 items)
 
-  const values = Array.from({ length: 11 }, (_, i) => i); // 0 to 10
+  const values = Array.from({ length: maxValue + 1 }, (_, i) => i); // 0 to maxValue
 
   useEffect(() => {
     if (isOpen && scrollRef.current) {
@@ -78,8 +82,7 @@ export default function BeepStartPicker({ isOpen, onClose, onConfirm, initialVal
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-background border-2 border-black rounded-lg p-6 w-80 max-w-sm mx-4">
-        <h2 className="text-2xl font-bold text-center mb-4">Beep Start</h2>
-        <p className="text-center mb-6">sec</p>
+        <h2 className="text-2xl font-bold text-center mb-4">{name}</h2>
         
         {/* Picker Wheel */}
         <div className="flex justify-center mb-8 relative">

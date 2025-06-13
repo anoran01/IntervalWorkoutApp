@@ -26,14 +26,14 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
   // Load settings from localStorage or use defaults
   const loadSettings = (): QuickWorkoutSettings => {
     try {
-      const saved = localStorage.getItem('quickCreateSettings');
+      const saved = localStorage.getItem("quickCreateSettings");
       if (saved) {
         return JSON.parse(saved);
       }
     } catch (error) {
-      console.error('Failed to load settings from localStorage:', error);
+      console.error("Failed to load settings from localStorage:", error);
     }
-    
+
     // Default values
     return {
       prepare: 5,
@@ -44,7 +44,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
       restBetweenCycles: 60,
       soundSettings: {
         beepTone: "standard",
-        beepStart: 10,
+        beepStart: 5,
         tenSecondWarning: true,
         halfwayReminder: true,
         verbalReminder: true,
@@ -53,15 +53,16 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
     };
   };
 
-  const [settings, setSettings] = useState<QuickWorkoutSettings>(loadSettings());
+  const [settings, setSettings] =
+    useState<QuickWorkoutSettings>(loadSettings());
 
   // Save settings to localStorage whenever they change
   const updateSettings = (newSettings: QuickWorkoutSettings) => {
     setSettings(newSettings);
     try {
-      localStorage.setItem('quickCreateSettings', JSON.stringify(newSettings));
+      localStorage.setItem("quickCreateSettings", JSON.stringify(newSettings));
     } catch (error) {
-      console.error('Failed to save settings to localStorage:', error);
+      console.error("Failed to save settings to localStorage:", error);
     }
   };
 
@@ -92,9 +93,9 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     if (minutes === 0) {
-      return `:${remainingSeconds.toString().padStart(2, '0')}`;
+      return `:${remainingSeconds.toString().padStart(2, "0")}`;
     }
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
   };
 
   const formatCount = (count: number) => {
@@ -107,7 +108,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
 
   const handleTimerClick = (type: string) => {
     setCurrentEditingField(type);
-    if (type === 'rounds' || type === 'cycles') {
+    if (type === "rounds" || type === "cycles") {
       setShowCountPicker(true);
     } else {
       setShowTimePicker(true);
@@ -117,7 +118,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
   const handleTimePickerConfirm = (totalSeconds: number) => {
     const newSettings = {
       ...settings,
-      [currentEditingField]: totalSeconds
+      [currentEditingField]: totalSeconds,
     };
     updateSettings(newSettings);
     setShowTimePicker(false);
@@ -127,7 +128,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
   const handleCountPickerConfirm = (count: number) => {
     const newSettings = {
       ...settings,
-      [currentEditingField]: count
+      [currentEditingField]: count,
     };
     updateSettings(newSettings);
     setShowCountPicker(false);
@@ -137,26 +138,35 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
   const handleSoundSettingsChange = (newSoundSettings: SoundSettings) => {
     const newSettings = {
       ...settings,
-      soundSettings: newSoundSettings
+      soundSettings: newSoundSettings,
     };
     updateSettings(newSettings);
   };
 
   const getModalTitle = () => {
     switch (currentEditingField) {
-      case 'prepare': return 'Set Prepare Time';
-      case 'work': return 'Set Work Time';
-      case 'rest': return 'Set Rest Time';
-      case 'restBetweenCycles': return 'Set Rest Between Cycles';
-      case 'rounds': return 'Set Number of Rounds';
-      case 'cycles': return 'Set Number of Cycles';
-      default: return 'Set Value';
+      case "prepare":
+        return "Set Prepare Time";
+      case "work":
+        return "Set Work Time";
+      case "rest":
+        return "Set Rest Time";
+      case "restBetweenCycles":
+        return "Set Rest Between Cycles";
+      case "rounds":
+        return "Set Number of Rounds";
+      case "cycles":
+        return "Set Number of Cycles";
+      default:
+        return "Set Value";
     }
   };
 
   const getCurrentValue = () => {
     if (!currentEditingField) return 0;
-    const value = settings[currentEditingField as keyof QuickWorkoutSettings] as number;
+    const value = settings[
+      currentEditingField as keyof QuickWorkoutSettings
+    ] as number;
     return isNaN(value) ? 0 : value;
   };
 
@@ -182,7 +192,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         <Button
           variant="outline"
           className="w-full h-10 flex justify-between items-center px-6 text-base font-medium border-2 border-black rounded-lg hover:bg-muted"
-          onClick={() => handleTimerClick('prepare')}
+          onClick={() => handleTimerClick("prepare")}
         >
           <span>Prepare</span>
           <span className="font-mono">{formatTime(settings.prepare)}</span>
@@ -192,7 +202,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         <Button
           variant="outline"
           className="w-full h-10 flex justify-between items-center px-6 text-base font-medium border-2 border-black rounded-lg hover:bg-muted"
-          onClick={() => handleTimerClick('work')}
+          onClick={() => handleTimerClick("work")}
         >
           <span>Work</span>
           <span className="font-mono">{formatTime(settings.work)}</span>
@@ -202,7 +212,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         <Button
           variant="outline"
           className="w-full h-10 flex justify-between items-center px-6 text-base font-medium border-2 border-black rounded-lg hover:bg-muted"
-          onClick={() => handleTimerClick('rest')}
+          onClick={() => handleTimerClick("rest")}
         >
           <span>Rest</span>
           <span className="font-mono">{formatTime(settings.rest)}</span>
@@ -212,7 +222,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         <Button
           variant="outline"
           className="w-full h-10 flex justify-between items-center px-6 text-base font-medium border-2 border-black rounded-lg hover:bg-muted"
-          onClick={() => handleTimerClick('rounds')}
+          onClick={() => handleTimerClick("rounds")}
         >
           <span>Rounds</span>
           <span className="font-mono">{formatCount(settings.rounds)}</span>
@@ -222,7 +232,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         <Button
           variant="outline"
           className="w-full h-10 flex justify-between items-center px-6 text-base font-medium border-2 border-black rounded-lg hover:bg-muted"
-          onClick={() => handleTimerClick('cycles')}
+          onClick={() => handleTimerClick("cycles")}
         >
           <span>Cycles</span>
           <span className="font-mono">{formatCount(settings.cycles)}</span>
@@ -232,10 +242,12 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         <Button
           variant="outline"
           className="w-full h-10 flex justify-between items-center px-6 text-base font-medium border-2 border-black rounded-lg hover:bg-muted"
-          onClick={() => handleTimerClick('restBetweenCycles')}
+          onClick={() => handleTimerClick("restBetweenCycles")}
         >
           <span>Rest between Cycles</span>
-          <span className="font-mono">{formatTime(settings.restBetweenCycles)}</span>
+          <span className="font-mono">
+            {formatTime(settings.restBetweenCycles)}
+          </span>
         </Button>
 
         {/* Create Button */}
@@ -252,13 +264,17 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
       <div className="fixed bottom-0 left-0 right-0 z-20 border-t-2 border-black bg-background">
         <div className="flex">
           <button className="flex-1 py-6 px-4 text-center bg-gray-300 dark:bg-gray-600">
-            <div className="text-lg font-bold text-black dark:text-white">Quick Create</div>
+            <div className="text-lg font-bold text-black dark:text-white">
+              Quick Create
+            </div>
           </button>
-          <button 
+          <button
             className="flex-1 py-6 px-4 text-center transition-colors duration-200 bg-white dark:bg-gray-900"
             onClick={onNavigateToWorkoutList}
           >
-            <div className="text-lg font-bold text-black dark:text-white">Workout List</div>
+            <div className="text-lg font-bold text-black dark:text-white">
+              Workout List
+            </div>
           </button>
         </div>
       </div>
@@ -274,7 +290,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         onConfirm={handleTimePickerConfirm}
         title={getModalTitle()}
         initialSeconds={getCurrentValue()}
-        showHours={currentEditingField === 'restBetweenCycles'}
+        showHours={currentEditingField === "restBetweenCycles"}
       />
 
       <CountPickerModal
@@ -288,7 +304,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         title={getModalTitle()}
         initialCount={getCurrentValue()}
         min={1}
-        max={currentEditingField === 'rounds' ? 20 : 10}
+        max={currentEditingField === "rounds" ? 20 : 10}
       />
 
       {/* Settings Modal */}
@@ -301,4 +317,6 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
           />
         </div>
       )}
+    </div>
+  );
 }
