@@ -76,7 +76,7 @@ export default function BeepStartPicker({ isOpen, onClose, onConfirm, initialVal
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-background border-2 border-black rounded-lg p-6 w-80 max-w-sm mx-4">
         <h2 className="text-2xl font-bold text-center mb-4">Beep Start</h2>
         <p className="text-center mb-6">sec</p>
