@@ -35,23 +35,22 @@ export default function QuickCreateSettings({
 
   return (
     <>
-      <div className={showBeepStartPicker ? 'pointer-events-none' : ''}>
-        <Dialog open={isOpen} onOpenChange={() => {}}>
-          <DialogContent className="w-full max-w-sm h-screen m-0 rounded-none [&>button]:hidden">
-            <div className="flex flex-col h-full">
-              {/* Header */}
-              <DialogHeader className="flex-row items-center space-y-0 pb-2 border-b">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="mr-2 p-1"
-                  onClick={onClose}
-                >
-                  <ArrowLeft className="w-5 h-5" />
-                </Button>
-                <DialogTitle className="flex-1 text-center">Settings</DialogTitle>
-                <div className="w-9"></div> {/* Spacer for centering */}
-              </DialogHeader>
+      <Dialog open={isOpen} onOpenChange={() => {}}>
+        <DialogContent className="w-full max-w-sm h-screen m-0 rounded-none [&>button]:hidden">
+          <div className="flex flex-col h-full">
+            {/* Header */}
+            <DialogHeader className="flex-row items-center space-y-0 pb-2 border-b">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mr-2 p-1"
+                onClick={onClose}
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+              <DialogTitle className="flex-1 text-center">Settings</DialogTitle>
+              <div className="w-9"></div> {/* Spacer for centering */}
+            </DialogHeader>
 
               {/* Settings List */}
               <div className="flex-1 py-2 space-y-2">
@@ -167,7 +166,6 @@ export default function QuickCreateSettings({
             </div>
           </DialogContent>
         </Dialog>
-      </div>
 
       {/* Beep Tone Menu */}
       {showBeepToneMenu && (
