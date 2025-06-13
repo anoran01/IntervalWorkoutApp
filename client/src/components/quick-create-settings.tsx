@@ -23,6 +23,8 @@ export default function QuickCreateSettings({
   const [showBeepToneMenu, setShowBeepToneMenu] = useState(false);
   const [showBeepStartMenu, setShowBeepStartMenu] = useState(false);
   const [beepStart, setBeepStart] = useState(soundSettings.beepStart || 10);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout>();
 
   const updateSoundSetting = (key: keyof SoundSettings, value: any) => {
     onSoundSettingsChange({
@@ -30,6 +32,17 @@ export default function QuickCreateSettings({
       [key]: value
     });
   };
+
+  // Auto-scroll to current value when beep start menu opens
+  useEffect(() => {
+    if (showBeepStartMenu && scrollRef.current) {
+      const itemHeight = 48;
+      const containerHeight = 192;
+      const paddingTop = containerHeight / 2 - itemHeight / 2;
+      const scrollPosition = (beepStart - 1) * itemHeight + paddingTop;
+      scrollRef.current.scrollTop = scrollPosition;
+    }
+  }, [showBeepStartMenu, beepStart]);
 
   const handleBeepStartConfirm = (seconds: number) => {
     setBeepStart(seconds);
@@ -39,19 +52,8 @@ export default function QuickCreateSettings({
 
   const createBeepStartScrollList = () => {
     const items = Array.from({ length: 30 }, (_, i) => i + 1); // 1-30 seconds
-    const scrollRef = useRef<HTMLDivElement>(null);
-    const scrollTimeoutRef = useRef<NodeJS.Timeout>();
     const itemHeight = 48; // Height of each item
     const containerHeight = 192; // Height of visible area
-    
-    // Auto-scroll to current value when component mounts
-    useEffect(() => {
-      if (scrollRef.current) {
-        const paddingTop = containerHeight / 2 - itemHeight / 2;
-        const scrollPosition = (beepStart - 1) * itemHeight + paddingTop;
-        scrollRef.current.scrollTop = scrollPosition;
-      }
-    }, []);
 
     const handleScroll = () => {
       if (!scrollRef.current) return;
