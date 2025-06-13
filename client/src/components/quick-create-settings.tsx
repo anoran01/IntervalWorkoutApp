@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -39,24 +39,99 @@ export default function QuickCreateSettings({
 
   const createBeepStartScrollList = () => {
     const items = Array.from({ length: 30 }, (_, i) => i + 1); // 1-30 seconds
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const scrollTimeoutRef = useRef<NodeJS.Timeout>();
+    const itemHeight = 48; // Height of each item
+    const containerHeight = 192; // Height of visible area
+    
+    // Auto-scroll to current value when component mounts
+    useEffect(() => {
+      if (scrollRef.current) {
+        const paddingTop = containerHeight / 2 - itemHeight / 2;
+        const scrollPosition = (beepStart - 1) * itemHeight + paddingTop;
+        scrollRef.current.scrollTop = scrollPosition;
+      }
+    }, []);
+
+    const handleScroll = () => {
+      if (!scrollRef.current) return;
+      
+      // Clear existing timeout
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+      
+      const scrollTop = scrollRef.current.scrollTop;
+      const paddingTop = containerHeight / 2 - itemHeight / 2;
+      
+      // Calculate which item is currently centered  
+      const adjustedScrollTop = scrollTop - paddingTop;
+      const itemIndex = Math.round(adjustedScrollTop / itemHeight);
+      const clampedIndex = Math.max(0, Math.min(items.length - 1, itemIndex));
+      
+      // Update selected value
+      setBeepStart(items[clampedIndex]);
+      
+      // Set timeout to snap to position after scrolling stops
+      scrollTimeoutRef.current = setTimeout(() => {
+        if (!scrollRef.current) return;
+        
+        const currentScrollTop = scrollRef.current.scrollTop;
+        const currentPaddingTop = containerHeight / 2 - itemHeight / 2;
+        const currentAdjustedScrollTop = currentScrollTop - currentPaddingTop;
+        const currentItemIndex = Math.round(currentAdjustedScrollTop / itemHeight);
+        const currentClampedIndex = Math.max(0, Math.min(items.length - 1, currentItemIndex));
+        
+        // Calculate target scroll position to center the selected item
+        const targetScrollTop = currentClampedIndex * itemHeight + currentPaddingTop;
+        
+        // Only snap if we're not already at the target position
+        if (Math.abs(currentScrollTop - targetScrollTop) > 2) {
+          scrollRef.current.scrollTo({
+            top: targetScrollTop,
+            behavior: 'smooth'
+          });
+        }
+      }, 200);
+    };
     
     return (
       <div className="flex flex-col items-center w-full">
-        <div className="h-64 overflow-y-auto border border-border rounded-lg w-full max-w-24">
-          <div className="py-20">
+        <div className="relative">
+          {/* Selection Bar */}
+          <div 
+            className="absolute left-0 right-0 border-2 border-black dark:border-white rounded-lg z-10 pointer-events-none"
+            style={{ 
+              top: `${containerHeight / 2 - itemHeight / 2}px`,
+              height: `${itemHeight}px`,
+              backgroundColor: 'transparent'
+            }}
+          />
+          
+          {/* Scrollable Container */}
+          <div 
+            ref={scrollRef}
+            className="border-2 border-black rounded-lg overflow-y-auto scrollbar-hide"
+            style={{ height: `${containerHeight}px`, width: '120px' }}
+            onScroll={handleScroll}
+          >
+            {/* Padding top */}
+            <div style={{ height: `${containerHeight / 2 - itemHeight / 2}px` }} />
+            
+            {/* Values */}
             {items.map((item) => (
               <div
                 key={item}
-                className={`px-4 py-3 text-center cursor-pointer transition-colors text-lg ${
-                  item === beepStart
-                    ? "bg-primary text-primary-foreground font-semibold"
-                    : "hover:bg-muted"
-                }`}
+                className="text-center flex items-center justify-center transition-colors cursor-pointer"
+                style={{ height: `${itemHeight}px` }}
                 onClick={() => setBeepStart(item)}
               >
-                {item}
+                <span className="text-lg font-bold">{item}</span>
               </div>
             ))}
+            
+            {/* Padding bottom */}
+            <div style={{ height: `${containerHeight / 2 - itemHeight / 2}px` }} />
           </div>
         </div>
       </div>
