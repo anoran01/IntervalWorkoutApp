@@ -53,7 +53,7 @@ export default function TimePickerModal({
       <TimePickerWheel
         isOpen={isOpen}
         onClose={() => {}}
-        onConfirm={onValueChange}
+        onConfirm={() => {}}
         initialValue={initialValue}
         maxValue={maxValue}
         itemHeight={itemHeight}
