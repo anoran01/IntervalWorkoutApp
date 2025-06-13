@@ -1,5 +1,4 @@
-
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import TimePickerWheel from "@/components/timer-picker-wheel";
 
@@ -42,27 +41,6 @@ export default function TimePickerModal({
     onClose();
   };
 
-  const createPickerWheel = (
-    initialValue: number,
-    maxValue: number,
-    itemHeight: number,
-    containerHeight: number,
-    name: string,
-  ) => {
-    return (
-      <TimePickerWheel
-        isOpen={isOpen}
-        onClose={() => {}}
-        onConfirm={() => {}}
-        initialValue={initialValue}
-        maxValue={maxValue}
-        itemHeight={itemHeight}
-        containerHeight={containerHeight}
-        name={name}
-      />
-    );
-  };
-
   if (!isOpen) return null;
 
   return (
@@ -75,9 +53,26 @@ export default function TimePickerModal({
         </div>
 
         <div className="flex gap-4 py-4">
-          {showHours && createPickerWheel(hours, 23, 48, 244, "Hours")}
-          {createPickerWheel(minutes, 59, 48, 244, "Minutes")}
-          {createPickerWheel(seconds, 59, 48, 244, "Seconds")}
+          {showHours && (
+            <TimePickerWheel
+              value={hours}
+              maxValue={23}
+              onValueChange={setHours}
+              name="Hours"
+            />
+          )}
+          <TimePickerWheel
+            value={minutes}
+            maxValue={59}
+            onValueChange={setMinutes}
+            name="Minutes"
+          />
+          <TimePickerWheel
+            value={seconds}
+            maxValue={59}
+            onValueChange={setSeconds}
+            name="Seconds"
+          />
         </div>
 
         <div className="flex justify-center pt-4">
