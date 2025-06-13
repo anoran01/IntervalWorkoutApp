@@ -291,12 +291,14 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         max={currentEditingField === 'rounds' ? 20 : 10}
       />
 
-      <QuickCreateSettings
-        isOpen={showSettings}
-        onClose={() => setShowSettings(false)}
-        soundSettings={settings.soundSettings}
-        onSoundSettingsChange={handleSoundSettingsChange}
-      />
-    </div>
-  );
+      {/* Settings Modal */}
+      {showSettings && (
+        <div className="fixed inset-0 z-50">
+          <QuickCreateSettings
+            onClose={() => setShowSettings(false)}
+            soundSettings={settings.soundSettings}
+            onSoundSettingsChange={handleSoundSettingsChange}
+          />
+        </div>
+      )}
 }

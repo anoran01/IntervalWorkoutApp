@@ -7,19 +7,17 @@ import BeepStartPicker from "@/components/beep-start-picker";
 import type { SoundSettings } from "@shared/schema";
 import { useTheme } from "@/lib/theme-context";
 
-interface WorkoutSettingsProps {
-  workoutName: string;
+interface QuickCreateSettingsProps {
   soundSettings: SoundSettings;
   onSoundSettingsChange: (settings: SoundSettings) => void;
   onClose: () => void;
 }
 
-export default function QuickCreateSettings({ 
-  workoutName, 
+export default function QuickCreateSettings({  
   soundSettings, 
   onSoundSettingsChange, 
   onClose 
-}: WorkoutSettingsProps) {
+}: QuickCreateSettingsProps) {
   const { theme, toggleTheme } = useTheme();
   const [settings, setSettings] = useState<SoundSettings>(soundSettings);
   const [showBeepStartPicker, setShowBeepStartPicker] = useState(false);
