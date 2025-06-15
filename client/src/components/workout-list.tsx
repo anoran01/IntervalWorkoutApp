@@ -35,7 +35,7 @@ export default function WorkoutList({ onWorkoutSelect, onNavigateToQuickCreate }
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/workouts'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/workouts"] });
     },
   });
 
@@ -43,10 +43,14 @@ export default function WorkoutList({ onWorkoutSelect, onNavigateToQuickCreate }
     mutationFn: async (workoutId: number) => {
       const response = await apiRequest("DELETE", `/api/workouts/${workoutId}`);
       if (!response.ok) throw new Error('Failed to delete workout');
-      return response.json();
+      return true; // Don't try to parse JSON from 204 response
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/workouts'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/workouts"] });
+      setWorkoutToDelete(null);
+    },
+    onError: (error) => {
+      console.error('Delete failed:', error);
       setWorkoutToDelete(null);
     },
   });
