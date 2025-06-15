@@ -38,6 +38,10 @@ export default function WorkoutTimer({ workout, timers, onComplete, onStop }: Wo
       if (workoutSoundSettings.halfwayReminder && remaining === Math.floor((currentTimer?.duration || 0) / 2)) {
         playBeep();
       }
+      // Beep start functionality - beep during countdown to 1 second
+      if (remaining <= workoutSoundSettings.beepStart && remaining > 0) {
+        playBeep();
+      }
     }, [currentTimer?.duration, playBeep, workoutSoundSettings]),
     onComplete: useCallback(() => {
       // Vibrate if enabled
@@ -65,7 +69,11 @@ export default function WorkoutTimer({ workout, timers, onComplete, onStop }: Wo
       
       // Verbal reminder at timer start
       if (workoutSoundSettings.verbalReminder && 'speechSynthesis' in window) {
-        const utterance = new SpeechSynthesisUtterance(currentTimer.type === 'work' ? 'Work' : 'Rest');
+        const utterance = new SpeechSynthesisUtterance(
+          currentTimer.type === 'work' ? 'Work' : 
+          currentTimer.type === 'rest' ? 'Rest' : 
+          currentTimer.type === 'prepare' ? 'Prepare' : 'Ready'
+        );
         speechSynthesis.speak(utterance);
       }
     }

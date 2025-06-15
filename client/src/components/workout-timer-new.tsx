@@ -21,7 +21,7 @@ export default function WorkoutTimer({ workout, timers, onComplete, onStop }: Wo
   const workoutSoundSettings = workout.soundSettings as SoundSettings;
 
   const { playBeep, playCompletionSound } = useAudio(workoutSoundSettings);
-
+  
   const currentTimer = timers[currentTimerIndex];
   const isLastTimer = currentTimerIndex === timers.length - 1;
 
@@ -40,8 +40,18 @@ export default function WorkoutTimer({ workout, timers, onComplete, onStop }: Wo
           if (newTime === 10 && workoutSoundSettings.tenSecondWarning) {
             playBeep();
           }
-          if (newTime === 0) {
+          // Beep start functionality - beep during countdown to 1 second
+          if (newTime <= workoutSoundSettings.beepStart && newTime > 0) {
             playBeep();
+          }
+          // Verbal reminder at timer start
+          if (newTime === currentTimer.duration && workoutSoundSettings.verbalReminder && 'speechSynthesis' in window) {
+            const utterance = new SpeechSynthesisUtterance(
+              currentTimer.type === 'work' ? 'Work' : 
+              currentTimer.type === 'rest' ? 'Rest' : 
+              currentTimer.type === 'prepare' ? 'Prepare' : 'Ready'
+            );
+            speechSynthesis.speak(utterance);
           }
 
           return newTime;
@@ -62,15 +72,15 @@ export default function WorkoutTimer({ workout, timers, onComplete, onStop }: Wo
         const nextIndex = currentTimerIndex + 1;
         setCurrentTimerIndex(nextIndex);
         setTimeRemaining(timers[nextIndex].duration);
-        playBeep(); // Timer start sound
+        // No beep here - beep start will handle countdown beeps
       }
     }
-  }, [timeRemaining, currentTimer, isLastTimer, currentTimerIndex, timers, onComplete, playBeep, playCompletionSound]);
+  }, [timeRemaining, currentTimer, isLastTimer, currentTimerIndex, timers, onComplete, playCompletionSound]);
 
   const handlePlayPause = () => {
     if (!isRunning && currentTimerIndex === 0 && timeRemaining === timers[0]?.duration) {
       // Starting workout
-      playBeep();
+      //playBeep();
     }
     setIsRunning(!isRunning);
   };
