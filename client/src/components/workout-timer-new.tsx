@@ -12,7 +12,12 @@ interface WorkoutTimerProps {
   onStop: () => void;
 }
 
-export default function WorkoutTimer({ workout, timers, onComplete, onStop }: WorkoutTimerProps) {
+export default function WorkoutTimer({
+  workout,
+  timers,
+  onComplete,
+  onStop,
+}: WorkoutTimerProps) {
   const [isRunning, setIsRunning] = useState(false);
   const [currentTimerIndex, setCurrentTimerIndex] = useState(0);
   const [timeRemaining, setTimeRemaining] = useState(timers[0]?.duration || 0);
@@ -21,7 +26,7 @@ export default function WorkoutTimer({ workout, timers, onComplete, onStop }: Wo
   const workoutSoundSettings = workout.soundSettings as SoundSettings;
 
   const { playBeep, playCompletionSound } = useAudio(workoutSoundSettings);
-  
+
   const currentTimer = timers[currentTimerIndex];
   const isLastTimer = currentTimerIndex === timers.length - 1;
 
@@ -30,11 +35,14 @@ export default function WorkoutTimer({ workout, timers, onComplete, onStop }: Wo
 
     if (isRunning && timeRemaining > 0) {
       interval = setInterval(() => {
-        setTimeRemaining(prev => {
+        setTimeRemaining((prev) => {
           const newTime = prev - 1;
 
           // Audio notifications
-          if (newTime === Math.floor(currentTimer.duration / 2) && workoutSoundSettings.halfwayReminder) {
+          if (
+            newTime === Math.floor(currentTimer.duration / 2) &&
+            workoutSoundSettings.halfwayReminder
+          ) {
             playBeep();
           }
           if (newTime === 10 && workoutSoundSettings.tenSecondWarning) {
@@ -42,17 +50,21 @@ export default function WorkoutTimer({ workout, timers, onComplete, onStop }: Wo
           }
           // Beep start functionality - beep during countdown to 1 second
           if (newTime <= workoutSoundSettings.beepStart && newTime > 0) {
+            console.log('newTime', newTime);
             playBeep();
           }
           // Verbal reminder at timer start
-          if (newTime === currentTimer.duration && workoutSoundSettings.verbalReminder && 'speechSynthesis' in window) {
+          if (newTime === currentTimer.duration && workoutSoundSettings.verbalReminder) {
+            playBeep();
+          };
+          /*if (newTime === currentTimer.duration && workoutSoundSettings.verbalReminder && 'speechSynthesis' in window) {
             const utterance = new SpeechSynthesisUtterance(
               currentTimer.type === 'work' ? 'Work' : 
               currentTimer.type === 'rest' ? 'Rest' : 
               currentTimer.type === 'prepare' ? 'Prepare' : 'Ready'
             );
             speechSynthesis.speak(utterance);
-          }
+          }*/
 
           return newTime;
         });
@@ -75,10 +87,22 @@ export default function WorkoutTimer({ workout, timers, onComplete, onStop }: Wo
         // No beep here - beep start will handle countdown beeps
       }
     }
-  }, [timeRemaining, currentTimer, isLastTimer, currentTimerIndex, timers, onComplete, playCompletionSound]);
+  }, [
+    timeRemaining,
+    currentTimer,
+    isLastTimer,
+    currentTimerIndex,
+    timers,
+    onComplete,
+    playCompletionSound,
+  ]);
 
   const handlePlayPause = () => {
-    if (!isRunning && currentTimerIndex === 0 && timeRemaining === timers[0]?.duration) {
+    if (
+      !isRunning &&
+      currentTimerIndex === 0 &&
+      timeRemaining === timers[0]?.duration
+    ) {
       // Starting workout
       //playBeep();
     }
@@ -108,7 +132,7 @@ export default function WorkoutTimer({ workout, timers, onComplete, onStop }: Wo
         setCurrentTimerIndex(currentIndex);
       }
     }
-    
+
     setTimeRemaining(currentTime);
   };
 
@@ -130,12 +154,12 @@ export default function WorkoutTimer({ workout, timers, onComplete, onStop }: Wo
     // We need to go back to previous timer(s)
     // First, use up the elapsed time in current timer
     remainingSkip -= elapsedInCurrentTimer;
-    
+
     // Move to previous timer
     while (remainingSkip > 0 && currentIndex > 0) {
       currentIndex--;
       const prevTimerDuration = timers[currentIndex].duration;
-      
+
       if (remainingSkip <= prevTimerDuration) {
         // We can fit the remaining skip within this previous timer
         setCurrentTimerIndex(currentIndex);
@@ -146,7 +170,7 @@ export default function WorkoutTimer({ workout, timers, onComplete, onStop }: Wo
         remainingSkip -= prevTimerDuration;
       }
     }
-    
+
     // If we've gone back to the beginning, set to start of first timer
     setCurrentTimerIndex(0);
     setTimeRemaining(timers[0].duration);
@@ -156,35 +180,39 @@ export default function WorkoutTimer({ workout, timers, onComplete, onStop }: Wo
     return (
       <div className="flex flex-col h-screen bg-background items-center justify-center">
         <p className="text-muted-foreground">No timers available</p>
-        <Button onClick={onStop} className="mt-4">Back to Workout</Button>
+        <Button onClick={onStop} className="mt-4">
+          Back to Workout
+        </Button>
       </div>
     );
   }
 
-  const progressPercentage = ((currentTimer.duration - timeRemaining) / currentTimer.duration) * 100;
+  const progressPercentage =
+    ((currentTimer.duration - timeRemaining) / currentTimer.duration) * 100;
 
   const getTimerColor = (timerName: string) => {
     const name = timerName.toLowerCase();
-    if (name.includes('prepare')) return 'border-yellow-500 bg-yellow-100 dark:bg-yellow-900/30';
-    if (name.includes('work')) return 'border-orange-500 bg-orange-100 dark:bg-orange-900/30';
-    if (name.includes('rest') && !name.includes('cycle')) return 'border-blue-500 bg-blue-100 dark:bg-blue-900/30';
-    if (name.includes('cycle')) return 'border-green-500 bg-green-100 dark:bg-green-900/30';
-    return 'border-gray-500 bg-gray-100 dark:bg-gray-900/30';
+    if (name.includes("prepare"))
+      return "border-yellow-500 bg-yellow-100 dark:bg-yellow-900/30";
+    if (name.includes("work"))
+      return "border-orange-500 bg-orange-100 dark:bg-orange-900/30";
+    if (name.includes("rest") && !name.includes("cycle"))
+      return "border-blue-500 bg-blue-100 dark:bg-blue-900/30";
+    if (name.includes("cycle"))
+      return "border-green-500 bg-green-100 dark:bg-green-900/30";
+    return "border-gray-500 bg-gray-100 dark:bg-gray-900/30";
   };
 
   return (
     <div className="flex flex-col h-screen bg-background">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b-2 border-black">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="p-2"
-          onClick={onStop}
-        >
+        <Button variant="ghost" size="sm" className="p-2" onClick={onStop}>
           <ArrowLeft className="w-6 h-6" />
         </Button>
-        <h1 className="text-2xl font-bold text-center flex-1">{workout.name}</h1>
+        <h1 className="text-2xl font-bold text-center flex-1">
+          {workout.name}
+        </h1>
         <div className="w-10" />
       </div>
 
@@ -199,14 +227,14 @@ export default function WorkoutTimer({ workout, timers, onComplete, onStop }: Wo
           <SkipBack className="w-6 h-6" />
           <span className="text-xs mt-1">30</span>
         </Button>
-        
+
         <Button
           onClick={handlePlayPause}
           size="lg"
           className={`w-20 h-20 rounded-lg flex items-center justify-center ${
-            isRunning 
-              ? 'bg-transparent border-2 border-black dark:border-white text-black dark:text-white hover:bg-gray-800/20 dark:hover:bg-gray-200/20' 
-              : 'bg-white dark:bg-black text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
+            isRunning
+              ? "bg-transparent border-2 border-black dark:border-white text-black dark:text-white hover:bg-gray-800/20 dark:hover:bg-gray-200/20"
+              : "bg-white dark:bg-black text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
           }`}
         >
           {isRunning ? (
@@ -218,7 +246,7 @@ export default function WorkoutTimer({ workout, timers, onComplete, onStop }: Wo
             <Play className="w-12 h-12 ml-1" fill="currentColor" />
           )}
         </Button>
-        
+
         <Button
           variant="ghost"
           size="lg"
@@ -232,18 +260,22 @@ export default function WorkoutTimer({ workout, timers, onComplete, onStop }: Wo
 
       {/* Current Timer Progress Bar */}
       <div className="px-4 mb-4">
-        <div className={`border-2 rounded-lg p-4 relative overflow-hidden ${getTimerColor(currentTimer.name)}`}>
+        <div
+          className={`border-2 rounded-lg p-4 relative overflow-hidden ${getTimerColor(currentTimer.name)}`}
+        >
           {/* Progress fill that depletes from right to left */}
-          <div 
+          <div
             className="absolute inset-0 bg-background transition-all duration-1000 ease-linear"
-            style={{ 
+            style={{
               width: `${100 - progressPercentage}%`,
-              right: 0
+              right: 0,
             }}
           />
           <div className="relative z-10 flex items-center justify-between">
             <span className="text-lg font-bold">{currentTimer.name}</span>
-            <span className="text-lg font-bold">{formatTime(timeRemaining)}</span>
+            <span className="text-lg font-bold">
+              {formatTime(timeRemaining)}
+            </span>
           </div>
         </div>
       </div>
@@ -258,7 +290,9 @@ export default function WorkoutTimer({ workout, timers, onComplete, onStop }: Wo
             >
               <div className="flex items-center justify-between">
                 <span className="text-lg font-bold">{timer.name}</span>
-                <span className="text-lg font-bold">{formatTime(timer.duration)}</span>
+                <span className="text-lg font-bold">
+                  {formatTime(timer.duration)}
+                </span>
               </div>
             </div>
           ))}
