@@ -1,4 +1,6 @@
 import { workouts, timers, type Workout, type InsertWorkout, type Timer, type InsertTimer } from "@shared/schema";
+import { db } from "./db";
+import { eq, desc, asc, and, gte } from "drizzle-orm";
 
 export interface IStorage {
   // Workout operations
@@ -19,131 +21,115 @@ export interface IStorage {
   insertTimerAtPosition(workoutId: number, timer: Omit<InsertTimer, 'workoutId' | 'order'>, position: number): Promise<Timer>;
 }
 
-export class MemStorage implements IStorage {
-  private workouts: Map<number, Workout>;
-  private timers: Map<number, Timer>;
-  private currentWorkoutId: number;
-  private currentTimerId: number;
-
-  constructor() {
-    this.workouts = new Map();
-    this.timers = new Map();
-    this.currentWorkoutId = 1;
-    this.currentTimerId = 1;
-  }
-
+export class DatabaseStorage implements IStorage {
   async createWorkout(insertWorkout: InsertWorkout): Promise<Workout> {
-    const id = this.currentWorkoutId++;
-    const maxOrder = Math.max(...Array.from(this.workouts.values()).map(w => w.order), -1);
-    const workout: Workout = { 
-      ...insertWorkout, 
-      id,
-      order: insertWorkout.order ?? maxOrder + 1,
-      createdAt: new Date().toISOString()
-    };
-    this.workouts.set(id, workout);
+    const maxOrderResult = await db.select({ maxOrder: workouts.order }).from(workouts).orderBy(desc(workouts.order)).limit(1);
+    const maxOrder = maxOrderResult.length > 0 ? maxOrderResult[0].maxOrder : -1;
+    
+    const [workout] = await db
+      .insert(workouts)
+      .values({
+        ...insertWorkout,
+        order: insertWorkout.order ?? maxOrder + 1,
+        createdAt: new Date().toISOString()
+      })
+      .returning();
     return workout;
   }
 
   async getWorkout(id: number): Promise<Workout | undefined> {
-    return this.workouts.get(id);
+    const [workout] = await db.select().from(workouts).where(eq(workouts.id, id));
+    return workout || undefined;
   }
 
   async getAllWorkouts(): Promise<Workout[]> {
-    return Array.from(this.workouts.values()).sort((a, b) => a.order - b.order);
+    return await db.select().from(workouts).orderBy(asc(workouts.order));
   }
 
   async updateWorkout(id: number, updates: Partial<InsertWorkout>): Promise<Workout | undefined> {
-    const existing = this.workouts.get(id);
-    if (!existing) return undefined;
-    
-    const updated: Workout = { ...existing, ...updates };
-    this.workouts.set(id, updated);
-    return updated;
+    const [workout] = await db
+      .update(workouts)
+      .set(updates)
+      .where(eq(workouts.id, id))
+      .returning();
+    return workout || undefined;
   }
 
   async deleteWorkout(id: number): Promise<boolean> {
-    const deleted = this.workouts.delete(id);
-    if (deleted) {
-      await this.deleteTimersByWorkoutId(id);
-    }
-    return deleted;
-  }
-
-  async createTimer(insertTimer: InsertTimer): Promise<Timer> {
-    const id = this.currentTimerId++;
-    const timer: Timer = { ...insertTimer, id };
-    this.timers.set(id, timer);
-    return timer;
-  }
-
-  async getTimersByWorkoutId(workoutId: number): Promise<Timer[]> {
-    return Array.from(this.timers.values())
-      .filter(timer => timer.workoutId === workoutId)
-      .sort((a, b) => a.order - b.order);
-  }
-
-  async updateTimer(id: number, updates: Partial<InsertTimer>): Promise<Timer | undefined> {
-    const existing = this.timers.get(id);
-    if (!existing) return undefined;
-    
-    const updated: Timer = { ...existing, ...updates };
-    this.timers.set(id, updated);
-    return updated;
-  }
-
-  async deleteTimer(id: number): Promise<boolean> {
-    return this.timers.delete(id);
-  }
-
-  async deleteTimersByWorkoutId(workoutId: number): Promise<void> {
-    const timersToDelete = Array.from(this.timers.entries())
-      .filter(([_, timer]) => timer.workoutId === workoutId)
-      .map(([id]) => id);
-    
-    timersToDelete.forEach(id => this.timers.delete(id));
-  }
-
-  async reorderTimers(workoutId: number, timerOrders: { id: number; order: number }[]): Promise<void> {
-    for (const { id, order } of timerOrders) {
-      const timer = this.timers.get(id);
-      if (timer && timer.workoutId === workoutId) {
-        this.timers.set(id, { ...timer, order });
-      }
-    }
+    await this.deleteTimersByWorkoutId(id);
+    const result = await db.delete(workouts).where(eq(workouts.id, id));
+    return (result.rowCount ?? 0) > 0;
   }
 
   async reorderWorkouts(workoutOrders: { id: number; order: number }[]): Promise<void> {
     for (const { id, order } of workoutOrders) {
-      const workout = this.workouts.get(id);
-      if (workout) {
-        this.workouts.set(id, { ...workout, order });
-      }
+      await db
+        .update(workouts)
+        .set({ order })
+        .where(eq(workouts.id, id));
+    }
+  }
+
+  async createTimer(insertTimer: InsertTimer): Promise<Timer> {
+    const [timer] = await db
+      .insert(timers)
+      .values(insertTimer)
+      .returning();
+    return timer;
+  }
+
+  async getTimersByWorkoutId(workoutId: number): Promise<Timer[]> {
+    return await db
+      .select()
+      .from(timers)
+      .where(eq(timers.workoutId, workoutId))
+      .orderBy(asc(timers.order));
+  }
+
+  async updateTimer(id: number, updates: Partial<InsertTimer>): Promise<Timer | undefined> {
+    const [timer] = await db
+      .update(timers)
+      .set(updates)
+      .where(eq(timers.id, id))
+      .returning();
+    return timer || undefined;
+  }
+
+  async deleteTimer(id: number): Promise<boolean> {
+    const result = await db.delete(timers).where(eq(timers.id, id));
+    return result.rowCount > 0;
+  }
+
+  async deleteTimersByWorkoutId(workoutId: number): Promise<void> {
+    await db.delete(timers).where(eq(timers.workoutId, workoutId));
+  }
+
+  async reorderTimers(workoutId: number, timerOrders: { id: number; order: number }[]): Promise<void> {
+    for (const { id, order } of timerOrders) {
+      await db
+        .update(timers)
+        .set({ order })
+        .where(and(eq(timers.id, id), eq(timers.workoutId, workoutId)));
     }
   }
 
   async insertTimerAtPosition(workoutId: number, timer: Omit<InsertTimer, 'workoutId' | 'order'>, position: number): Promise<Timer> {
-    // Get existing timers for this workout
-    const existingTimers = await this.getTimersByWorkoutId(workoutId);
-    
-    // Shift orders for timers at or after the insertion position
-    for (const existingTimer of existingTimers) {
-      if (existingTimer.order >= position) {
-        this.timers.set(existingTimer.id, { ...existingTimer, order: existingTimer.order + 1 });
-      }
-    }
-    
-    // Create new timer at the specified position
-    const id = this.currentTimerId++;
-    const newTimer: Timer = { 
-      ...timer, 
-      id,
-      workoutId,
-      order: position
-    };
-    this.timers.set(id, newTimer);
+    // Shift existing timers at or after position up by 1
+    await db
+      .update(timers)
+      .set({ order: timers.order + 1 })
+      .where(and(eq(timers.workoutId, workoutId), gte(timers.order, position)));
+
+    const [newTimer] = await db
+      .insert(timers)
+      .values({
+        ...timer,
+        workoutId,
+        order: position
+      })
+      .returning();
     return newTimer;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
