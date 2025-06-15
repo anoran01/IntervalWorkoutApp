@@ -1,6 +1,6 @@
 import { workouts, timers, type Workout, type InsertWorkout, type Timer, type InsertTimer } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, asc, and, gte } from "drizzle-orm";
+import { eq, desc, asc, and, gte, sql } from "drizzle-orm";
 
 export interface IStorage {
   // Workout operations
@@ -97,7 +97,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteTimer(id: number): Promise<boolean> {
     const result = await db.delete(timers).where(eq(timers.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   async deleteTimersByWorkoutId(workoutId: number): Promise<void> {
@@ -117,7 +117,7 @@ export class DatabaseStorage implements IStorage {
     // Shift existing timers at or after position up by 1
     await db
       .update(timers)
-      .set({ order: timers.order + 1 })
+      .set({ order: sql`${timers.order} + 1` })
       .where(and(eq(timers.workoutId, workoutId), gte(timers.order, position)));
 
     const [newTimer] = await db
