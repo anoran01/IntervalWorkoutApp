@@ -43,18 +43,21 @@ export default function WorkoutTimer({
             newTime === Math.floor(currentTimer.duration / 2) &&
             workoutSoundSettings.halfwayReminder
           ) {
+            console.log('🔊 Halfway reminder beep - Timer:', currentTimer.name, 'Time:', newTime);
             playBeep();
           }
           if (newTime === 10 && workoutSoundSettings.tenSecondWarning) {
+            console.log('🔊 Ten second warning beep - Timer:', currentTimer.name, 'Time:', newTime);
             playBeep();
           }
           // Beep start functionality - beep during countdown to 1 second
           if (newTime <= workoutSoundSettings.beepStart && newTime > 0) {
-            console.log('newTime', newTime);
+            console.log('🔊 Beep start countdown - Timer:', currentTimer.name, 'Time:', newTime, 'BeepStart setting:', workoutSoundSettings.beepStart);
             playBeep();
           }
           // Verbal reminder at timer start
           if (newTime === currentTimer.duration && workoutSoundSettings.verbalReminder) {
+            console.log('🔊 Verbal reminder beep - Timer:', currentTimer.name, 'Starting with duration:', currentTimer.duration);
             playBeep();
           };
           /*if (newTime === currentTimer.duration && workoutSoundSettings.verbalReminder && 'speechSynthesis' in window) {
@@ -77,11 +80,13 @@ export default function WorkoutTimer({
   useEffect(() => {
     if (timeRemaining === 0 && currentTimer) {
       if (isLastTimer) {
+        console.log('🎯 Workout complete - Playing completion sound');
         playCompletionSound();
         onComplete();
       } else {
         // Move to next timer
         const nextIndex = currentTimerIndex + 1;
+        console.log('⏭️ Moving to next timer:', timers[nextIndex].name, 'Duration:', timers[nextIndex].duration);
         setCurrentTimerIndex(nextIndex);
         setTimeRemaining(timers[nextIndex].duration);
         // No beep here - beep start will handle countdown beeps
@@ -104,8 +109,10 @@ export default function WorkoutTimer({
       timeRemaining === timers[0]?.duration
     ) {
       // Starting workout
+      console.log('▶️ Starting workout:', workout.name, 'First timer:', timers[0]?.name);
       //playBeep();
     }
+    console.log('⏯️ Play/Pause toggled - isRunning:', !isRunning, 'Current timer:', currentTimer?.name);
     setIsRunning(!isRunning);
   };
 
