@@ -40,7 +40,9 @@ export default function BeepStartPicker({ isOpen, onClose, onConfirm, initialVal
     // Calculate which item is currently centered  
     const adjustedScrollTop = scrollTop;
     const itemIndex = Math.round(adjustedScrollTop / itemHeight);
-    const clampedIndex = Math.max(0, Math.min(values.length - 1, itemIndex));
+    const clampedIndex = itemIndex;
+    //const clampedIndex = Math.max(0, Math.min(values.length - 1, itemIndex));
+    
     
     // Update selected value without triggering scroll
     setSelectedValue(clampedIndex);
@@ -50,13 +52,18 @@ export default function BeepStartPicker({ isOpen, onClose, onConfirm, initialVal
       if (!scrollRef.current) return;
       
       const currentScrollTop = scrollRef.current.scrollTop;
-      const currentPaddingTop = containerHeight / 2 - itemHeight / 2;
-      const currentAdjustedScrollTop = currentScrollTop - currentPaddingTop;
-      const currentItemIndex = Math.round(currentAdjustedScrollTop / itemHeight) + 1;
-      const currentClampedIndex = Math.max(0, Math.min(values.length - 1, currentItemIndex));
+      
+      //const currentPaddingTop = containerHeight / 2 - itemHeight / 2;
+      //console.log('current padding top', currentPaddingTop);
+      const currentAdjustedScrollTop = currentScrollTop;// - currentPaddingTop;
+      const currentItemIndex = Math.round(currentAdjustedScrollTop / itemHeight);// + 1;
+      const currentClampedIndex = currentItemIndex;
+//      const currentClampedIndex = Math.max(0, Math.min(values.length - 1, currentItemIndex));
+      
       
       // Calculate target scroll position to center the selected item
-      const targetScrollTop = (currentClampedIndex - 1) * itemHeight + currentPaddingTop;
+      const targetScrollTop = currentClampedIndex * itemHeight;
+      //const targetScrollTop = (currentClampedIndex - 1) * itemHeight;// + currentPaddingTop;
       
       // Only snap if we're not already at the target position
       if (Math.abs(currentScrollTop - targetScrollTop) > 2) {

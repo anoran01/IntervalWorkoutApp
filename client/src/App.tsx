@@ -21,6 +21,7 @@ function App() {
       <ThemeProvider>
         <TooltipProvider>
           <div className="min-h-screen bg-background text-foreground">
+            {console.log("App rendered")}
             <Router />
           </div>
         </TooltipProvider>
