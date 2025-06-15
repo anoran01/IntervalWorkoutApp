@@ -18,7 +18,8 @@ export default function WorkoutTimer({ workout, timers, onComplete, onStop }: Wo
   const [isRunning, setIsRunning] = useState(true);
   const currentTimer = timers[currentTimerIndex];
   
-  const { playBeep, playCompletionSound } = useAudio(workout.soundSettings as SoundSettings);
+  const workoutSoundSettings = workout.soundSettings as SoundSettings;
+  const { playBeep, playCompletionSound } = useAudio(workoutSoundSettings);
   
   const {
     timeRemaining,
@@ -31,16 +32,16 @@ export default function WorkoutTimer({ workout, timers, onComplete, onStop }: Wo
     initialTime: currentTimer?.duration || 0,
     onTick: useCallback((remaining: number) => {
       // Handle sound cues
-      if (workout.soundSettings.tenSecondWarning && remaining === 10) {
+      if (workoutSoundSettings.tenSecondWarning && remaining === 10) {
         playBeep();
       }
-      if (workout.soundSettings.halfwayReminder && remaining === Math.floor((currentTimer?.duration || 0) / 2)) {
+      if (workoutSoundSettings.halfwayReminder && remaining === Math.floor((currentTimer?.duration || 0) / 2)) {
         playBeep();
       }
-    }, [currentTimer?.duration, playBeep, workout.soundSettings]),
+    }, [currentTimer?.duration, playBeep, workoutSoundSettings]),
     onComplete: useCallback(() => {
       // Vibrate if enabled
-      if (workout.soundSettings.vibrate && navigator.vibrate) {
+      if (workoutSoundSettings.vibrate && navigator.vibrate) {
         navigator.vibrate(200);
       }
       
@@ -51,7 +52,7 @@ export default function WorkoutTimer({ workout, timers, onComplete, onStop }: Wo
         playCompletionSound();
         onComplete();
       }
-    }, [currentTimerIndex, timers.length, onComplete, playCompletionSound, workout.soundSettings.vibrate])
+    }, [currentTimerIndex, timers.length, onComplete, playCompletionSound, workoutSoundSettings.vibrate])
   });
 
   // Reset timer when current timer changes
@@ -61,8 +62,14 @@ export default function WorkoutTimer({ workout, timers, onComplete, onStop }: Wo
       if (isRunning) {
         start();
       }
+      
+      // Verbal reminder at timer start
+      if (workoutSoundSettings.verbalReminder && 'speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(currentTimer.type === 'work' ? 'Work' : 'Rest');
+        speechSynthesis.speak(utterance);
+      }
     }
-  }, [currentTimer, reset, start, isRunning]);
+  }, [currentTimer, reset, start, isRunning, workoutSoundSettings.verbalReminder]);
 
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
