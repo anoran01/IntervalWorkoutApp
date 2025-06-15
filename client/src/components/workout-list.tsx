@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Settings, Plus, List, GripVertical } from "lucide-react";
+import { Settings, Plus, List, GripVertical, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import WorkoutListSettings from "@/components/workout-list-settings";
 import type { Workout, Timer } from "@shared/schema";
 
@@ -15,6 +16,7 @@ export default function WorkoutList({ onWorkoutSelect, onNavigateToQuickCreate }
   const [showSettings, setShowSettings] = useState(false);
   const [draggedItem, setDraggedItem] = useState<number | null>(null);
   const [draggedOver, setDraggedOver] = useState<number | null>(null);
+  const [workoutToDelete, setWorkoutToDelete] = useState<Workout | null>(null);
   
   const { data: workouts = [], isLoading } = useQuery<Workout[]>({
     queryKey: ["/api/workouts"],
@@ -34,6 +36,18 @@ export default function WorkoutList({ onWorkoutSelect, onNavigateToQuickCreate }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/workouts'] });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (workoutId: number) => {
+      const response = await apiRequest("DELETE", `/api/workouts/${workoutId}`);
+      if (!response.ok) throw new Error('Failed to delete workout');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/workouts'] });
+      setWorkoutToDelete(null);
     },
   });
 
@@ -97,6 +111,17 @@ export default function WorkoutList({ onWorkoutSelect, onNavigateToQuickCreate }
       onWorkoutSelect(workout, timers);
     } catch (error) {
       console.error("Failed to fetch workout timers:", error);
+    }
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent, workout: Workout) => {
+    e.stopPropagation(); // Prevent workout click
+    setWorkoutToDelete(workout);
+  };
+
+  const handleConfirmDelete = () => {
+    if (workoutToDelete) {
+      deleteMutation.mutate(workoutToDelete.id);
     }
   };
 
@@ -180,6 +205,14 @@ export default function WorkoutList({ onWorkoutSelect, onNavigateToQuickCreate }
                   >
                     {workout.name}
                   </h3>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    onClick={(e) => handleDeleteClick(e, workout)}
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </Button>
                 </div>
               </div>
             ))}
@@ -210,6 +243,27 @@ export default function WorkoutList({ onWorkoutSelect, onNavigateToQuickCreate }
           />
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!workoutToDelete} onOpenChange={() => setWorkoutToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Workout</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{workoutToDelete?.name}"? This action cannot be undone and will permanently remove the workout and all its timers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
