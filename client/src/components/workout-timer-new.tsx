@@ -17,17 +17,10 @@ export default function WorkoutTimer({ workout, timers, onComplete, onStop }: Wo
   const [currentTimerIndex, setCurrentTimerIndex] = useState(0);
   const [timeRemaining, setTimeRemaining] = useState(timers[0]?.duration || 0);
 
-  // Default sound settings - in a real app this would come from workout settings
-  const defaultSoundSettings: SoundSettings = {
-    beepTone: "standard",
-    beepStart: 10,
-    tenSecondWarning: true,
-    halfwayReminder: true,
-    verbalReminder: true,
-    vibrate: true
-  };
+  // Use the workout's sound settings
+  const workoutSoundSettings = workout.soundSettings as SoundSettings;
 
-  const { playBeep, playCompletionSound } = useAudio(defaultSoundSettings);
+  const { playBeep, playCompletionSound } = useAudio(workoutSoundSettings);
 
   const currentTimer = timers[currentTimerIndex];
   const isLastTimer = currentTimerIndex === timers.length - 1;
@@ -41,10 +34,10 @@ export default function WorkoutTimer({ workout, timers, onComplete, onStop }: Wo
           const newTime = prev - 1;
 
           // Audio notifications
-          if (newTime === Math.floor(currentTimer.duration / 2) && defaultSoundSettings.halfwayReminder) {
+          if (newTime === Math.floor(currentTimer.duration / 2) && workoutSoundSettings.halfwayReminder) {
             playBeep();
           }
-          if (newTime === 10 && defaultSoundSettings.tenSecondWarning) {
+          if (newTime === 10 && workoutSoundSettings.tenSecondWarning) {
             playBeep();
           }
           if (newTime === 0) {
@@ -57,7 +50,7 @@ export default function WorkoutTimer({ workout, timers, onComplete, onStop }: Wo
     }
 
     return () => clearInterval(interval);
-  }, [isRunning, timeRemaining, currentTimer, playBeep, defaultSoundSettings]);
+  }, [isRunning, timeRemaining, currentTimer, playBeep, workoutSoundSettings]);
 
   useEffect(() => {
     if (timeRemaining === 0 && currentTimer) {

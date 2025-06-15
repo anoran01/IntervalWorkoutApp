@@ -4,7 +4,7 @@ import { Progress } from "@/components/ui/progress";
 import { Pause, OctagonMinus, Play, SkipForward, Plus } from "lucide-react";
 import { useTimer } from "@/hooks/use-timer";
 import { useAudio } from "@/hooks/use-audio";
-import type { Workout, Timer } from "@shared/schema";
+import type { Workout, Timer, SoundSettings } from "@shared/schema";
 
 interface WorkoutTimerProps {
   workout: Workout;
@@ -18,7 +18,7 @@ export default function WorkoutTimer({ workout, timers, onComplete, onStop }: Wo
   const [isRunning, setIsRunning] = useState(true);
   const currentTimer = timers[currentTimerIndex];
   
-  const { playBeep, playCompletionSound } = useAudio(workout.soundSettings);
+  const { playBeep, playCompletionSound } = useAudio(workout.soundSettings as SoundSettings);
   
   const {
     timeRemaining,
