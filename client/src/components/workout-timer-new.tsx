@@ -55,11 +55,6 @@ export default function WorkoutTimer({
             console.log('🔊 Beep start countdown - Timer:', currentTimer.name, 'Time:', newTime, 'BeepStart setting:', workoutSoundSettings.beepStart);
             playBeep();
           }
-          // Verbal reminder at timer start
-          if (newTime === currentTimer.duration && workoutSoundSettings.verbalReminder) {
-            console.log('🔊 Verbal reminder beep - Timer:', currentTimer.name, 'Starting with duration:', currentTimer.duration);
-            playBeep();
-          };
           /*if (newTime === currentTimer.duration && workoutSoundSettings.verbalReminder && 'speechSynthesis' in window) {
             const utterance = new SpeechSynthesisUtterance(
               currentTimer.type === 'work' ? 'Work' : 
@@ -86,10 +81,16 @@ export default function WorkoutTimer({
       } else {
         // Move to next timer
         const nextIndex = currentTimerIndex + 1;
-        console.log('⏭️ Moving to next timer:', timers[nextIndex].name, 'Duration:', timers[nextIndex].duration);
+        const nextTimer = timers[nextIndex];
+        console.log('⏭️ Moving to next timer:', nextTimer.name, 'Duration:', nextTimer.duration);
         setCurrentTimerIndex(nextIndex);
-        setTimeRemaining(timers[nextIndex].duration);
-        // No beep here - beep start will handle countdown beeps
+        setTimeRemaining(nextTimer.duration);
+        
+        // Verbal reminder for the new timer
+        if (workoutSoundSettings.verbalReminder) {
+          console.log('🔊 Verbal reminder beep - Timer:', nextTimer.name, 'Starting with duration:', nextTimer.duration);
+          playBeep();
+        }
       }
     }
   }, [
@@ -100,6 +101,8 @@ export default function WorkoutTimer({
     timers,
     onComplete,
     playCompletionSound,
+    workoutSoundSettings.verbalReminder,
+    playBeep,
   ]);
 
   const handlePlayPause = () => {
@@ -108,9 +111,12 @@ export default function WorkoutTimer({
       currentTimerIndex === 0 &&
       timeRemaining === timers[0]?.duration
     ) {
-      // Starting workout
+      // Starting workout - verbal reminder for first timer
       console.log('▶️ Starting workout:', workout.name, 'First timer:', timers[0]?.name);
-      //playBeep();
+      if (workoutSoundSettings.verbalReminder) {
+        console.log('🔊 Verbal reminder beep - Timer:', timers[0]?.name, 'Starting with duration:', timers[0]?.duration);
+        playBeep();
+      }
     }
     console.log('⏯️ Play/Pause toggled - isRunning:', !isRunning, 'Current timer:', currentTimer?.name);
     setIsRunning(!isRunning);
