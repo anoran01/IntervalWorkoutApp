@@ -150,7 +150,7 @@ export default function WorkoutList({ onWorkoutSelect, onNavigateToQuickCreate }
       </div>
 
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto pt-20 pb-20 p-4">
+      <div className="flex-1 overflow-y-auto pt-20 pb-20 p-4 scrollbar-hide">
         {workouts.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground mb-4">No workouts created yet</p>

@@ -180,7 +180,7 @@ export default function WorkoutMenu({
     const container = scrollContainerRef.current;
     const containerRect = container.getBoundingClientRect();
     const containerHeight = containerRect.height;
-    const middleY = containerHeight / 2;
+    const middleY = containerHeight / 2.65;
 
     // Get all timer elements
     const timerElements = timerListRef.current.children;
@@ -353,7 +353,7 @@ export default function WorkoutMenu({
 
       {/* Fixed Add Timer Button - positioned between 2nd and 3rd timers */}
       <div className="fixed left-4 right-4 z-30 flex items-center" style={{ 
-        top: `calc(20px + 80px + 48px + 72px + 12px + 36px)` // Header + Play button + spacing + 1st timer + spacing + half of 2nd timer
+        top: `calc(20px + 80px + 48px + 72px + 12px + 6px)` // Header + Play button + spacing + 1st timer + spacing + half of spacing?
       }}>
         <button
           onClick={() => handleAddTimer(insertPosition)}
@@ -361,13 +361,13 @@ export default function WorkoutMenu({
         >
           <Plus className="w-4 h-4" />
         </button>
-        <div className="flex-1 h-0.5 bg-black dark:bg-white ml-3 mr-4"></div>
+        <div className="flex-1 h-0.5 bg-black dark:bg-white ml-3 mr-80"></div>
       </div>
 
       {/* Scrollable Content */}
       <div 
         ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto pt-20 pb-4"
+        className="flex-1 overflow-y-auto pt-20 pb-4 scrollbar-hide"
         style={{ scrollBehavior: 'auto' }}
       >
         <div className="p-4 space-y-6">
@@ -395,8 +395,10 @@ export default function WorkoutMenu({
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, timer.id)}
               >
+                
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
+                    
                     <GripVertical className="w-5 h-5 text-gray-500 cursor-grab active:cursor-grabbing" />
                     <span 
                       className="text-lg font-bold cursor-pointer"
