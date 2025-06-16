@@ -43,9 +43,14 @@ export default function WorkoutMenu({
   const [draggedItem, setDraggedItem] = useState<number | null>(null);
   const [draggedOver, setDraggedOver] = useState<number | null>(null);
   const [headerHeight, setHeaderHeight] = useState(80); // Default fallback
+  const [lineAngle, setLineAngle] = useState(0); // Line angle in degrees
+  const [lineLength, setLineLength] = useState(200); // Line length in pixels
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const timerListRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
+  const addTimerButtonRef = useRef<HTMLButtonElement>(null);
+  const addTimerLineRef = useRef<HTMLDivElement>(null);
+  const timerRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const reorderMutation = useMutation({
     mutationFn: async (timerOrders: { id: number; order: number }[]) => {
@@ -94,6 +99,120 @@ export default function WorkoutMenu({
     }
     setIsEditingWorkoutName(false);
   };
+
+  // Calculate the nearest gap between timers and angle the line to point there
+  const updateLineAngle = () => {
+    if (!addTimerButtonRef.current || !timerListRef.current) return;
+
+    const buttonRect = addTimerButtonRef.current.getBoundingClientRect();
+    const buttonCenterY = buttonRect.top + buttonRect.height / 2;
+    const buttonCenterX = buttonRect.left + buttonRect.width / 2;
+
+    // Get all timer elements
+    const timerElements = timerRefs.current.filter(ref => ref !== null);
+    
+    if (timerElements.length === 0) {
+      // No timers, point to the timer list area
+      const listRect = timerListRef.current.getBoundingClientRect();
+      const targetY = listRect.top + 50; // Point to beginning of list area
+      const targetX = listRect.left + listRect.width / 2;
+      
+      const deltaX = targetX - buttonCenterX;
+      const deltaY = targetY - buttonCenterY;
+      const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
+      const length = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+      
+      setLineAngle(angle);
+      setLineLength(length);
+      setInsertPosition(0);
+      return;
+    }
+
+    // Find the gap closest to the button's Y position
+    let closestGapY = 0;
+    let closestDistance = Infinity;
+    let closestPosition = 0;
+
+    // Check gap before first timer
+    const firstTimerRect = timerElements[0].getBoundingClientRect();
+    const gapBeforeFirst = firstTimerRect.top - 15; // 15px above first timer
+    const distanceToFirst = Math.abs(buttonCenterY - gapBeforeFirst);
+    
+    if (distanceToFirst < closestDistance) {
+      closestDistance = distanceToFirst;
+      closestGapY = gapBeforeFirst;
+      closestPosition = 0;
+    }
+
+    // Check gaps between timers
+    for (let i = 0; i < timerElements.length - 1; i++) {
+      const currentRect = timerElements[i].getBoundingClientRect();
+      const nextRect = timerElements[i + 1].getBoundingClientRect();
+      const gapY = currentRect.bottom + ((nextRect.top - currentRect.bottom) / 2);
+      const distance = Math.abs(buttonCenterY - gapY);
+      
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestGapY = gapY;
+        closestPosition = i + 1;
+      }
+    }
+
+    // Check gap after last timer
+    const lastTimerRect = timerElements[timerElements.length - 1].getBoundingClientRect();
+    const gapAfterLast = lastTimerRect.bottom + 15; // 15px below last timer
+    const distanceToLast = Math.abs(buttonCenterY - gapAfterLast);
+    
+    if (distanceToLast < closestDistance) {
+      closestDistance = distanceToLast;
+      closestGapY = gapAfterLast;
+      closestPosition = timerElements.length;
+    }
+
+    // Calculate angle from button to closest gap
+    const listRect = timerListRef.current.getBoundingClientRect();
+    const targetX = listRect.left + listRect.width / 2;
+    
+    const deltaX = targetX - buttonCenterX;
+    const deltaY = closestGapY - buttonCenterY;
+    const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
+    const length = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    
+    setLineAngle(angle);
+    setLineLength(Math.min(length, 300)); // Cap length at 300px
+    setInsertPosition(closestPosition);
+  };
+
+  // Update line angle when timers change or on scroll
+  useEffect(() => {
+    updateLineAngle();
+    
+    const handleScroll = () => {
+      updateLineAngle();
+    };
+    
+    const handleResize = () => {
+      updateLineAngle();
+    };
+    
+    const scrollContainer = scrollContainerRef.current;
+    if (scrollContainer) {
+      scrollContainer.addEventListener('scroll', handleScroll);
+    }
+    
+    window.addEventListener('resize', handleResize);
+    
+    // Update angle after a short delay to ensure DOM is settled
+    const timer = setTimeout(updateLineAngle, 100);
+    
+    return () => {
+      if (scrollContainer) {
+        scrollContainer.removeEventListener('scroll', handleScroll);
+      }
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(timer);
+    };
+  }, [timers.length, showAddTimer]); // Re-run when timer count changes
 
   const handleDragStart = (e: React.DragEvent, timerId: number) => {
     setDraggedItem(timerId);
@@ -373,13 +492,40 @@ export default function WorkoutMenu({
       <div className="fixed left-4 right-4 z-30 flex items-center" style={{ 
         top: '50vh' // Header + Play button + spacing + 1st timer + spacing + half of spacing?
       }}>
-        <button
+        <button ref={addTimerButtonRef} 
           onClick={() => handleAddTimer(insertPosition)}
           className="w-8 h-8 rounded-full border-2 border-black dark:border-white bg-background flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shadow-lg"
         >
           <Plus className="w-4 h-4" />
         </button>
-        <div className="flex-1 h-0.5 bg-black dark:bg-white ml-3 mr-80"></div>
+        <svg 
+          ref={addTimerLineRef}
+          className="ml-3" 
+          width={lineLength} 
+          height="100" 
+          style={{ 
+            position: 'absolute',
+            left: '44px', // Position after button (32px + 12px margin)
+            top: '50%',
+            transform: 'translateY(-50%)',
+            pointerEvents: 'none',
+            zIndex: 25
+          }}
+        >
+          <line
+            x1="0"
+            y1="50"
+            x2={lineLength}
+            y2="50"
+            stroke="currentColor"
+            strokeWidth="2"
+            className="text-black dark:text-white"
+            style={{
+              transform: `rotate(${lineAngle}deg)`,
+              transformOrigin: '0 50px'
+            }}
+          />
+        </svg>
       </div>
 
       {/* Scrollable Content */}
@@ -403,6 +549,7 @@ export default function WorkoutMenu({
             {timers.map((timer, index) => (
               <div
                 key={timer.id}
+                ref={(el) => { timerRefs.current[index] = el; }}
                 className={`border-2 rounded-lg p-4 transition-all duration-200 ${getTimerColor(timer.name, index)} ${
                   draggedItem === timer.id ? 'opacity-50' : ''
                 } ${
