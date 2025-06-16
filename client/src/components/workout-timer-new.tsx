@@ -43,12 +43,12 @@ export default function WorkoutTimer({
             newTime === Math.floor(currentTimer.duration / 2) &&
             workoutSoundSettings.halfwayReminder
           ) {
-            console.log('🔊 Halfway reminder beep - Timer:', currentTimer.name, 'Time:', newTime);
-            playBeep();
+            console.log('🔊 Halfway reminder audio - Timer:', currentTimer.name, 'Time:', newTime);
+            playHalfwayReminder();
           }
           if (newTime === 10 && workoutSoundSettings.tenSecondWarning) {
-            console.log('🔊 Ten second warning beep - Timer:', currentTimer.name, 'Time:', newTime);
-            playBeep();
+            console.log('🔊 Ten second warning audio - Timer:', currentTimer.name, 'Time:', newTime);
+            playTenSecondWarning();
           }
           // Beep start functionality - beep during countdown to 1 second
           if (newTime <= workoutSoundSettings.beepStart && newTime > 0) {
@@ -80,11 +80,11 @@ export default function WorkoutTimer({
         
         // Verbal reminder for the new timer
         if (workoutSoundSettings.verbalReminder) {
-          console.log('🔊 Verbal reminder beep - Timer:', nextTimer.name, 'Starting with duration:', nextTimer.duration);
-          playBeep();
+          console.log('🔊 Verbal reminder audio - Timer:', nextTimer.name, 'Type:', nextTimer.type, 'Starting with duration:', nextTimer.duration);
+          playVerbalReminder(nextTimer.type);
         } else if (workoutSoundSettings.tenSecondWarning && nextTimer.duration === 10) {
           console.log('🔊 Ten Second Timer Duration - Timer:', nextTimer.name, 'Time:', nextTimer.duration);
-          playBeep();
+          playTenSecondWarning();
         }
       }
     }
@@ -97,7 +97,10 @@ export default function WorkoutTimer({
     onComplete,
     playCompletionSound,
     workoutSoundSettings.verbalReminder,
+    workoutSoundSettings.tenSecondWarning,
     playBeep,
+    playVerbalReminder,
+    playTenSecondWarning,
   ]);
 
   const handlePlayPause = () => {
@@ -109,8 +112,8 @@ export default function WorkoutTimer({
       // Starting workout - verbal reminder for first timer
       console.log('▶️ Starting workout:', workout.name, 'First timer:', timers[0]?.name);
       if (workoutSoundSettings.verbalReminder) {
-        console.log('🔊 Verbal reminder beep - Timer:', timers[0]?.name, 'Starting with duration:', timers[0]?.duration);
-        playBeep();
+        console.log('🔊 Verbal reminder audio - Timer:', timers[0]?.name, 'Type:', timers[0]?.type, 'Starting with duration:', timers[0]?.duration);
+        playVerbalReminder(timers[0]?.type);
       }
     }
     console.log('⏯️ Play/Pause toggled - isRunning:', !isRunning, 'Current timer:', currentTimer?.name);
