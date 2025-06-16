@@ -490,11 +490,13 @@ export default function WorkoutMenu({
 
       {/* Fixed Add Timer Button - positioned between 2nd and 3rd timers */}
       <div className="fixed left-4 right-4 z-30 flex items-center" style={{ 
-        top: '50vh' // Header + Play button + spacing + 1st timer + spacing + half of spacing?
+        top: '50vh', // Header + Play button + spacing + 1st timer + spacing + half of spacing?
+        pointerEvents: 'none'
       }}>
         <button ref={addTimerButtonRef} 
           onClick={() => handleAddTimer(insertPosition)}
           className="w-8 h-8 rounded-full border-2 border-black dark:border-white bg-background flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shadow-lg"
+          style={{ pointerEvents: 'auto' }}
         >
           <Plus className="w-4 h-4" />
         </button>
