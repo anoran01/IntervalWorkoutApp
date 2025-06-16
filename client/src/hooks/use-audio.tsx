@@ -122,7 +122,7 @@ export function useAudio(soundSettings: SoundSettings) {
       // Wait a moment before playing the second sound
       setTimeout(async () => {
         await playAudioFile(greatWorkoutWav);
-      }, 1000);
+      }, 250);
     } catch (error) {
       console.warn("Failed to play completion sound:", error);
     }
