@@ -49,7 +49,7 @@ export default function WorkoutMenu({
   const timerListRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const addTimerButtonRef = useRef<HTMLButtonElement>(null);
-  const addTimerLineRef = useRef<HTMLDivElement>(null);
+  const addTimerLineRef = useRef<SVGSVGElement>(null);
   const timerRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const reorderMutation = useMutation({
