@@ -46,12 +46,12 @@ export default function WorkoutTimer({
             console.log('🔊 Halfway reminder beep - Timer:', currentTimer.name, 'Time:', newTime);
             playBeep();
           }
-          if (newTime === 10 && workoutSoundSettings.tenSecondWarning && currentTimer.duration > 10) {
+          if (newTime === 10 && workoutSoundSettings.tenSecondWarning) {
             console.log('🔊 Ten second warning beep - Timer:', currentTimer.name, 'Time:', newTime);
             playBeep();
           }
           // Beep start functionality - beep during countdown to 1 second
-          if (newTime <= workoutSoundSettings.beepStart && newTime > 0 && newTime !== 10) {
+          if (newTime <= workoutSoundSettings.beepStart && newTime > 0) {
             console.log('🔊 Beep start countdown - Timer:', currentTimer.name, 'Time:', newTime, 'BeepStart setting:', workoutSoundSettings.beepStart);
             playBeep();
           }
