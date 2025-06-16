@@ -3,11 +3,13 @@ import type { SoundSettings } from "@shared/schema";
 
 export function useAudio(soundSettings: SoundSettings) {
   const audioContextRef = useRef<AudioContext | null>(null);
+  const isAudioEnabledRef = useRef<boolean>(false);
 
   const initAudioContext = useCallback(() => {
     if (!audioContextRef.current) {
       try {
         audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+        console.log('🔊 Audio context created, state:', audioContextRef.current.state);
       } catch (error) {
         console.warn("Web Audio API not supported:", error);
       }
@@ -15,14 +17,26 @@ export function useAudio(soundSettings: SoundSettings) {
     return audioContextRef.current;
   }, []);
 
-  const playBeep = useCallback(() => {
+  const playBeep = useCallback(async () => {
+    console.log('🔊 playBeep called - Settings:', soundSettings);
+    
     const audioContext = initAudioContext();
-    if (!audioContext) return;
+    if (!audioContext) {
+      console.warn('❌ No audio context available');
+      return;
+    }
 
     try {
       // Resume audio context if suspended (required by some browsers)
       if (audioContext.state === 'suspended') {
-        audioContext.resume();
+        console.log('🔊 Resuming suspended audio context...');
+        await audioContext.resume();
+      }
+
+      // Mark audio as enabled on first successful interaction
+      if (!isAudioEnabledRef.current) {
+        isAudioEnabledRef.current = true;
+        console.log('✅ Audio context activated by user interaction');
       }
 
       const oscillator = audioContext.createOscillator();
@@ -54,10 +68,12 @@ export function useAudio(soundSettings: SoundSettings) {
 
       oscillator.start(audioContext.currentTime);
       oscillator.stop(audioContext.currentTime + 0.2);
+      
+      console.log('🔊 Beep played successfully - Frequency:', frequency, 'State:', audioContext.state);
     } catch (error) {
-      console.warn("Failed to play beep:", error);
+      console.warn("❌ Failed to play beep:", error);
     }
-  }, [soundSettings.beepTone, initAudioContext]);
+  }, [soundSettings.beepTone, initAudioContext, soundSettings]);
 
   const playCompletionSound = useCallback(() => {
     const audioContext = initAudioContext();
