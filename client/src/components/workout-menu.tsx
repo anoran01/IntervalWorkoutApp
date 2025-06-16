@@ -171,7 +171,7 @@ export default function WorkoutMenu({
 
     // Calculate angle from button to closest gap
     const listRect = timerListRef.current.getBoundingClientRect();
-    const targetX = listRect.left + listRect.width / 2;
+    const targetX = listRect.left + 0*listRect.width / 2;
     
     const deltaX = targetX - buttonCenterX;
     const deltaY = closestGapY - buttonCenterY;
@@ -382,7 +382,7 @@ export default function WorkoutMenu({
     const handleScroll = () => {
       clearTimeout(scrollTimeout);
       scrollTimeout = setTimeout(() => {
-        snapToPosition();
+        //snapToPosition();
       }, 150); // Debounce scroll events
     };
 
