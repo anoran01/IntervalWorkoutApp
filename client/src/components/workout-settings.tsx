@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -34,14 +34,18 @@ export default function WorkoutSettings({
       ...prev,
       [key]: value
     }));
-    
-    // Play beep preview when beepTone changes
-    if (key === 'beepTone') {
-      setTimeout(() => {
-        playBeep();
-      }, 100); // Small delay to ensure setting is updated
-    }
   };
+
+  const isInitialMount = useRef(true);
+
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    console.log('settings.beepTone', settings.beepTone);
+    playBeep();
+  }, [settings.beepTone]);
 
   return (
     <div className="flex flex-col h-screen bg-background border-2 border-gray-300 dark:border-gray-600 rounded-lg">

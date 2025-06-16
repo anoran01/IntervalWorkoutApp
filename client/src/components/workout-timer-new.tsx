@@ -94,8 +94,6 @@ export default function WorkoutTimer({
     isLastTimer,
     currentTimerIndex,
     timers,
-    onComplete,
-    playCompletionSound,
     workoutSoundSettings.verbalReminder,
     workoutSoundSettings.tenSecondWarning,
     playBeep,
