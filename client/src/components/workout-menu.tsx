@@ -410,9 +410,9 @@ export default function WorkoutMenu({
   }, [workout.name, isEditingWorkoutName]);
   
   // Initial snap on mount and when timers change
-  useEffect(() => {
+  /*useEffect(() => {
     setTimeout(() => snapToPosition(), 100);
-  }, [timers.length]);
+  }, [timers.length]);*/
 
   const getTimerColor = (timerName: string, index: number) => {
     const name = timerName.toLowerCase();
