@@ -1,6 +1,14 @@
 import { useCallback, useRef } from "react";
 import type { SoundSettings } from "@shared/schema";
 
+// Import audio files
+import tenSecondsWav from "@/audio/ten-seconds.wav";
+import halfwayWav from "@/audio/halfway.wav";
+import workWav from "@/audio/work.wav";
+import restWav from "@/audio/rest.wav";
+import doneWav from "@/audio/done.wav";
+import greatWorkoutWav from "@/audio/great-workout.wav";
+
 export function useAudio(soundSettings: SoundSettings) {
   const audioContextRef = useRef<AudioContext | null>(null);
   const isAudioEnabledRef = useRef<boolean>(false);
@@ -17,7 +25,19 @@ export function useAudio(soundSettings: SoundSettings) {
     return audioContextRef.current;
   }, []);
 
-  const playBeep = useCallback( () => {//const playBeep = useCallback(async () => {
+  // Helper function to play audio files
+  const playAudioFile = useCallback(async (audioSrc: string) => {
+    try {
+      const audio = new Audio(audioSrc);
+      audio.volume = 0.8;
+      await audio.play();
+      console.log('🔊 Audio file played:', audioSrc);
+    } catch (error) {
+      console.warn('❌ Failed to play audio file:', audioSrc, error);
+    }
+  }, []);
+
+  const playBeep = useCallback(async () => {
     console.log('🔊 playBeep called - Settings:', soundSettings);
     
     const audioContext = initAudioContext();
@@ -75,40 +95,38 @@ export function useAudio(soundSettings: SoundSettings) {
     }
   }, [soundSettings.beepTone, initAudioContext, soundSettings]);
 
-  const playCompletionSound = useCallback(() => {
-    const audioContext = initAudioContext();
-    if (!audioContext) return;
+  // New specific audio functions for different reminder types
+  const playTenSecondWarning = useCallback(async () => {
+    console.log('🔊 Playing ten second warning audio file');
+    await playAudioFile(tenSecondsWav);
+  }, [playAudioFile]);
 
+  const playHalfwayReminder = useCallback(async () => {
+    console.log('🔊 Playing halfway reminder audio file');
+    await playAudioFile(halfwayWav);
+  }, [playAudioFile]);
+
+  const playVerbalReminder = useCallback(async (timerType: string) => {
+    console.log('🔊 Playing verbal reminder for timer type:', timerType);
+    if (timerType === 'work') {
+      await playAudioFile(workWav);
+    } else if (timerType === 'rest' || timerType === 'rest_between_cycles') {
+      await playAudioFile(restWav);
+    }
+  }, [playAudioFile]);
+
+  const playCompletionSound = useCallback(async () => {
+    console.log('🔊 Playing completion sound sequence');
     try {
-      if (audioContext.state === 'suspended') {
-        audioContext.resume();
-      }
-
-      // Play a sequence of ascending tones for completion
-      const frequencies = [523, 659, 784, 1047]; // C, E, G, C (major chord)
-      
-      frequencies.forEach((freq, index) => {
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-
-        oscillator.frequency.setValueAtTime(freq, audioContext.currentTime);
-        oscillator.type = 'sine';
-
-        const startTime = audioContext.currentTime + index * 0.15;
-        gainNode.gain.setValueAtTime(0, startTime);
-        gainNode.gain.linearRampToValueAtTime(0.2, startTime + 0.01);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 0.3);
-
-        oscillator.start(startTime);
-        oscillator.stop(startTime + 0.3);
-      });
+      await playAudioFile(doneWav);
+      // Wait a moment before playing the second sound
+      setTimeout(async () => {
+        await playAudioFile(greatWorkoutWav);
+      }, 1000);
     } catch (error) {
       console.warn("Failed to play completion sound:", error);
     }
-  }, [initAudioContext]);
+  }, [playAudioFile]);
 
   // Cleanup function
   const cleanup = useCallback(() => {
@@ -120,6 +138,9 @@ export function useAudio(soundSettings: SoundSettings) {
 
   return {
     playBeep,
+    playTenSecondWarning,
+    playHalfwayReminder,
+    playVerbalReminder,
     playCompletionSound,
     cleanup
   };

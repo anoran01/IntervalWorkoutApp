@@ -25,7 +25,7 @@ export default function WorkoutTimer({
   // Use the workout's sound settings
   const workoutSoundSettings = workout.soundSettings as SoundSettings;
 
-  const { playBeep, playCompletionSound } = useAudio(workoutSoundSettings);
+  const { playBeep, playTenSecondWarning, playHalfwayReminder, playVerbalReminder, playCompletionSound } = useAudio(workoutSoundSettings);
 
   const currentTimer = timers[currentTimerIndex];
   const isLastTimer = currentTimerIndex === timers.length - 1;
