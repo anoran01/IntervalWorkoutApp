@@ -42,8 +42,10 @@ export default function WorkoutMenu({
   const [insertPosition, setInsertPosition] = useState(0);
   const [draggedItem, setDraggedItem] = useState<number | null>(null);
   const [draggedOver, setDraggedOver] = useState<number | null>(null);
+  const [headerHeight, setHeaderHeight] = useState(80); // Default fallback
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const timerListRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
 
   const reorderMutation = useMutation({
     mutationFn: async (timerOrders: { id: number; order: number }[]) => {
@@ -180,7 +182,7 @@ export default function WorkoutMenu({
     const container = scrollContainerRef.current;
     const containerRect = container.getBoundingClientRect();
     const containerHeight = containerRect.height;
-    const middleY = containerHeight / 2.65;
+    const middleY = containerHeight / 3.9;
 
     // Get all timer elements
     const timerElements = timerListRef.current.children;
@@ -272,6 +274,22 @@ export default function WorkoutMenu({
     };
   }, [timers.length]);
 
+  // Measure header height on mount and when workout name changes
+  useEffect(() => {
+    const measureHeaderHeight = () => {
+      if (headerRef.current) {
+        const height = headerRef.current.offsetHeight;
+        setHeaderHeight(height);
+      }
+    };
+
+    measureHeaderHeight();
+    // Re-measure when window resizes or content changes
+    window.addEventListener('resize', measureHeaderHeight);
+
+    return () => window.removeEventListener('resize', measureHeaderHeight);
+  }, [workout.name, isEditingWorkoutName]);
+  
   // Initial snap on mount and when timers change
   useEffect(() => {
     setTimeout(() => snapToPosition(), 100);
@@ -306,7 +324,7 @@ export default function WorkoutMenu({
   return (
     <div className="flex flex-col h-screen bg-background relative">
       {/* Fixed Header */}
-      <div className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between p-4 border-b-2 border-black bg-background">
+      <div ref={headerRef} className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between p-4 border-b-2 border-black bg-background">
         <Button
           variant="ghost"
           size="sm"
@@ -353,7 +371,7 @@ export default function WorkoutMenu({
 
       {/* Fixed Add Timer Button - positioned between 2nd and 3rd timers */}
       <div className="fixed left-4 right-4 z-30 flex items-center" style={{ 
-        top: `calc(20px + 80px + 48px + 72px + 12px + 6px)` // Header + Play button + spacing + 1st timer + spacing + half of spacing?
+        top: `calc(20px + 80px + 48px + 72px + 12px + 6px + 66px)` // Header + Play button + spacing + 1st timer + spacing + half of spacing?
       }}>
         <button
           onClick={() => handleAddTimer(insertPosition)}
@@ -367,8 +385,9 @@ export default function WorkoutMenu({
       {/* Scrollable Content */}
       <div 
         ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto pt-20 pb-4 scrollbar-hide"
-        style={{ scrollBehavior: 'auto' }}
+        className="flex-1 overflow-y-auto pb-4 scrollbar-hide"
+        style={{ scrollBehavior: 'auto',
+               paddingTop: `${headerHeight}px` }}
       >
         <div className="p-4 space-y-6">
           {/* Play Button */}
