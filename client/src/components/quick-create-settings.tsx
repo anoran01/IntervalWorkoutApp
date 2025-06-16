@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import BeepStartPicker from "@/components/beep-start-picker";
 import type { SoundSettings } from "@shared/schema";
 import { useTheme } from "@/lib/theme-context";
+import { useAudio } from "@/hooks/use-audio";
 
 interface QuickCreateSettingsProps {
   soundSettings: SoundSettings;
@@ -21,6 +22,7 @@ export default function QuickCreateSettings({
   const { theme, toggleTheme } = useTheme();
   const [settings, setSettings] = useState<SoundSettings>(soundSettings);
   const [showBeepStartPicker, setShowBeepStartPicker] = useState(false);
+  const { playBeep } = useAudio(settings);
 
   const handleSave = () => {
     onSoundSettingsChange(settings);
@@ -32,6 +34,13 @@ export default function QuickCreateSettings({
       ...settings,
       [key]: value
     });
+    
+    // Play beep preview when beepTone changes
+    if (key === 'beepTone') {
+      setTimeout(() => {
+        playBeep();
+      }, 100); // Small delay to ensure setting is updated
+    }
   };
 
   return (

@@ -100,20 +100,17 @@ export default function WorkoutTimer({
     playBeep,
   ]);
 
-  const handlePlayPause = async () => {
+  const handlePlayPause = () => {
     if (
       !isRunning &&
       currentTimerIndex === 0 &&
       timeRemaining === timers[0]?.duration
     ) {
-      // Starting workout - initialize audio context with user interaction
+      // Starting workout - verbal reminder for first timer
       console.log('▶️ Starting workout:', workout.name, 'First timer:', timers[0]?.name);
-      try {
-        // This user interaction will activate the audio context
-        await playBeep();
-        console.log('✅ Audio context activated successfully');
-      } catch (error) {
-        console.warn('❌ Failed to activate audio context:', error);
+      if (workoutSoundSettings.verbalReminder) {
+        console.log('🔊 Verbal reminder beep - Timer:', timers[0]?.name, 'Starting with duration:', timers[0]?.duration);
+        playBeep();
       }
     }
     console.log('⏯️ Play/Pause toggled - isRunning:', !isRunning, 'Current timer:', currentTimer?.name);

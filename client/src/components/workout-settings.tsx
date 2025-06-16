@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft } from "lucide-react";
 import BeepStartPicker from "@/components/beep-start-picker";
 import type { SoundSettings } from "@shared/schema";
+import { useAudio } from "@/hooks/use-audio";
 
 interface WorkoutSettingsProps {
   workoutName: string;
@@ -21,6 +22,7 @@ export default function WorkoutSettings({
 }: WorkoutSettingsProps) {
   const [settings, setSettings] = useState<SoundSettings>(soundSettings);
   const [showBeepStartPicker, setShowBeepStartPicker] = useState(false);
+  const { playBeep } = useAudio(settings);
 
   const handleSave = () => {
     onSave(settings);
@@ -32,6 +34,13 @@ export default function WorkoutSettings({
       ...prev,
       [key]: value
     }));
+    
+    // Play beep preview when beepTone changes
+    if (key === 'beepTone') {
+      setTimeout(() => {
+        playBeep();
+      }, 100); // Small delay to ensure setting is updated
+    }
   };
 
   return (

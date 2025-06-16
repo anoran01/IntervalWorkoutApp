@@ -17,7 +17,7 @@ export function useAudio(soundSettings: SoundSettings) {
     return audioContextRef.current;
   }, []);
 
-  const playBeep = useCallback(async () => {
+  const playBeep = useCallback( () => {//const playBeep = useCallback(async () => {
     console.log('🔊 playBeep called - Settings:', soundSettings);
     
     const audioContext = initAudioContext();
@@ -30,7 +30,7 @@ export function useAudio(soundSettings: SoundSettings) {
       // Resume audio context if suspended (required by some browsers)
       if (audioContext.state === 'suspended') {
         console.log('🔊 Resuming suspended audio context...');
-        await audioContext.resume();
+        audioContext.resume();//await audioContext.resume();
       }
 
       // Mark audio as enabled on first successful interaction

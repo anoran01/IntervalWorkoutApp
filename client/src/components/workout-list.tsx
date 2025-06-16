@@ -190,7 +190,7 @@ export default function WorkoutList({ onWorkoutSelect, onNavigateToQuickCreate }
             {workouts.map((workout) => (
               <div
                 key={workout.id}
-                className={`border-2 border-black rounded-lg p-6 transition-all duration-200 bg-background ${
+                className={`border-2 dark:border-white border-black rounded-lg p-6 transition-all duration-200 bg-background ${
                   draggedItem === workout.id ? 'opacity-50' : ''
                 } ${
                   draggedOver === workout.id ? 'transform translate-y-1 shadow-lg' : ''
