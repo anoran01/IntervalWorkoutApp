@@ -55,14 +55,6 @@ export default function WorkoutTimer({
             console.log('🔊 Beep start countdown - Timer:', currentTimer.name, 'Time:', newTime, 'BeepStart setting:', workoutSoundSettings.beepStart);
             playBeep();
           }
-          /*if (newTime === currentTimer.duration && workoutSoundSettings.verbalReminder && 'speechSynthesis' in window) {
-            const utterance = new SpeechSynthesisUtterance(
-              currentTimer.type === 'work' ? 'Work' : 
-              currentTimer.type === 'rest' ? 'Rest' : 
-              currentTimer.type === 'prepare' ? 'Prepare' : 'Ready'
-            );
-            speechSynthesis.speak(utterance);
-          }*/
 
           return newTime;
         });
@@ -89,6 +81,9 @@ export default function WorkoutTimer({
         // Verbal reminder for the new timer
         if (workoutSoundSettings.verbalReminder) {
           console.log('🔊 Verbal reminder beep - Timer:', nextTimer.name, 'Starting with duration:', nextTimer.duration);
+          playBeep();
+        } else if (workoutSoundSettings.tenSecondWarning && nextTimer.duration === 10) {
+          console.log('🔊 Ten Second Timer Duration - Timer:', nextTimer.name, 'Time:', nextTimer.duration);
           playBeep();
         }
       }
@@ -274,7 +269,7 @@ export default function WorkoutTimer({
       {/* Current Timer Progress Bar */}
       <div className="px-4 mb-4">
         <div
-          className={`border-2 rounded-lg p-4 relative overflow-hidden ${getTimerColor(currentTimer.name)}`}
+          className={`border-4 rounded-lg p-4 relative overflow-hidden ${getTimerColor(currentTimer.name)}`}
         >
           {/* Progress fill that depletes from right to left */}
           <div
@@ -289,12 +284,15 @@ export default function WorkoutTimer({
             <span className="text-lg font-bold">
               {formatTime(timeRemaining)}
             </span>
+            
           </div>
+          
         </div>
+        <div className="border-b-2 dark:border-white border-black my-2" />
       </div>
 
       {/* Future Timer List */}
-      <div className="flex-1 px-4 pb-4 overflow-y-auto">
+      <div className="flex-1 px-4 pb-4 overflow-y-auto scrollbar-hide">
         <div className="space-y-3">
           {timers.slice(currentTimerIndex + 1).map((timer, index) => (
             <div
