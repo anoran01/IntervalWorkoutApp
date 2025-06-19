@@ -1,24 +1,31 @@
+console.log("Home rendered");
+
 import { useState } from "react";
 import QuickMenu from "@/components/quick-menu";
 import WorkoutList from "@/components/workout-list";
 import WorkoutMenu from "@/components/workout-menu";
 import WorkoutTimer from "@/components/workout-timer-new";
 import WorkoutCompleteModal from "@/components/workout-complete-modal";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { Workout, Timer, SoundSettings } from "@shared/schema";
+import type { Workout } from "@/schema";
+import { useGetWorkouts } from "@/lib/queryClient";
 
-type Screen = "quick-menu" | "workout-list" | "workout-detail" | "workout-timer";
+type Screen = "quick-menu" | "workout-list" | "workout-menu" | "workout-timer";
 
 export default function Home() {
+  console.log("🏠 Home component starting to render");
+  
   const [currentScreen, setCurrentScreen] = useState<Screen>("quick-menu");
-  const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
-  const [workoutTimers, setWorkoutTimers] = useState<Timer[]>([]);
+  const [selectedWorkoutId, setSelectedWorkoutId] = useState<number | null>(null);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
 
-  const handleWorkoutSelect = (workout: Workout, timers: Timer[]) => {
-    setSelectedWorkout(workout);
-    setWorkoutTimers(timers);
-    setCurrentScreen("workout-detail");
+  const { data: workouts } = useGetWorkouts();
+  const selectedWorkout = selectedWorkoutId ? workouts?.find(w => w.id === selectedWorkoutId) ?? null : null;
+
+  console.log("🏠 Home state:", { currentScreen, selectedWorkout, showCompleteModal });
+
+  const handleWorkoutSelect = (workout: Workout) => {
+    setSelectedWorkoutId(workout.id);
+    setCurrentScreen("workout-menu");
   };
 
   const handleStartWorkout = () => {
@@ -26,6 +33,7 @@ export default function Home() {
   };
 
   const handleBackToList = () => {
+    setSelectedWorkoutId(null);
     setCurrentScreen("workout-list");
   };
 
@@ -39,74 +47,14 @@ export default function Home() {
   };
 
   const handleStopWorkout = () => {
-    setCurrentScreen("workout-detail");
+    setCurrentScreen("workout-menu");
   };
 
-  const handleEditWorkoutName = async (name: string) => {
-    if (!selectedWorkout) return;
-    
-    try {
-      const response = await apiRequest("PATCH", `/api/workouts/${selectedWorkout.id}`, {
-        name
-      });
-      const updatedWorkout = await response.json();
-      setSelectedWorkout(updatedWorkout);
-      queryClient.invalidateQueries({ queryKey: ["/api/workouts"] });
-    } catch (error) {
-      console.error("Failed to update workout name:", error);
-    }
-  };
-
-  const handleEditTimerName = async (timerId: number, name: string) => {
-    try {
-      const response = await apiRequest("PATCH", `/api/timers/${timerId}`, {
-        name
-      });
-      const updatedTimer = await response.json();
-      
-      // Update the timers in state
-      setWorkoutTimers(prev => 
-        prev.map(timer => timer.id === timerId ? updatedTimer : timer)
-      );
-    } catch (error) {
-      console.error("Failed to update timer name:", error);
-    }
-  };
-
-  const handleEditTimerDuration = async (timerId: number, duration: number) => {
-    try {
-      const response = await apiRequest("PATCH", `/api/timers/${timerId}`, {
-        duration
-      });
-      const updatedTimer = await response.json();
-      
-      // Update the timers in state
-      setWorkoutTimers(prev => 
-        prev.map(timer => timer.id === timerId ? updatedTimer : timer)
-      );
-    } catch (error) {
-      console.error("Failed to update timer duration:", error);
-    }
-  };
-
-  const handleUpdateSoundSettings = async (settings: SoundSettings) => {
-    if (!selectedWorkout) return;
-    
-    try {
-      const response = await apiRequest("PATCH", `/api/workouts/${selectedWorkout.id}`, {
-        soundSettings: settings
-      });
-      const updatedWorkout = await response.json();
-      setSelectedWorkout(updatedWorkout);
-      queryClient.invalidateQueries({ queryKey: ["/api/workouts"] });
-    } catch (error) {
-      console.error("Failed to update sound settings:", error);
-    }
-  };
-
+  console.log("🏠 Home about to return JSX, currentScreen:", currentScreen);
+  
   return (
     <div className="max-w-sm mx-auto min-h-screen relative bg-background">
-      {/* Main Content */}
+      {console.log("🏠 Inside Home JSX render")}
       <div className="h-screen">
         {currentScreen === "quick-menu" && <QuickMenu onNavigateToWorkoutList={() => setCurrentScreen("workout-list")} />}
         {currentScreen === "workout-list" && (
@@ -115,41 +63,22 @@ export default function Home() {
             onNavigateToQuickCreate={() => setCurrentScreen("quick-menu")}
           />
         )}
-        {currentScreen === "workout-detail" && selectedWorkout && (
+        {currentScreen === "workout-menu" && selectedWorkout && (
           <WorkoutMenu
             workout={selectedWorkout}
-            timers={workoutTimers}
             onBack={handleBackToList}
             onStart={handleStartWorkout}
-            onEditWorkoutName={handleEditWorkoutName}
-            onEditTimerName={handleEditTimerName}
-            onEditTimerDuration={handleEditTimerDuration}
-            onUpdateSoundSettings={handleUpdateSoundSettings}
-            onTimersReordered={async () => {
-              // Refetch timers after reordering
-              if (selectedWorkout) {
-                try {
-                  const response = await apiRequest("GET", `/api/workouts/${selectedWorkout.id}/timers`);
-                  const updatedTimers = await response.json();
-                  setWorkoutTimers(updatedTimers);
-                } catch (error) {
-                  console.error("Failed to refetch timers:", error);
-                }
-              }
-            }}
           />
         )}
         {currentScreen === "workout-timer" && selectedWorkout && (
           <WorkoutTimer
             workout={selectedWorkout}
-            timers={workoutTimers}
             onComplete={handleWorkoutComplete}
             onStop={handleStopWorkout}
           />
         )}
       </div>
 
-      {/* Workout Complete Modal */}
       {showCompleteModal && selectedWorkout && (
         <WorkoutCompleteModal
           workout={selectedWorkout}

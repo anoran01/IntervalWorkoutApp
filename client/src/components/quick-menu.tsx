@@ -1,12 +1,14 @@
-import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAddWorkoutAndTimer } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Settings, Plus, List } from "lucide-react";
 import TimePickerModal from "./time-picker-modal";
 import CountPickerModal from "./count-picker-modal";
 import QuickCreateSettings from "./quick-create-settings";
-import type { SoundSettings } from "@shared/schema";
+import { generateTimersFromWorkout } from "@/lib/workout-utils";
+import type { SoundSettings, InsertWorkout } from "@/schema";
+import { Preferences } from '@capacitor/preferences';
 
 interface QuickWorkoutSettings {
   prepare: number; // in seconds
@@ -23,71 +25,87 @@ interface QuickMenuProps {
 }
 
 export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
-  // Load settings from localStorage or use defaults
-  const loadSettings = (): QuickWorkoutSettings => {
+  console.log("📋 QuickMenu component starting");
+
+  const DEFAULT_SETTINGS: QuickWorkoutSettings = {
+    prepare: 5,
+    work: 60,
+    rest: 30,
+    rounds: 4,
+    cycles: 6,
+    restBetweenCycles: 60,
+    soundSettings: {
+      beepTone: "standard",
+      beepStart: 5,
+      tenSecondWarning: true,
+      halfwayReminder: true,
+      verbalReminder: true,
+      vibrate: true,
+    },
+  };
+
+  // Async load function for Capacitor Preferences
+  const loadSettings = async (): Promise<QuickWorkoutSettings> => {
     try {
-      const saved = localStorage.getItem("quickCreateSettings");
-      if (saved) {
-        return JSON.parse(saved);
+      const { value } = await Preferences.get({ key: "quickCreateSettings" });
+      if (value) {
+        return JSON.parse(value);
       }
     } catch (error) {
-      console.error("Failed to load settings from localStorage:", error);
+      console.error("Failed to load settings from Preferences:", error);
     }
-
-    // Default values
-    return {
-      prepare: 5,
-      work: 60,
-      rest: 30,
-      rounds: 4,
-      cycles: 6,
-      restBetweenCycles: 60,
-      soundSettings: {
-        beepTone: "standard",
-        beepStart: 5,
-        tenSecondWarning: true,
-        halfwayReminder: true,
-        verbalReminder: true,
-        vibrate: true,
-      },
-    };
+    return DEFAULT_SETTINGS;
   };
 
-  const [settings, setSettings] =
-    useState<QuickWorkoutSettings>(loadSettings());
+  const [settings, setSettings] = useState<QuickWorkoutSettings>(DEFAULT_SETTINGS);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
+  
+  console.log("📋 QuickMenu settings:", settings);
 
-  // Save settings to localStorage whenever they change
+  useEffect(() => {
+    if (isLoadingSettings) {
+      console.log("📋 QuickMenu isLoadingSettings:", isLoadingSettings);
+      const loadSettingsAsync = async () => {
+        try {
+          const loadedSettings = await loadSettings();
+          setSettings(loadedSettings);
+        } catch (error) {
+          console.error("Failed to load settings:", error);
+          // Keep default settings on error
+        } finally {
+          setIsLoadingSettings(false);
+        }
+      };
+
+      loadSettingsAsync();
+    }
+  }, []);
+
+  console.log("📋 QuickMenu post use effect");
+
+  // Save settings to @capacitor/preferences whenever they change
   const updateSettings = (newSettings: QuickWorkoutSettings) => {
     setSettings(newSettings);
-    try {
-      localStorage.setItem("quickCreateSettings", JSON.stringify(newSettings));
-    } catch (error) {
-      console.error("Failed to save settings to localStorage:", error);
-    }
+    Preferences.set({
+      key: "quickCreateSettings",
+      value: JSON.stringify(newSettings),
+    }).catch((error: any) => {
+      console.error("Failed to save settings to Preferences:", error);
+    });
   };
 
+  console.log("📋 QuickMenu post updateSettings definition");
+  
   const [showSettings, setShowSettings] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [showCountPicker, setShowCountPicker] = useState(false);
   const [currentEditingField, setCurrentEditingField] = useState<string>("");
 
-  const queryClient = useQueryClient();
+  console.log("📋 QuickMenu currentEditingField:", currentEditingField);
 
-  const createWorkoutMutation = useMutation({
-    mutationFn: async (data: QuickWorkoutSettings) => {
-      const response = await apiRequest("POST", "/api/workouts/quick", data);
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/workouts"] });
-      // Navigate to workout list after successful creation
-      onNavigateToWorkoutList();
-    },
-    onError: () => {
-      // Silent error handling - no toast notifications
-      console.error("Failed to create workout");
-    },
-  });
+  const createWorkoutAndTimerMutation = useAddWorkoutAndTimer();
+
+  console.log("📋 QuickMenu post createWorkoutAndTimerMutation definition");
 
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
@@ -103,7 +121,29 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
   };
 
   const handleCreateWorkout = () => {
-    createWorkoutMutation.mutate(settings);
+    console.log("📋 QuickMenu handleCreateWorkout");
+    // Create a user-friendly name for the workout based on the current date and time
+    const workoutName = `Quick Workout - ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`;
+
+    const newWorkout: InsertWorkout = {
+      ...settings,
+      name: workoutName,
+    };
+    console.log("📋 QuickMenu newWorkout:", newWorkout);
+
+    const timers = generateTimersFromWorkout(newWorkout); // doesn't have workout id because it's of type InsertWorkout
+    
+    console.log("📋 QuickMenu timers:", timers);
+
+    createWorkoutAndTimerMutation.mutate({workout: newWorkout, timers: timers}, {
+      onSuccess: (workoutId) => {
+        console.log(`Created workout ${workoutId} with ${timers.length} timers`);
+        onNavigateToWorkoutList();
+      },
+      onError: () => {
+        console.error("Failed to create workout");
+      }
+    });
   };
 
   const handleTimerClick = (type: string) => {
@@ -170,10 +210,21 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
     return isNaN(value) ? 0 : value;
   };
 
+  console.log("📋 QuickMenu about to return JSX");
+  // Show loading state while settings are being loaded
+  if (isLoadingSettings) {
+    return (
+      <div className="flex flex-col h-screen bg-background items-center justify-center">
+        <div>Loading settings...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-screen bg-background">
+      {console.log("📋 Inside QuickMenu JSX")}
       {/* Fixed Header */}
-      <div className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between p-4 border-b-2 border-black bg-background">
+      <div className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between p-4 pt-16 border-b-2 border-black bg-background">
         <div className="w-10" />
         <h1 className="text-2xl font-bold text-center flex-1">Quick Create</h1>
         <Button
@@ -187,11 +238,11 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
       </div>
 
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto pt-20 pb-20 p-4 space-y-2">
+      <div className="flex-1 overflow-y-auto pt-32 pb-20 p-4 space-y-2">
         {/* Prepare */}
         <Button
           variant="outline"
-          className="w-full h-10 flex justify-between items-center px-6 text-base font-medium border-2 border-black rounded-lg hover:bg-muted"
+          className="w-full h-10 flex justify-between items-center px-6 text-base font-medium border-2 border-black dark:border-white rounded-lg hover:bg-muted"
           onClick={() => handleTimerClick("prepare")}
         >
           <span>Prepare</span>
@@ -201,7 +252,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         {/* Work */}
         <Button
           variant="outline"
-          className="w-full h-10 flex justify-between items-center px-6 text-base font-medium border-2 border-black rounded-lg hover:bg-muted"
+          className="w-full h-10 flex justify-between items-center px-6 text-base font-medium border-2 border-black dark:border-white rounded-lg hover:bg-muted"
           onClick={() => handleTimerClick("work")}
         >
           <span>Work</span>
@@ -211,7 +262,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         {/* Rest */}
         <Button
           variant="outline"
-          className="w-full h-10 flex justify-between items-center px-6 text-base font-medium border-2 border-black rounded-lg hover:bg-muted"
+          className="w-full h-10 flex justify-between items-center px-6 text-base font-medium border-2 border-black dark:border-white rounded-lg hover:bg-muted"
           onClick={() => handleTimerClick("rest")}
         >
           <span>Rest</span>
@@ -221,7 +272,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         {/* Rounds */}
         <Button
           variant="outline"
-          className="w-full h-10 flex justify-between items-center px-6 text-base font-medium border-2 border-black rounded-lg hover:bg-muted"
+          className="w-full h-10 flex justify-between items-center px-6 text-base font-medium border-2 border-black dark:border-white rounded-lg hover:bg-muted"
           onClick={() => handleTimerClick("rounds")}
         >
           <span>Rounds</span>
@@ -231,7 +282,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         {/* Cycles */}
         <Button
           variant="outline"
-          className="w-full h-10 flex justify-between items-center px-6 text-base font-medium border-2 border-black rounded-lg hover:bg-muted"
+          className="w-full h-10 flex justify-between items-center px-6 text-base font-medium border-2 border-black dark:border-white rounded-lg hover:bg-muted"
           onClick={() => handleTimerClick("cycles")}
         >
           <span>Cycles</span>
@@ -241,7 +292,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         {/* Rest Between Cycles */}
         <Button
           variant="outline"
-          className="w-full h-10 flex justify-between items-center px-6 text-base font-medium border-2 border-black rounded-lg hover:bg-muted"
+          className="w-full h-10 flex justify-between items-center px-6 text-base font-medium border-2 border-black dark:border-white rounded-lg hover:bg-muted"
           onClick={() => handleTimerClick("restBetweenCycles")}
         >
           <span>Rest between Cycles</span>
@@ -254,9 +305,9 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         <Button
           className="w-full h-12 text-lg font-bold bg-background border-2 border-black dark:border-white hover:bg-gray-100 dark:hover:bg-gray-800 text-black dark:text-white rounded-lg mt-4"
           onClick={handleCreateWorkout}
-          disabled={createWorkoutMutation.isPending}
+          disabled={createWorkoutAndTimerMutation.isPending}
         >
-          {createWorkoutMutation.isPending ? "Creating..." : "Create"}
+          {createWorkoutAndTimerMutation.isPending ? "Creating..." : "Create"}
         </Button>
       </div>
 

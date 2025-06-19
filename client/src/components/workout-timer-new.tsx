@@ -3,29 +3,57 @@ import { Button } from "@/components/ui/button";
 import { formatTime } from "@/lib/workout-utils";
 import { useAudio } from "@/hooks/use-audio";
 import { ArrowLeft, Play, Pause, SkipForward, SkipBack } from "lucide-react";
-import type { Workout, Timer, SoundSettings } from "@shared/schema";
+import { useGetTimers } from "@/lib/queryClient";
+import type { Workout, Timer, SoundSettings } from "@/schema";
 
 interface WorkoutTimerProps {
   workout: Workout;
-  timers: Timer[];
   onComplete: () => void;
   onStop: () => void;
 }
 
 export default function WorkoutTimer({
   workout,
-  timers,
   onComplete,
   onStop,
 }: WorkoutTimerProps) {
+  const { data: timers, isLoading } = useGetTimers(workout.id);
   const [isRunning, setIsRunning] = useState(false);
   const [currentTimerIndex, setCurrentTimerIndex] = useState(0);
-  const [timeRemaining, setTimeRemaining] = useState(timers[0]?.duration || 0);
+  const [timeRemaining, setTimeRemaining] = useState(0);
+
+  // Initialize timeRemaining when timers are loaded
+  useEffect(() => {
+    if (timers && timers.length > 0) {
+      setTimeRemaining(timers[0]?.duration || 0);
+    }
+  }, [timers]);
 
   // Use the workout's sound settings
   const workoutSoundSettings = workout.soundSettings as SoundSettings;
 
   const { playBeep, playTenSecondWarning, playHalfwayReminder, playVerbalReminder, playCompletionSound } = useAudio(workoutSoundSettings);
+
+  // Show loading state if timers are still loading
+  if (isLoading || !timers) {
+    return (
+      <div className="flex flex-col h-screen bg-background items-center justify-center">
+        <p className="text-muted-foreground">Loading workout timers...</p>
+      </div>
+    );
+  }
+
+  // Show error state if no timers
+  if (timers.length === 0) {
+    return (
+      <div className="flex flex-col h-screen bg-background items-center justify-center">
+        <p className="text-muted-foreground">No timers available for this workout</p>
+        <Button onClick={onStop} className="mt-4">
+          Back to Workout
+        </Button>
+      </div>
+    );
+  }
 
   const currentTimer = timers[currentTimerIndex];
   const isLastTimer = currentTimerIndex === timers.length - 1;
@@ -185,17 +213,6 @@ export default function WorkoutTimer({
     setTimeRemaining(timers[0].duration);
   };
 
-  if (!currentTimer) {
-    return (
-      <div className="flex flex-col h-screen bg-background items-center justify-center">
-        <p className="text-muted-foreground">No timers available</p>
-        <Button onClick={onStop} className="mt-4">
-          Back to Workout
-        </Button>
-      </div>
-    );
-  }
-
   const progressPercentage =
     ((currentTimer.duration - timeRemaining) / currentTimer.duration) * 100;
 
@@ -215,7 +232,7 @@ export default function WorkoutTimer({
   return (
     <div className="flex flex-col h-screen bg-background">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b-2 border-black">
+      <div className="flex items-center justify-between p-4 pt-16 border-b-2 border-black">
         <Button variant="ghost" size="sm" className="p-2" onClick={onStop}>
           <ArrowLeft className="w-6 h-6" />
         </Button>

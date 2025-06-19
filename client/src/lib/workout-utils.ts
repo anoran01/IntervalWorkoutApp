@@ -1,4 +1,4 @@
-import type { Workout, Timer } from "@shared/schema";
+import type { Workout, Timer, InsertTimer, InsertWorkout } from "@/schema";
 
 export function formatTime(seconds: number): string {
   const minutes = Math.floor(seconds / 60);
@@ -9,11 +9,68 @@ export function formatTime(seconds: number): string {
   return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
 }
 
+export function generateTimersFromWorkout(workout: Workout | InsertWorkout | { id: number; prepare: number; work: number; rest: number; rounds: number; cycles: number; restBetweenCycles: number }): InsertTimer[] {
+  const timers: InsertTimer[] = [];
+  let order = 0;
+  
+  // Use a placeholder workoutId if the workout doesn't have an id (InsertWorkout case)
+  // This will be replaced with the actual workoutId when inserting into the database
+  const workoutId = 'id' in workout ? workout.id : 0;
+
+  // Add prepare timer if it exists
+  if (workout.prepare > 0) {
+    timers.push({
+      workoutId: workoutId,
+      name: "Prepare",
+      duration: workout.prepare,
+      type: "prepare",
+      order: order++
+    });
+  }
+
+  // Generate timers for each cycle
+  for (let cycle = 0; cycle < workout.cycles; cycle++) {
+    // Generate timers for each round in this cycle
+    for (let round = 0; round < workout.rounds; round++) {
+      // Work timer
+      timers.push({
+        workoutId: workoutId,
+        name: "Work",
+        duration: workout.work,
+        type: "work",
+        order: order++
+      });
+
+      // Rest timer after each work timer
+      timers.push({
+        workoutId: workoutId,
+        name: "Rest",
+        duration: workout.rest,
+        type: "rest",
+        order: order++
+      });
+    }
+
+    // Rest between cycles (except after the last cycle)
+    if (cycle < workout.cycles - 1 && workout.restBetweenCycles > 0) {
+      timers.push({
+        workoutId: workoutId,
+        name: "Rest Between Cycles",
+        duration: workout.restBetweenCycles,
+        type: "rest_between_cycles",
+        order: order++
+      });
+    }
+  }
+
+  return timers;
+}
+
 export function calculateWorkoutDuration(workout: Workout): number {
   const { prepare, work, rest, rounds, cycles, restBetweenCycles } = workout;
   
   // Calculate time for one cycle
-  const cycleTime = rounds * (work + rest) - rest; // Last round doesn't have rest
+  const cycleTime = rounds * (work + rest); // Every round has work + rest
   
   // Calculate total time
   const totalCycleTime = cycles * cycleTime;

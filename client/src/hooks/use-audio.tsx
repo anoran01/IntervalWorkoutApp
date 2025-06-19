@@ -1,5 +1,5 @@
 import { useCallback, useRef } from "react";
-import type { SoundSettings } from "@shared/schema";
+import type { SoundSettings } from "@/schema";
 
 // Import audio files
 import tenSecondsWav from "@/audio/ten-seconds.wav";

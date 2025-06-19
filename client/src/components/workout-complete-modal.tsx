@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { CheckCircle } from "lucide-react";
-import type { Workout } from "@shared/schema";
+import type { Workout } from "@/schema";
 
 interface WorkoutCompleteModalProps {
   workout: Workout;

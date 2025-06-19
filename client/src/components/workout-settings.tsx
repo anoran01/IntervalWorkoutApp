@@ -4,7 +4,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft } from "lucide-react";
 import BeepStartPicker from "@/components/beep-start-picker";
-import type { SoundSettings } from "@shared/schema";
+import type { SoundSettings } from "@/schema";
 import { useAudio } from "@/hooks/use-audio";
 
 interface WorkoutSettingsProps {
@@ -50,7 +50,7 @@ export default function WorkoutSettings({
   return (
     <div className="flex flex-col h-screen bg-background border-2 border-gray-300 dark:border-gray-600 rounded-lg">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b-2 border-black">
+      <div className="flex items-center justify-between p-4 pt-16 border-b-2 border-black">
         <Button
           variant="ghost"
           size="sm"
@@ -75,7 +75,7 @@ export default function WorkoutSettings({
                 updateSetting("beepTone", value)
               }
             >
-              <SelectTrigger className="border-2 border-black rounded-lg">
+              <SelectTrigger className="border-2 border-black dark:border-white rounded-lg">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -93,7 +93,7 @@ export default function WorkoutSettings({
           <div className="w-32">
             <Button
               variant="outline"
-              className="w-full border-2 border-black rounded-lg text-left justify-start"
+              className="w-full border-2 border-black dark:border-white rounded-lg text-left justify-start"
               onClick={() => setShowBeepStartPicker(true)}
             >
               {settings.beepStart}

@@ -1,61 +1,66 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useMutation } from "@tanstack/react-query";
+import { useGetWorkouts, useReorderWorkouts, queryClient, useDeleteWorkout } from "@/lib/queryClient";
 import { Settings, Plus, List, GripVertical, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import WorkoutListSettings from "@/components/workout-list-settings";
-import type { Workout, Timer } from "@shared/schema";
+import type { Workout, Timer } from "@/schema";
+import { WorkoutCard } from "./workout-card";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface WorkoutListProps {
-  onWorkoutSelect: (workout: Workout, timers: Timer[]) => void;
+  onWorkoutSelect: (workout: Workout) => void;
   onNavigateToQuickCreate: () => void;
 }
 
+function SortableWorkoutCard({ workout, onSelect }: { workout: Workout; onSelect: () => void; }) {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: workout.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes}>
+      <WorkoutCard workout={workout} onSelect={onSelect} {...listeners} />
+    </div>
+  );
+}
+
 export default function WorkoutList({ onWorkoutSelect, onNavigateToQuickCreate }: WorkoutListProps) {
+  console.log("WOrkout List WOrkout list WorkoutList");
   const [showSettings, setShowSettings] = useState(false);
   const [draggedItem, setDraggedItem] = useState<number | null>(null);
   const [draggedOver, setDraggedOver] = useState<number | null>(null);
   const [workoutToDelete, setWorkoutToDelete] = useState<Workout | null>(null);
   
-  const { data: workouts = [], isLoading } = useQuery<Workout[]>({
-    queryKey: ["/api/workouts"],
-  });
+  const { data: workouts, isLoading, error } = useGetWorkouts();
+  const reorderMutation = useReorderWorkouts();
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
-  const reorderMutation = useMutation({
-    mutationFn: async (workoutOrders: { id: number; order: number }[]) => {
-      const response = await fetch('/api/workouts/reorder', {
-        method: 'PATCH',
-        body: JSON.stringify(workoutOrders),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      if (!response.ok) throw new Error('Failed to reorder workouts');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/workouts"] });
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (workoutId: number) => {
-      const response = await apiRequest("DELETE", `/api/workouts/${workoutId}`);
-      if (!response.ok) throw new Error('Failed to delete workout');
-      return true; // Don't try to parse JSON from 204 response
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/workouts"] });
-      setWorkoutToDelete(null);
-    },
-    onError: (error) => {
-      console.error('Delete failed:', error);
-      setWorkoutToDelete(null);
-    },
-  });
-
-
+  const deleteMutation = useDeleteWorkout();
 
   const handleDragStart = (e: React.DragEvent, workoutId: number) => {
     setDraggedItem(workoutId);
@@ -81,8 +86,8 @@ export default function WorkoutList({ onWorkoutSelect, onNavigateToQuickCreate }
     }
 
     // Find the indices of the dragged and target items
-    const draggedIndex = workouts.findIndex(w => w.id === draggedItem);
-    const targetIndex = workouts.findIndex(w => w.id === targetWorkoutId);
+    const draggedIndex = workouts?.findIndex(w => w.id === draggedItem);
+    const targetIndex = workouts?.findIndex(w => w.id === targetWorkoutId);
     
     if (draggedIndex === -1 || targetIndex === -1) {
       setDraggedItem(null);
@@ -96,26 +101,17 @@ export default function WorkoutList({ onWorkoutSelect, onNavigateToQuickCreate }
     newWorkouts.splice(targetIndex, 0, draggedWorkout);
 
     // Update orders based on new positions
-    const workoutOrders = newWorkouts.map((workout, index) => ({
-      id: workout.id,
-      order: index
-    }));
+    const workoutIds = newWorkouts.map((workout) => workout.id);
 
     // Submit the reorder request
-    reorderMutation.mutate(workoutOrders);
+    reorderMutation.mutate(workoutIds);
     
     setDraggedItem(null);
     setDraggedOver(null);
   };
 
-  const handleWorkoutClick = async (workout: Workout) => {
-    try {
-      const response = await apiRequest("GET", `/api/workouts/${workout.id}/timers`);
-      const timers: Timer[] = await response.json();
-      onWorkoutSelect(workout, timers);
-    } catch (error) {
-      console.error("Failed to fetch workout timers:", error);
-    }
+  const handleWorkoutClick = (workout: Workout) => {
+    onWorkoutSelect(workout);
   };
 
   const handleDeleteClick = (e: React.MouseEvent, workout: Workout) => {
@@ -125,7 +121,26 @@ export default function WorkoutList({ onWorkoutSelect, onNavigateToQuickCreate }
 
   const handleConfirmDelete = () => {
     if (workoutToDelete) {
-      deleteMutation.mutate(workoutToDelete.id);
+      deleteMutation.mutate(workoutToDelete.id, {
+        onSuccess: () => {
+          setWorkoutToDelete(null);
+        },
+        onError: (error) => {
+          console.error('Delete failed:', error);
+          setWorkoutToDelete(null);
+        },
+      });
+    }
+  };
+
+  const handleDragEnd = (event: any) => {
+    const { active, over } = event;
+    if (active.id !== over.id) {
+      const oldIndex = workouts.findIndex((w) => w.id === active.id);
+      const newIndex = workouts.findIndex((w) => w.id === over.id);
+      const newWorkoutsOrder = arrayMove(workouts, oldIndex, newIndex);
+      const workoutIds = newWorkoutsOrder.map((w) => w.id);
+      reorderMutation.mutate(workoutIds);
     }
   };
 
@@ -133,14 +148,14 @@ export default function WorkoutList({ onWorkoutSelect, onNavigateToQuickCreate }
     return (
       <div className="flex flex-col h-screen bg-background">
         {/* Fixed Header */}
-        <div className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between p-4 border-b-2 border-black bg-background">
+        <div className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between p-4 pt-16 border-b-2 border-black bg-background">
           <div className="w-10" />
           <h1 className="text-2xl font-bold text-center flex-1">Workout List</h1>
           <Button variant="ghost" size="sm" className="p-2">
             <Settings className="w-6 h-6" />
           </Button>
         </div>
-        <div className="flex-1 flex items-center justify-center pt-20 pb-20">
+        <div className="flex-1 flex items-center justify-center pt-32 pb-20">
           <p className="text-muted-foreground">Loading workouts...</p>
         </div>
         
@@ -165,7 +180,7 @@ export default function WorkoutList({ onWorkoutSelect, onNavigateToQuickCreate }
   return (
     <div className="flex flex-col h-screen bg-background">
       {/* Fixed Header */}
-      <div className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between p-4 border-b-2 border-black bg-background">
+      <div className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between p-4 pt-16 border-b-2 border-black bg-background">
         <div className="w-10" />
         <h1 className="text-2xl font-bold text-center flex-1">Workout List</h1>
         <Button
@@ -179,48 +194,26 @@ export default function WorkoutList({ onWorkoutSelect, onNavigateToQuickCreate }
       </div>
 
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto pt-20 pb-20 p-4 scrollbar-hide">
-        {workouts.length === 0 ? (
+      <div className="flex-1 overflow-y-auto pt-32 pb-20 p-4 scrollbar-hide">
+        {workouts?.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground mb-4">No workouts created yet</p>
             <p className="text-sm text-muted-foreground">Use Quick Create to create your first workout</p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {workouts.map((workout) => (
-              <div
-                key={workout.id}
-                className={`border-2 dark:border-white border-black rounded-lg p-6 transition-all duration-200 bg-background ${
-                  draggedItem === workout.id ? 'opacity-50' : ''
-                } ${
-                  draggedOver === workout.id ? 'transform translate-y-1 shadow-lg' : ''
-                }`}
-                draggable
-                onDragStart={(e) => handleDragStart(e, workout.id)}
-                onDragOver={(e) => handleDragOver(e, workout.id)}
-                onDragLeave={handleDragLeave}
-                onDrop={(e) => handleDrop(e, workout.id)}
-              >
-                <div className="flex items-center gap-3">
-                  <GripVertical className="w-5 h-5 text-gray-500 cursor-grab active:cursor-grabbing" />
-                  <h3 
-                    className="text-xl font-bold cursor-pointer flex-1"
-                    onClick={() => handleWorkoutClick(workout)}
-                  >
-                    {workout.name}
-                  </h3>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 dark:hover:bg-red-900/20"
-                    onClick={(e) => handleDeleteClick(e, workout)}
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </Button>
-                </div>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={workouts.map(w => w.id)} strategy={verticalListSortingStrategy}>
+              <div className="space-y-4">
+                {workouts.map((workout) => (
+                  <SortableWorkoutCard 
+                    key={workout.id} 
+                    workout={workout} 
+                    onSelect={() => handleWorkoutClick(workout)}
+                  />
+                ))}
               </div>
-            ))}
-          </div>
+            </SortableContext>
+          </DndContext>
         )}
       </div>
 

@@ -5,32 +5,57 @@ import { formatTime } from "@/lib/workout-utils";
 import WorkoutSettings from "@/components/workout-settings";
 import AddTimerModal from "@/components/add-timer-modal";
 import TimePickerModal from "@/components/time-picker-modal";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useMutation } from "@tanstack/react-query";
-import type { Workout, Timer, SoundSettings } from "@shared/schema";
+import { useGetTimers, useInsertTimer, useReorderTimers, useUpdateWorkout, useGetWorkouts, useUpdateTimer } from "@/lib/queryClient";
+import type { Workout, Timer, SoundSettings, InsertTimer, InsertWorkout } from "@/schema";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface WorkoutMenuProps {
   workout: Workout;
-  timers: Timer[];
   onBack: () => void;
   onStart: () => void;
-  onEditWorkoutName: (name: string) => void;
-  onEditTimerName: (timerId: number, name: string) => void;
-  onEditTimerDuration: (timerId: number, duration: number) => void;
-  onUpdateSoundSettings: (settings: SoundSettings) => void;
-  onTimersReordered: () => void;
+}
+
+function SortableTimerItem({ timer, onEditTimerName, onEditTimerDuration }: { timer: Timer; onEditTimerName: (id: number, name: string) => void; onEditTimerDuration: (id: number, duration: number) => void; }) {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: timer.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  const getTimerColor = (timerName: string) => {
+    const name = timerName.toLowerCase();
+    if (name.includes('prepare')) return 'border-yellow-500 bg-yellow-100 dark:bg-yellow-900/30';
+    if (name.includes('work')) return 'border-orange-500 bg-orange-100 dark:bg-orange-900/30';
+    if (name.includes('rest') && !name.includes('cycle')) return 'border-blue-500 bg-blue-100 dark:bg-blue-900/30';
+    if (name.includes('cycle')) return 'border-green-500 bg-green-100 dark:bg-green-900/30';
+    return 'border-gray-500 bg-gray-100 dark:bg-gray-900/30';
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} className={`border-2 rounded-lg p-4 ${getTimerColor(timer.name)}`}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <button {...listeners} className="cursor-grab active:cursor-grabbing">
+            <GripVertical className="w-5 h-5 text-gray-500" />
+          </button>
+          <span className="text-lg font-bold cursor-pointer" onClick={() => onEditTimerName(timer.id, timer.name)}>
+            {timer.name}
+          </span>
+        </div>
+        <span className="text-lg font-bold cursor-pointer" onClick={() => onEditTimerDuration(timer.id, timer.duration)}>
+          {formatTime(timer.duration)}
+        </span>
+      </div>
+    </div>
+  );
 }
 
 export default function WorkoutMenu({ 
   workout, 
-  timers, 
   onBack, 
   onStart,
-  onEditWorkoutName,
-  onEditTimerName,
-  onEditTimerDuration,
-  onUpdateSoundSettings,
-  onTimersReordered
 }: WorkoutMenuProps) {
   const [isEditingWorkoutName, setIsEditingWorkoutName] = useState(false);
   const [workoutNameInput, setWorkoutNameInput] = useState(workout.name);
@@ -50,52 +75,38 @@ export default function WorkoutMenu({
   const headerRef = useRef<HTMLDivElement>(null);
   const addTimerButtonRef = useRef<HTMLButtonElement>(null);
   const addTimerLineRef = useRef<SVGSVGElement>(null);
-  const timerRefs = useRef<(HTMLDivElement | null)[]>([]);
+  //const timerRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  const reorderMutation = useMutation({
-    mutationFn: async (timerOrders: { id: number; order: number }[]) => {
-      const response = await fetch(`/api/workouts/${workout.id}/timers/reorder`, {
-        method: 'PATCH',
-        body: JSON.stringify(timerOrders),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      if (!response.ok) throw new Error('Failed to reorder timers');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/workouts', workout.id, 'timers'] });
-      onTimersReordered();
-    },
-  });
+  const { data: timers, isLoading, error } = useGetTimers(workout.id);
+  const { data: workouts } = useGetWorkouts();
+  const currentWorkout = workouts?.find(w => w.id === workout.id) || workout;
+  const reorderTimersMutation = useReorderTimers();
+  const insertTimerMutation = useInsertTimer();
+  const updateWorkoutMutation = useUpdateWorkout();
+  const updateTimerMutation = useUpdateTimer();
 
-  const addTimerMutation = useMutation({
-    mutationFn: async ({ type, duration, position }: { type: string; duration: number; position: number }) => {
-      const response = await fetch(`/api/workouts/${workout.id}/timers/insert`, {
-        method: 'POST',
-        body: JSON.stringify({
-          name: type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' '),
-          type,
-          duration,
-          position
-        }),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      if (!response.ok) throw new Error('Failed to add timer');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/workouts', workout.id, 'timers'] });
-      onTimersReordered();
-    },
-  });
+  // Debug logging for timer loading
+  useEffect(() => {
+    if (timers) {
+      console.log(`Successfully loaded ${timers.length} timers for workout ${workout.id}:`, timers);
+    }
+  }, [timers, workout.id]);
+
+  useEffect(() => {
+    if (error) {
+      console.error(`Failed to load timers for workout ${workout.id}:`, error);
+    }
+  }, [error, workout.id]);
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const handleWorkoutNameSave = () => {
     if (workoutNameInput.trim() && workoutNameInput !== workout.name) {
-      onEditWorkoutName(workoutNameInput.trim());
+      updateWorkoutMutation.mutate({ id: workout.id, workout: { name: workoutNameInput.trim() } });
     }
     setIsEditingWorkoutName(false);
   };
@@ -109,7 +120,8 @@ export default function WorkoutMenu({
     const buttonCenterX = buttonRect.left + buttonRect.width / 2;
 
     // Get all timer elements
-    const timerElements = timerRefs.current.filter(ref => ref !== null);
+    //const timerElements = timerRefs.current.filter(ref => ref !== null);
+    const timerElements = Array.from(timerListRef.current.children) as HTMLElement[]
     
     if (timerElements.length === 0) {
       // No timers, point to the timer list area
@@ -212,7 +224,7 @@ export default function WorkoutMenu({
       window.removeEventListener('resize', handleResize);
       clearTimeout(timer);
     };
-  }, [timers.length, showAddTimer]); // Re-run when timer count changes
+  }, [timers?.length, showAddTimer]); // Re-run when timer count changes
 
   const handleDragStart = (e: React.DragEvent, timerId: number) => {
     setDraggedItem(timerId);
@@ -238,8 +250,8 @@ export default function WorkoutMenu({
     }
 
     // Find the indices of the dragged and target items
-    const draggedIndex = timers.findIndex(t => t.id === draggedItem);
-    const targetIndex = timers.findIndex(t => t.id === targetTimerId);
+    const draggedIndex = timers?.findIndex(t => t.id === draggedItem);
+    const targetIndex = timers?.findIndex(t => t.id === targetTimerId);
     
     if (draggedIndex === -1 || targetIndex === -1) {
       setDraggedItem(null);
@@ -248,9 +260,9 @@ export default function WorkoutMenu({
     }
 
     // Create new order by moving the dragged item to the target position
-    const newTimers = [...timers];
-    const [draggedTimer] = newTimers.splice(draggedIndex, 1);
-    newTimers.splice(targetIndex, 0, draggedTimer);
+    const newTimers = [...(timers || [])];
+    const [draggedTimer] = newTimers.splice(draggedIndex!, 1);
+    newTimers.splice(targetIndex!, 0, draggedTimer);
 
     // Update orders based on new positions
     const timerOrders = newTimers.map((timer, index) => ({
@@ -259,7 +271,8 @@ export default function WorkoutMenu({
     }));
 
     // Submit the reorder request
-    reorderMutation.mutate(timerOrders);
+    const timerIds = newTimers.map(t => t.id);
+    reorderTimersMutation.mutate({ workoutId: workout.id, timerIds });
     
     setDraggedItem(null);
     setDraggedOver(null);
@@ -271,7 +284,13 @@ export default function WorkoutMenu({
   };
 
   const handleAddTimerConfirm = (type: string, duration: number) => {
-    addTimerMutation.mutate({ type, duration, position: insertPosition });
+    insertTimerMutation.mutate({ 
+      workoutId: workout.id, 
+      name: type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' '), 
+      duration, 
+      type,
+      order: timers?.length || 0
+    });
     setShowAddTimer(false);
   };
 
@@ -283,7 +302,10 @@ export default function WorkoutMenu({
 
   const handleTimerDurationConfirm = (newDuration: number) => {
     if (editingTimerId !== null && newDuration > 0) {
-      onEditTimerDuration(editingTimerId, newDuration);
+      updateTimerMutation.mutate({ 
+        id: editingTimerId, 
+        updates: { duration: newDuration } 
+      });
     }
     setShowTimerDurationPicker(false);
     setEditingTimerId(null);
@@ -296,7 +318,7 @@ export default function WorkoutMenu({
 
   // Snap scroll to position the horizontal bar between timers
   const snapToPosition = () => {
-    if (!scrollContainerRef.current || !timerListRef.current || timers.length === 0) return;
+    if (!scrollContainerRef.current || !timerListRef.current || !timers || timers.length === 0) return;
 
     const container = scrollContainerRef.current;
     const containerRect = container.getBoundingClientRect();
@@ -391,7 +413,7 @@ export default function WorkoutMenu({
       container.removeEventListener('scroll', handleScroll);
       clearTimeout(scrollTimeout);
     };
-  }, [timers.length]);
+  }, [timers?.length]);
 
   // Measure header height on mount and when workout name changes
   useEffect(() => {
@@ -440,10 +462,53 @@ export default function WorkoutMenu({
     vibrate: true
   };
 
+  const handleDragEnd = (event: any) => {
+    const { active, over } = event;
+
+    if (active.id !== over.id) {
+      if (!timers) return;
+      const oldIndex = timers.findIndex((t) => t.id === active.id);
+      const newIndex = timers.findIndex((t) => t.id === over.id);
+      const newTimersOrder = arrayMove(timers, oldIndex, newIndex);
+      const timerIds = newTimersOrder.map((t) => t.id);
+
+      reorderTimersMutation.mutate({ workoutId: workout.id, timerIds });
+    }
+  };
+
+  const handleInsertTimer = async (type: 'work' | 'rest') => {
+    if (!timers) return;
+    const newTimer = {
+      workoutId: workout.id,
+      name: type === 'work' ? 'Work' : 'Rest',
+      duration: type === 'work' ? workout.work : workout.rest,
+      type: type,
+      order: timers.length,
+    };
+    insertTimerMutation.mutate(newTimer);
+  };
+
+  const handleSoundSettingsChange = (newSoundSettings: SoundSettings) => {
+    updateSettings(newSoundSettings);
+  };
+
+  // Update sound settings in the database for this specific workout
+  const updateSettings = (newSoundSettings: SoundSettings) => {
+    const workoutUpdate: Partial<InsertWorkout> = {
+      soundSettings: newSoundSettings
+    };
+    console.log("🔵 updateSettings:", workoutUpdate);
+    
+    updateWorkoutMutation.mutate({ 
+      id: workout.id, 
+      workout: workoutUpdate 
+    });
+  };
+
   return (
     <div className="flex flex-col h-screen bg-background relative">
       {/* Fixed Header */}
-      <div ref={headerRef} className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between p-4 border-b-2 border-black bg-background">
+      <div ref={headerRef} className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between p-4 pt-16 border-b-2 border-black bg-background">
         <Button
           variant="ghost"
           size="sm"
@@ -488,9 +553,9 @@ export default function WorkoutMenu({
         </Button>
       </div>
 
-      {/* Fixed Add Timer Button - positioned between 2nd and 3rd timers */}
+      {/* Fixed Add Timer Button */}
       <div className="fixed left-4 right-4 z-30 flex items-center" style={{ 
-        top: '50vh', // Header + Play button + spacing + 1st timer + spacing + half of spacing?
+        top: '50vh',
         pointerEvents: 'none'
       }}>
         <button ref={addTimerButtonRef} 
@@ -537,7 +602,7 @@ export default function WorkoutMenu({
         style={{ scrollBehavior: 'auto',
                paddingTop: `${headerHeight}px` }}
       >
-        <div className="p-4 space-y-6">
+        <div className="pl-16 pr-4 py-4 space-y-6">
           {/* Play Button */}
           <Button
             onClick={onStart}
@@ -547,49 +612,27 @@ export default function WorkoutMenu({
           </Button>
 
           {/* Timer List */}
-          <div ref={timerListRef} className="space-y-3">
-            {timers.map((timer, index) => (
-              <div
-                key={timer.id}
-                ref={(el) => { timerRefs.current[index] = el; }}
-                className={`border-2 rounded-lg p-4 transition-all duration-200 ${getTimerColor(timer.name, index)} ${
-                  draggedItem === timer.id ? 'opacity-50' : ''
-                } ${
-                  draggedOver === timer.id ? 'transform translate-y-1 shadow-lg' : ''
-                }`}
-                draggable
-                onDragStart={(e) => handleDragStart(e, timer.id)}
-                onDragOver={(e) => handleDragOver(e, timer.id)}
-                onDragLeave={handleDragLeave}
-                onDrop={(e) => handleDrop(e, timer.id)}
-              >
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    
-                    <GripVertical className="w-5 h-5 text-gray-500 cursor-grab active:cursor-grabbing" />
-                    <span 
-                      className="text-lg font-bold cursor-pointer"
-                      onClick={() => {
-                        const newName = prompt('Enter timer name:', timer.name);
-                        if (newName && newName.trim() && newName !== timer.name) {
-                          onEditTimerName(timer.id, newName.trim());
-                        }
-                      }}
-                    >
-                      {timer.name}
-                    </span>
-                  </div>
-                  <span 
-                    className="text-lg font-bold cursor-pointer"
-                    onClick={() => handleTimerDurationClick(timer.id, timer.duration)}
-                  >
-                    {formatTime(timer.duration)}
-                  </span>
-                </div>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={timers?.map(t => t.id) || []} strategy={verticalListSortingStrategy}>
+              <div ref={timerListRef} className="space-y-3">
+                {timers?.map((timer) => (
+                  <SortableTimerItem 
+                    key={timer.id} 
+                    timer={timer}
+                    onEditTimerName={(id, name) => {
+                      const newName = prompt('Enter timer name:', name);
+                      if (newName && newName.trim()) {
+                        // You'll need a mutation for updating a timer's name
+                      }
+                    }}
+                    onEditTimerDuration={(id, duration) => {
+                      handleTimerDurationClick(id, duration);
+                    }}
+                  />
+                ))}
               </div>
-            ))}
-          </div>
+            </SortableContext>
+          </DndContext>
         </div>
       </div>
 
@@ -597,9 +640,11 @@ export default function WorkoutMenu({
       {showSettings && (
         <div className="fixed inset-0 z-50">
           <WorkoutSettings
-            workoutName={workout.name}
-            soundSettings={workout.soundSettings as SoundSettings || defaultSoundSettings}
-            onSave={onUpdateSoundSettings}
+            workoutName={currentWorkout.name}
+            soundSettings={currentWorkout.soundSettings as SoundSettings || defaultSoundSettings}
+            onSave={(settings) => {
+              handleSoundSettingsChange(settings);
+            }}
             onClose={() => setShowSettings(false)}
           />
         </div>

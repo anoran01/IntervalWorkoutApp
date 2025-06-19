@@ -7,6 +7,7 @@ import Home from "@/pages/home";
 import NotFound from "@/pages/not-found";
 
 function Router() {
+  console.log("Router rendered");
   return (
     <Switch>
       <Route path="/" component={Home} />
@@ -16,12 +17,12 @@ function Router() {
 }
 
 function App() {
+  console.log("App rendered");
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <TooltipProvider>
           <div className="min-h-screen bg-background text-foreground">
-            {console.log("App rendered")}
             <Router />
           </div>
         </TooltipProvider>
