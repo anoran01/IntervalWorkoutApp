@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Settings, Play, GripVertical, Plus } from "lucide-react";
+import { ArrowLeft, Settings, Play, GripVertical, Plus, Trash2 } from "lucide-react";
 import { formatTime } from "@/lib/workout-utils";
 import WorkoutSettings from "@/components/workout-settings";
 import AddTimerModal from "@/components/add-timer-modal";
 import TimePickerModal from "@/components/time-picker-modal";
-import { useGetTimers, useInsertTimer, useReorderTimers, useUpdateWorkout, useGetWorkouts, useUpdateTimer } from "@/lib/queryClient";
+import { useGetTimers, useInsertTimer, useReorderTimers, useUpdateWorkout, useGetWorkouts, useUpdateTimer, useDeleteTimer } from "@/lib/queryClient";
 import type { Workout, Timer, SoundSettings, InsertTimer, InsertWorkout } from "@/schema";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
@@ -17,7 +17,7 @@ interface WorkoutMenuProps {
   onStart: () => void;
 }
 
-function SortableTimerItem({ timer, onEditTimerName, onEditTimerDuration }: { timer: Timer; onEditTimerName: (id: number, name: string) => void; onEditTimerDuration: (id: number, duration: number) => void; }) {
+function SortableTimerItem({ timer, onEditTimerName, onEditTimerDuration, onDeleteTimer }: { timer: Timer; onEditTimerName: (id: number, name: string) => void; onEditTimerDuration: (id: number, duration: number) => void; onDeleteTimer: (id: number) => void; }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: timer.id });
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -33,6 +33,13 @@ function SortableTimerItem({ timer, onEditTimerName, onEditTimerDuration }: { ti
     return 'border-gray-500 bg-gray-100 dark:bg-gray-900/30';
   };
 
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent any parent click handlers
+    if (window.confirm(`Are you sure you want to delete the "${timer.name}" timer?`)) {
+      onDeleteTimer(timer.id);
+    }
+  };
+
   return (
     <div ref={setNodeRef} style={style} {...attributes} className={`border-2 rounded-lg p-4 ${getTimerColor(timer.name)}`}>
       <div className="flex items-center justify-between">
@@ -44,9 +51,19 @@ function SortableTimerItem({ timer, onEditTimerName, onEditTimerDuration }: { ti
             {timer.name}
           </span>
         </div>
-        <span className="text-lg font-bold cursor-pointer" onClick={() => onEditTimerDuration(timer.id, timer.duration)}>
-          {formatTime(timer.duration)}
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="text-lg font-bold cursor-pointer" onClick={() => onEditTimerDuration(timer.id, timer.duration)}>
+            {formatTime(timer.duration)}
+          </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 dark:hover:bg-red-900/20"
+            onClick={handleDeleteClick}
+          >
+            <Trash2 className="w-5 h-5" />
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -84,6 +101,7 @@ export default function WorkoutMenu({
   const insertTimerMutation = useInsertTimer();
   const updateWorkoutMutation = useUpdateWorkout();
   const updateTimerMutation = useUpdateTimer();
+  const deleteTimerMutation = useDeleteTimer();
 
   // Debug logging for timer loading
   useEffect(() => {
@@ -283,14 +301,48 @@ export default function WorkoutMenu({
     setShowAddTimer(true);
   };
 
-  const handleAddTimerConfirm = (type: string, duration: number) => {
-    insertTimerMutation.mutate({ 
-      workoutId: workout.id, 
-      name: type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' '), 
-      duration, 
-      type,
-      order: timers?.length || 0
-    });
+  const handleAddTimerConfirm = async (type: string, duration: number) => {
+    if (!timers) return;
+    
+    // Sort timers by order to understand current sequence  
+    const sortedTimers = [...timers].sort((a, b) => a.order - b.order);
+    
+    try {
+      // Step 1: Insert the new timer with a temporary high order to avoid conflicts
+      const tempOrder = sortedTimers.length > 0 
+        ? Math.max(...sortedTimers.map(t => t.order)) + 1000
+        : 0;
+        
+      const newTimerId = await insertTimerMutation.mutateAsync({
+        workoutId: workout.id,
+        name: type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' '),
+        duration,
+        type,
+        order: tempOrder
+      });
+      
+      if (!newTimerId) {
+        throw new Error('Failed to insert timer - no ID returned');
+      }
+      
+      // Step 2: Build the final desired order with the new timer in the correct position
+      const currentTimerIds = sortedTimers.map(t => t.id);
+      const finalTimerIds = [
+        ...currentTimerIds.slice(0, insertPosition),
+        newTimerId,
+        ...currentTimerIds.slice(insertPosition)
+      ];
+      
+      // Step 3: Reorder all timers to sequential positions (0, 1, 2, 3...)
+      await reorderTimersMutation.mutateAsync({
+        workoutId: workout.id,
+        timerIds: finalTimerIds
+      });
+      
+    } catch (error) {
+      console.error('Failed to insert timer with positional reordering:', error);
+    }
+    
     setShowAddTimer(false);
   };
 
@@ -314,6 +366,10 @@ export default function WorkoutMenu({
   const handleTimerDurationPickerClose = () => {
     setShowTimerDurationPicker(false);
     setEditingTimerId(null);
+  };
+
+  const handleDeleteTimer = (timerId: number) => {
+    deleteTimerMutation.mutate(timerId);
   };
 
   // Snap scroll to position the horizontal bar between timers
@@ -476,17 +532,7 @@ export default function WorkoutMenu({
     }
   };
 
-  const handleInsertTimer = async (type: 'work' | 'rest') => {
-    if (!timers) return;
-    const newTimer = {
-      workoutId: workout.id,
-      name: type === 'work' ? 'Work' : 'Rest',
-      duration: type === 'work' ? workout.work : workout.rest,
-      type: type,
-      order: timers.length,
-    };
-    insertTimerMutation.mutate(newTimer);
-  };
+
 
   const handleSoundSettingsChange = (newSoundSettings: SoundSettings) => {
     updateSettings(newSoundSettings);
@@ -628,6 +674,7 @@ export default function WorkoutMenu({
                     onEditTimerDuration={(id, duration) => {
                       handleTimerDurationClick(id, duration);
                     }}
+                    onDeleteTimer={handleDeleteTimer}
                   />
                 ))}
               </div>

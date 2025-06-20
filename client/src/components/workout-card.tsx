@@ -1,0 +1,55 @@
+import { useMutation } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
+import { Button } from "@/components/ui/button";
+import { GripVertical, Trash2 } from "lucide-react";
+import type { Workout } from "@/schema";
+import { dbService } from "@/services/database";
+
+interface WorkoutCardProps {
+  workout: Workout;
+  onSelect: () => void;
+  // Add drag props from @dnd-kit
+  listeners?: any;
+  attributes?: any;
+}
+
+export function WorkoutCard({ workout, onSelect, listeners, attributes }: WorkoutCardProps) {
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => dbService.deleteWorkout(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["workouts"] });
+    },
+  });
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent the card's onSelect from firing
+    if (window.confirm(`Are you sure you want to delete "${workout.name}"?`)) {
+      deleteMutation.mutate(workout.id);
+    }
+  };
+
+  return (
+    <div className="border-2 dark:border-white border-black rounded-lg p-6 bg-background">
+      <div className="flex items-center gap-3">
+        <div
+          className="cursor-grab active:cursor-grabbing"
+          {...listeners}
+          {...attributes}
+        >
+          <GripVertical className="w-5 h-5 text-gray-500" />
+        </div>
+        <h3 className="text-xl font-bold cursor-pointer flex-1" onClick={onSelect}>
+          {workout.name}
+        </h3>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 dark:hover:bg-red-900/20"
+          onClick={handleDeleteClick}
+        >
+          <Trash2 className="w-5 h-5" />
+        </Button>
+      </div>
+    </div>
+  );
+} 

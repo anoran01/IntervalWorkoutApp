@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ToggleLeft, ToggleRight } from "lucide-react";
 import { useTheme } from "@/lib/theme-context";
 
 interface WorkoutListSettingsProps {
@@ -30,22 +30,21 @@ export default function WorkoutListSettings({ onClose }: WorkoutListSettingsProp
         {/* Dark/Light Mode */}
         <div className="flex items-center justify-between">
           <span className="text-xl font-bold">Mode</span>
-          <div className="relative flex items-center">
+          <div className="flex items-center">
             <span className="mr-3 text-base font-medium">
               {theme === 'dark' ? 'Dark' : 'Light'}
             </span>
-            <div 
-              className={`w-16 h-8 rounded-full border-2 border-black cursor-pointer transition-colors ${
-                theme === 'dark' ? 'bg-gray-600' : 'bg-gray-200'
-              }`}
+            <Button
+              variant="ghost"
               onClick={toggleTheme}
+              className={`w-16 h-16 ${theme === 'dark' ? 'text-white' : 'text-black'}`}
             >
-              <div 
-                className={`w-6 h-6 bg-white rounded-full border-2 border-black transition-transform duration-200 ${
-                  theme === 'dark' ? 'translate-x-8' : 'translate-x-0'
-                }`}
-              />
-            </div>
+              {theme === 'dark' ? (
+                <ToggleRight size={64} />
+              ) : (
+                <ToggleLeft size={64} />
+              )}
+            </Button>
           </div>
         </div>
       </div>

@@ -197,6 +197,10 @@ class DatabaseService {
     await this.db?.run(`UPDATE timers SET ${setClause} WHERE id = ?`, [...values, id]);
   }
 
+  async deleteTimer(id: number): Promise<void> {
+    await this.db?.run('DELETE FROM timers WHERE id = ?', [id]);
+  }
+
   async getTimersForWorkout(workoutId: number): Promise<Timer[]> {
     const result = await this.db?.query('SELECT * FROM timers WHERE workoutId = ? ORDER BY "order" ASC;', [workoutId]);
     return result?.values || [];

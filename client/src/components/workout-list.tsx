@@ -38,8 +38,8 @@ function SortableWorkoutCard({ workout, onSelect }: { workout: Workout; onSelect
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes}>
-      <WorkoutCard workout={workout} onSelect={onSelect} {...listeners} />
+    <div ref={setNodeRef} style={style}>
+      <WorkoutCard workout={workout} onSelect={onSelect} listeners={listeners} attributes={attributes} />
     </div>
   );
 }
@@ -47,8 +47,6 @@ function SortableWorkoutCard({ workout, onSelect }: { workout: Workout; onSelect
 export default function WorkoutList({ onWorkoutSelect, onNavigateToQuickCreate }: WorkoutListProps) {
   console.log("WOrkout List WOrkout list WorkoutList");
   const [showSettings, setShowSettings] = useState(false);
-  const [draggedItem, setDraggedItem] = useState<number | null>(null);
-  const [draggedOver, setDraggedOver] = useState<number | null>(null);
   const [workoutToDelete, setWorkoutToDelete] = useState<Workout | null>(null);
   
   const { data: workouts, isLoading, error } = useGetWorkouts();
@@ -61,54 +59,6 @@ export default function WorkoutList({ onWorkoutSelect, onNavigateToQuickCreate }
   );
 
   const deleteMutation = useDeleteWorkout();
-
-  const handleDragStart = (e: React.DragEvent, workoutId: number) => {
-    setDraggedItem(workoutId);
-    e.dataTransfer.effectAllowed = 'move';
-  };
-
-  const handleDragOver = (e: React.DragEvent, workoutId: number) => {
-    e.preventDefault();
-    setDraggedOver(workoutId);
-  };
-
-  const handleDragLeave = () => {
-    setDraggedOver(null);
-  };
-
-  const handleDrop = (e: React.DragEvent, targetWorkoutId: number) => {
-    e.preventDefault();
-    
-    if (!draggedItem || draggedItem === targetWorkoutId) {
-      setDraggedItem(null);
-      setDraggedOver(null);
-      return;
-    }
-
-    // Find the indices of the dragged and target items
-    const draggedIndex = workouts?.findIndex(w => w.id === draggedItem);
-    const targetIndex = workouts?.findIndex(w => w.id === targetWorkoutId);
-    
-    if (draggedIndex === -1 || targetIndex === -1) {
-      setDraggedItem(null);
-      setDraggedOver(null);
-      return;
-    }
-
-    // Create new order by moving the dragged item to the target position
-    const newWorkouts = [...workouts];
-    const [draggedWorkout] = newWorkouts.splice(draggedIndex, 1);
-    newWorkouts.splice(targetIndex, 0, draggedWorkout);
-
-    // Update orders based on new positions
-    const workoutIds = newWorkouts.map((workout) => workout.id);
-
-    // Submit the reorder request
-    reorderMutation.mutate(workoutIds);
-    
-    setDraggedItem(null);
-    setDraggedOver(null);
-  };
 
   const handleWorkoutClick = (workout: Workout) => {
     onWorkoutSelect(workout);
@@ -135,13 +85,21 @@ export default function WorkoutList({ onWorkoutSelect, onNavigateToQuickCreate }
 
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
-    if (active.id !== over.id) {
-      const oldIndex = workouts.findIndex((w) => w.id === active.id);
-      const newIndex = workouts.findIndex((w) => w.id === over.id);
-      const newWorkoutsOrder = arrayMove(workouts, oldIndex, newIndex);
-      const workoutIds = newWorkoutsOrder.map((w) => w.id);
-      reorderMutation.mutate(workoutIds);
+    
+    if (!workouts || !active.id || !over?.id || active.id === over.id) {
+      return;
     }
+
+    const oldIndex = workouts.findIndex((w) => w.id === active.id);
+    const newIndex = workouts.findIndex((w) => w.id === over.id);
+    
+    if (oldIndex === -1 || newIndex === -1) {
+      return;
+    }
+
+    const newWorkoutsOrder = arrayMove(workouts, oldIndex, newIndex);
+    const workoutIds = newWorkoutsOrder.map((w) => w.id);
+    reorderMutation.mutate(workoutIds);
   };
 
   if (isLoading) {
@@ -195,7 +153,7 @@ export default function WorkoutList({ onWorkoutSelect, onNavigateToQuickCreate }
 
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto pt-32 pb-20 p-4 scrollbar-hide">
-        {workouts?.length === 0 ? (
+        {!workouts || workouts.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground mb-4">No workouts created yet</p>
             <p className="text-sm text-muted-foreground">Use Quick Create to create your first workout</p>

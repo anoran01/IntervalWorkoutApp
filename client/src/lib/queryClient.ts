@@ -137,3 +137,25 @@ export function useUpdateTimer() {
     },
   });
 }
+
+// Hook to delete a timer
+export function useDeleteTimer() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => dbService.deleteTimer(id),
+    onSuccess: (data, variables) => {
+      // We need to know the workoutId to invalidate the right query
+      // We can get it from the current timers data
+      const currentTimers = queryClient.getQueriesData({ queryKey: ['timers'] });
+      for (const [queryKey, timers] of currentTimers) {
+        if (Array.isArray(timers)) {
+          const timer = timers.find((t: any) => t.id === variables);
+          if (timer) {
+            queryClient.invalidateQueries({ queryKey: ['timers', timer.workoutId] });
+            break;
+          }
+        }
+      }
+    },
+  });
+}

@@ -20,7 +20,7 @@ export default function WorkoutTimer({
   const { data: timers, isLoading } = useGetTimers(workout.id);
   const [isRunning, setIsRunning] = useState(false);
   const [currentTimerIndex, setCurrentTimerIndex] = useState(0);
-  const [timeRemaining, setTimeRemaining] = useState(0);
+  const [timeRemaining, setTimeRemaining] = useState<number>(0);
 
   // Initialize timeRemaining when timers are loaded
   useEffect(() => {
@@ -93,7 +93,7 @@ export default function WorkoutTimer({
   }, [isRunning, timeRemaining, currentTimer, playBeep, workoutSoundSettings]);
 
   useEffect(() => {
-    if (timeRemaining === 0 && currentTimer) {
+    if (timeRemaining === 0 && currentTimer && isRunning) {
       if (isLastTimer) {
         console.log('🎯 Workout complete - Playing completion sound');
         playCompletionSound();
