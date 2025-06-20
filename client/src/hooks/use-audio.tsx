@@ -26,12 +26,51 @@ export function useAudio(soundSettings: SoundSettings) {
   }, []);
 
   // Helper function to play audio files
-  const playAudioFile = useCallback(async (audioSrc: string) => {
+  /*const playAudioFile = useCallback(async (audioSrc: string) => {
     try {
       const audio = new Audio(audioSrc);
       audio.volume = 0.8;
       await audio.play();
       console.log('🔊 Audio file played:', audioSrc);
+    } catch (error) {
+      console.warn('❌ Failed to play audio file:', audioSrc, error);
+    }
+  }, []);*/
+
+  const playAudioFile = useCallback(async (audioSrc: string) => {
+    try {
+      const audioContext = initAudioContext();
+      if (!audioContext) throw new Error("No AudioContext available");
+
+      // Resume audio context if suspended (required by some browsers)
+      if (audioContext.state === 'suspended') {
+        console.log('🔊 Resuming suspended audio context...');
+        await audioContext.resume();
+      }
+
+      // Fetch the audio file as ArrayBuffer
+      const response = await fetch(audioSrc);
+      const arrayBuffer = await response.arrayBuffer();
+
+      // Decode the audio data
+      const decodedBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+      // Create a buffer source and gain node for volume control
+      const source = audioContext.createBufferSource();
+      const gainNode = audioContext.createGain();
+      
+      source.buffer = decodedBuffer;
+      
+      // Set volume (equivalent to audio.volume = 0.8)
+      gainNode.gain.setValueAtTime(0.8, audioContext.currentTime);
+      
+      // Connect: source -> gain -> destination
+      source.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      // Play the audio
+      source.start();
+      console.log('🔊 Audio file played via Web Audio API:', audioSrc);
     } catch (error) {
       console.warn('❌ Failed to play audio file:', audioSrc, error);
     }
