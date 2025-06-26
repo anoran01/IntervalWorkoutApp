@@ -36,8 +36,8 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
     cycles: 6,
     restBetweenCycles: 60,
     soundSettings: {
-      beepTone: "standard",
-      beepStart: 5,
+      beepTone: "low_pitch",
+      beepStart: 3,
       tenSecondWarning: true,
       halfwayReminder: true,
       verbalReminder: true,

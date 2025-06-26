@@ -494,10 +494,11 @@ export class AudioGeneratorService {
         
         // Add beep countdown (if enabled)
         if (soundSettings?.beepStart > 0) {
+            console.log('beepTone before adding beep countdown: ', soundSettings?.beepTone);
           let beepAudioFile = '/audio/beep500.wav'; // default to standard
-          if (soundSettings?.beepTone === 'low') {
+          if (soundSettings?.beepTone === 'low_pitch') {
             beepAudioFile = '/audio/beep300.wav';
-          } else if (soundSettings?.beepTone === 'high') {
+          } else if (soundSettings?.beepTone === 'high_pitch') {
             beepAudioFile = '/audio/beep700.wav';
           }
           const beepStartTime = Math.min(soundSettings.beepStart, timer.duration - 1);
