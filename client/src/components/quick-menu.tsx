@@ -139,7 +139,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
     // generate audio file for the workout
     // do I need to process the timers object or is it good as it?
     console.log("⏳ Starting audio generation at:", new Date().toLocaleTimeString());
-    const workoutAudioFile = await audioGeneratorService.generateFullWorkoutAudioFile(timers, settings.soundSettings);
+    const workoutAudioFile = await audioGeneratorService.generateFullWorkoutAudioFile(timers, settings.soundSettings, 'mp3');
     console.log("⏳ Finished audio generation at:", new Date().toLocaleTimeString());
 
     createWorkoutAndTimerMutation.mutate({workout: newWorkout, timers: timers, filePath: workoutAudioFile}, {

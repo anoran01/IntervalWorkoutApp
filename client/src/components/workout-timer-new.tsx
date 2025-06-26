@@ -24,18 +24,18 @@ export default function WorkoutTimer({
   const { data: timers, isLoading } = useGetTimers(workout.id);
   const [isRunning, setIsRunning] = useState(false);
   const [currentTimerIndex, setCurrentTimerIndex] = useState(0);
-  const [timeRemaining, setTimeRemaining] = useState<number>(0);
+  const [timeRemaining, setTimeRemaining] = useState<number>(0); //this is time remaining in the current timer not in the entire workout
   const [liveActivitySupported, setLiveActivitySupported] = useState(false);
   const [activityId, setActivityId] = useState<string | null>(null);
-
+  const [duration, setDuration] = useState<number>(0);
+  const [pausedTime, setPausedTime] = useState<number>(0);
   const SILENT_AUDIO_ID = 'silentloop';
   const SILENT_AUDIO_PATH = 'public/audio/silence.wav';
-  let isLoopPlaying = false;
   const AUDIO_ID = 'workout-audio';
 
   const AUDIO_PATH = useWorkoutAudioPath(workout.filePath);
 
-  async function preloadAudio(id: string, filepath: string, volume: number = 0.4) {
+  async function preloadAudio(id: string, filepath: string, volume: number = 1.0) {
     try {
       await NativeAudio.preload({
         assetId: id,
@@ -49,6 +49,8 @@ export default function WorkoutTimer({
         volume: volume,
       });
       console.log(`Audio volume set to ${volume} for ${id}.`);
+      const duration = await NativeAudio.getDuration({ assetId: id });
+      setDuration(duration.duration);
     } catch (error) {
       console.error(`Error setting up audio for ${id}: `, error);
     }
@@ -66,23 +68,18 @@ export default function WorkoutTimer({
   async function stopAudio(id: string) {
     try {
       await NativeAudio.stop({ assetId: id });
-      if (id === SILENT_AUDIO_ID) {
-        isLoopPlaying = false;
-      }
       console.log(`Audio stopped for ${id}.`);
     } catch (error) {
       console.error(`Error stopping audio for ${id}: `, error);
     }
   }
 
-  async function playAudioLoop(id: string) {
+  async function playAudio(id: string, time: number = 0) {
     try {
-      await NativeAudio.loop({
+      await NativeAudio.play({
         assetId: id,
+        time: time,
       });
-      if (id === SILENT_AUDIO_ID) {
-        isLoopPlaying = true;
-      }
       console.log(`Audio loop started for ${id}.`);
     } catch (error) {
       console.error(`Error playing audio loop for ${id}: `, error);
@@ -255,7 +252,7 @@ export default function WorkoutTimer({
     ) {
       // Starting workout - verbal reminder for first timer
       console.log('▶️ Starting workout:', workout.name, 'First timer:', timers[0]?.name);
-      await playAudioLoop(AUDIO_ID);
+      await playAudio(AUDIO_ID);
       if (workoutSoundSettings.verbalReminder) {
         console.log('🔊 Verbal reminder audio - Timer:', timers[0]?.name, 'Type:', timers[0]?.type, 'Starting with duration:', timers[0]?.duration);
       }
@@ -284,79 +281,28 @@ export default function WorkoutTimer({
         console.log('🎯 Live Activity started:', started);
       }
     } else if (!isRunning){
-      await playAudioLoop(AUDIO_ID);
+      await playAudio(AUDIO_ID, pausedTime);
     } else if (isRunning) {
+      const currentTime = await NativeAudio.getCurrentTime({ assetId: AUDIO_ID });
+      setPausedTime(currentTime.currentTime);
       await stopAudio(AUDIO_ID);
     }
     console.log('⏯️ Play/Pause toggled - isRunning:', !isRunning, 'Current timer:', currentTimer?.name);
     setIsRunning(!isRunning);
   };
 
-  const handleSkip30Forward = () => {
-    let remainingSkip = 30;
-    let currentIndex = currentTimerIndex;
-    let currentTime = timeRemaining;
-
-    while (remainingSkip > 0 && currentIndex < timers.length) {
-      if (currentTime > remainingSkip) {
-        // Skip within current timer
-        setTimeRemaining(currentTime - remainingSkip);
-        return;
-      } else {
-        // Skip entire current timer and move to next
-        remainingSkip -= currentTime;
-        currentIndex++;
-        if (currentIndex >= timers.length) {
-          // Reached end of workout
-          onComplete();
-          return;
-        }
-        currentTime = timers[currentIndex].duration;
-        setCurrentTimerIndex(currentIndex);
-      }
-    }
-
-    setTimeRemaining(currentTime);
+  const handleSkip30Forward = async () => {
+    const skipTime = 30;
+    const currentTime = await NativeAudio.getCurrentTime({ assetId: AUDIO_ID });
+    const newTime = Math.min(duration, currentTime.currentTime + skipTime);
+    await NativeAudio.play({ assetId: AUDIO_ID, time: newTime});
   };
 
-  const handleSkip30Backward = () => {
-    let remainingSkip = 30;
-    let currentIndex = currentTimerIndex;
-    let currentTime = timeRemaining;
-    const maxTimeForCurrentTimer = timers[currentIndex].duration;
-
-    // How much time has already elapsed in current timer
-    const elapsedInCurrentTimer = maxTimeForCurrentTimer - currentTime;
-
-    if (elapsedInCurrentTimer >= remainingSkip) {
-      // Skip backward within current timer (add time back)
-      setTimeRemaining(currentTime + remainingSkip);
-      return;
-    }
-
-    // We need to go back to previous timer(s)
-    // First, use up the elapsed time in current timer
-    remainingSkip -= elapsedInCurrentTimer;
-
-    // Move to previous timer
-    while (remainingSkip > 0 && currentIndex > 0) {
-      currentIndex--;
-      const prevTimerDuration = timers[currentIndex].duration;
-
-      if (remainingSkip <= prevTimerDuration) {
-        // We can fit the remaining skip within this previous timer
-        setCurrentTimerIndex(currentIndex);
-        setTimeRemaining(remainingSkip);
-        return;
-      } else {
-        // This previous timer is not long enough, skip it entirely
-        remainingSkip -= prevTimerDuration;
-      }
-    }
-
-    // If we've gone back to the beginning, set to start of first timer
-    setCurrentTimerIndex(0);
-    setTimeRemaining(timers[0].duration);
+  const handleSkip30Backward = async () => {
+    const skipTime = 30;
+    const currentTime = await NativeAudio.getCurrentTime({ assetId: AUDIO_ID });
+    const newTime = Math.max(0, currentTime.currentTime - skipTime);
+    await NativeAudio.play({ assetId: AUDIO_ID, time: newTime});
   };
 
   // Listen for Live Activity actions

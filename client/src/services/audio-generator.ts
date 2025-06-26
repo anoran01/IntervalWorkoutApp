@@ -1,5 +1,7 @@
-import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
+import { Filesystem, Directory, Encoding, FileInfo } from '@capacitor/filesystem';
 import { Capacitor } from '@capacitor/core';
+import { InsertTimer } from '../schema';
+import { createMp3Encoder } from 'wasm-media-encoders';
 
 interface TimerAudioConfig {
   timerId: string;
@@ -19,7 +21,7 @@ export class AudioGeneratorService {
   private initAudioContext(): AudioContext {
     if (!this.audioContext) {
       // Use a lower sample rate for speech-quality audio. 8000Hz is standard for telephony.
-      this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 8000 });
+      this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 44100});
     }
     return this.audioContext;
   }
@@ -161,6 +163,64 @@ export class AudioGeneratorService {
     }
     
     return arrayBuffer;
+  }
+
+  /**
+   * Converts AudioBuffer to MP3 file format using wasm-media-encoders
+   */
+  private async audioBufferToMp3(buffer: AudioBuffer): Promise<ArrayBuffer> {
+    console.log('Converting to MP3 using wasm-media-encoders (VBR)…');
+
+    const channels = buffer.numberOfChannels;
+    const sampleRate = buffer.sampleRate;
+
+    // Create encoder instance & configure for VBR (quality 4 ≈ ~130 kbps @ 44.1k)
+    const encoder = await createMp3Encoder();
+    encoder.configure({
+      sampleRate,
+      channels: channels as 1 | 2,
+      vbrQuality: 8, // 0 (best, largest) … 9.999 (worst, smallest)
+    });
+
+    const frameSize = 1152; // LAME processes 1152 PCM samples per frame
+    const totalSamples = buffer.length;
+
+    // Pre-grab channel data references
+    const channelData: Float32Array[] = [];
+    for (let ch = 0; ch < channels; ch++) {
+      channelData.push(buffer.getChannelData(ch));
+    }
+
+    const mp3Chunks: Uint8Array[] = [];
+
+    for (let i = 0; i < totalSamples; i += frameSize) {
+      // Slice per-channel PCM views for this frame
+      const slice: Float32Array[] = [];
+      for (let ch = 0; ch < channels; ch++) {
+        slice.push(channelData[ch].subarray(i, Math.min(i + frameSize, totalSamples)));
+      }
+
+      const encoded = encoder.encode(slice);
+      if (encoded.length) {
+        // MUST copy before next encode/finalize call (encoder reuses buffer)
+        mp3Chunks.push(new Uint8Array(encoded));
+      }
+    }
+
+    const last = encoder.finalize();
+    if (last.length) mp3Chunks.push(new Uint8Array(last));
+
+    // Merge chunks into single ArrayBuffer
+    const totalLength = mp3Chunks.reduce((len, c) => len + c.length, 0);
+    const merged = new Uint8Array(totalLength);
+    let offset = 0;
+    for (const chunk of mp3Chunks) {
+      merged.set(chunk, offset);
+      offset += chunk.length;
+    }
+
+    console.log('✅ MP3 conversion complete.');
+    return merged.buffer;
   }
 
   /**
@@ -362,7 +422,7 @@ export class AudioGeneratorService {
    * @param filepath - the filepath to check
    * @param nextNumber - the next number to check
    */
-  async pathCheck(filepath: string, nextNumber: number): Promise<string> {
+  async pathCheck(filepath: string, nextNumber: number, format: 'wav' | 'mp3'): Promise<string> {
     try {
       await Filesystem.stat({
         path: filepath,
@@ -370,9 +430,9 @@ export class AudioGeneratorService {
       });
       // If stat succeeds, file exists, so increment and recurse
       nextNumber = nextNumber + 1;
-      filepath = `workouts/workout_${nextNumber}_full.wav`;
+      filepath = `workouts/workout_${nextNumber}_full.${format}`;
       console.log('filepath in pathcheck still in recursion: ', filepath);
-      return this.pathCheck(filepath, nextNumber);
+      return this.pathCheck(filepath, nextNumber, format);
     } catch (error: any) {
       // If stat fails, file does not exist, so return this filepath
       // Optionally, you can check error.code === 'ENOENT' or similar if needed
@@ -386,7 +446,8 @@ export class AudioGeneratorService {
    */
   async generateFullWorkoutAudioFile(
     timers: Array<InsertTimer>,
-    soundSettings?: any
+    soundSettings?: any,
+    format: 'wav' | 'mp3' = 'wav'
   ): Promise<string> {
     try {
       // Calculate total workout duration
@@ -458,11 +519,20 @@ export class AudioGeneratorService {
       });
       
       // Create the composite buffer
+      console.log('Creating composite buffer...');
       const buffer = await this.createCompositeBuffer(totalDuration, audioInserts);
+      console.log('✅ Composite buffer created.');
       
       // Convert and save
-      const wavBuffer = this.audioBufferToWav(buffer);
-      const base64Data = this.arrayBufferToBase64(wavBuffer);
+      let audioData: ArrayBuffer;
+      if (format === 'mp3') {
+        console.log('Converting to MP3...');
+        audioData = await this.audioBufferToMp3(buffer);
+        console.log('✅ Converted to MP3.');
+      } else {
+        audioData = this.audioBufferToWav(buffer);
+      }
+      const base64Data = this.arrayBufferToBase64(audioData);
       
       // Read the 'workouts/' directory to determine the next available workout audio file number
       await this.ensureDirectoryExists('workouts');
@@ -471,13 +541,18 @@ export class AudioGeneratorService {
         directory: Directory.Data,
       });
       // Count only files that match the pattern 'workout_{number}_full.wav'
-      const workoutFiles = workoutsDir.files?.filter(f => /^workout_\d+_full\.wav$/.test(f.name || f)) || [];
+      const pattern = new RegExp(`^workout_\\d+_full\\.${format}$`);
+      const workoutFiles = workoutsDir.files?.filter(f => {
+        const filename = typeof f === 'string' ? f : f.name;
+        return pattern.test(filename);
+      }) || [];
+
       let nextNumber = workoutFiles.length + 1;
       console.log('nextNumber: ', nextNumber);
-      let filename = `workout_${nextNumber}_full.wav`;
+      let filename = `workout_${nextNumber}_full.${format}`;
       let filepath = `workouts/${filename}`;
       console.log('filepath before pathcheck: ', filepath);
-      filepath = await this.pathCheck(filepath, nextNumber);
+      filepath = await this.pathCheck(filepath, nextNumber, format);
       console.log('filepath: ', filepath);
       
       await this.ensureDirectoryExists('workouts');
@@ -495,8 +570,11 @@ export class AudioGeneratorService {
       console.log('uri: ', uri);
       return uri;
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Failed to generate full workout audio:', error);
+      if (error && typeof error === 'object') {
+        console.error('Error details:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
+      }
       throw error;
     }
   }
