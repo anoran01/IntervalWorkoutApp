@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { GripVertical, Trash2 } from "lucide-react";
 import type { Workout } from "@/schema";
 import { dbService } from "@/services/database";
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { useWorkoutAudioPath } from "@/hooks/use-workout-audio-path";
 
 interface WorkoutCardProps {
   workout: Workout;
@@ -14,14 +16,34 @@ interface WorkoutCardProps {
 }
 
 export function WorkoutCard({ workout, onSelect, listeners, attributes }: WorkoutCardProps) {
+  console.log('workout.filePath: ', workout.filePath);
+  const audioPath = useWorkoutAudioPath(workout.filePath);
+  console.log('audioPath in onSuccess of deleteMutation: ', audioPath);
+  
   const deleteMutation = useMutation({
     mutationFn: (id: number) => dbService.deleteWorkout(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["workouts"] });
+    onSuccess: async () => {
+      try {
+        console.log('in onSuccess of deleteMutation using dbService.deleteWorkout');
+        // delete the audio file
+        try {
+          await Filesystem.deleteFile({
+            path: audioPath,
+            //directory: Directory.Data,
+          });
+          console.log('Audio file deleted');
+        } catch (error) {
+          console.error('Error deleting audio file:', error);
+        }
+        queryClient.invalidateQueries({ queryKey: ["workouts"] });
+      } catch (error) {
+        console.error('Error in onSuccess of deleteMutation:', error);
+      }
     },
   });
 
   const handleDeleteClick = (e: React.MouseEvent) => {
+    console.log('in handleDeleteClick');
     e.stopPropagation(); // Prevent the card's onSelect from firing
     if (window.confirm(`Are you sure you want to delete "${workout.name}"?`)) {
       deleteMutation.mutate(workout.id);

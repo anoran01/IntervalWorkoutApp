@@ -9,6 +9,7 @@ import QuickCreateSettings from "./quick-create-settings";
 import { generateTimersFromWorkout } from "@/lib/workout-utils";
 import type { SoundSettings, InsertWorkout } from "@/schema";
 import { Preferences } from '@capacitor/preferences';
+import { audioGeneratorService } from '@/services/audio-generator';
 
 interface QuickWorkoutSettings {
   prepare: number; // in seconds
@@ -120,7 +121,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
     return count.toString();
   };
 
-  const handleCreateWorkout = () => {
+  const handleCreateWorkout = async () => {
     console.log("📋 QuickMenu handleCreateWorkout");
     // Create a user-friendly name for the workout based on the current date and time
     const workoutName = `Quick Workout - ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`;
@@ -135,7 +136,13 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
     
     console.log("📋 QuickMenu timers:", timers);
 
-    createWorkoutAndTimerMutation.mutate({workout: newWorkout, timers: timers}, {
+    // generate audio file for the workout
+    // do I need to process the timers object or is it good as it?
+    console.log("⏳ Starting audio generation at:", new Date().toLocaleTimeString());
+    const workoutAudioFile = await audioGeneratorService.generateFullWorkoutAudioFile(timers, settings.soundSettings);
+    console.log("⏳ Finished audio generation at:", new Date().toLocaleTimeString());
+
+    createWorkoutAndTimerMutation.mutate({workout: newWorkout, timers: timers, filePath: workoutAudioFile}, {
       onSuccess: (workoutId) => {
         console.log(`Created workout ${workoutId} with ${timers.length} timers`);
         onNavigateToWorkoutList();
@@ -144,6 +151,9 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         console.error("Failed to create workout");
       }
     });
+
+    
+
   };
 
   const handleTimerClick = (type: string) => {

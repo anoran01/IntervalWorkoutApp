@@ -37,7 +37,7 @@ export function useAudio(soundSettings: SoundSettings) {
     }
   }, []);*/
 
-  const playAudioFile = useCallback(async (audioSrc: string) => {
+  const playAudioFile = useCallback(async (audioSrc: string | null = null, gainValue: number = 0.8) => {
     try {
       const audioContext = initAudioContext();
       if (!audioContext) throw new Error("No AudioContext available");
@@ -48,12 +48,24 @@ export function useAudio(soundSettings: SoundSettings) {
         await audioContext.resume();
       }
 
-      // Fetch the audio file as ArrayBuffer
-      const response = await fetch(audioSrc);
-      const arrayBuffer = await response.arrayBuffer();
+      let decodedBuffer: AudioBuffer;
 
-      // Decode the audio data
-      const decodedBuffer = await audioContext.decodeAudioData(arrayBuffer);
+      if (audioSrc === null) {
+        const  channels = 1;
+        const sampleRate = audioContext.sampleRate;
+        const duration = 10;
+        decodedBuffer = audioContext.createBuffer(channels, sampleRate * duration, sampleRate);
+
+      } else if (audioSrc) {
+        // Fetch the audio file as ArrayBuffer
+        const response = await fetch(audioSrc);
+        const arrayBuffer = await response.arrayBuffer();
+
+        // Decode the audio data
+        decodedBuffer = await audioContext.decodeAudioData(arrayBuffer);
+      } else {
+        throw new Error("Invalid audio source");
+      }
 
       // Create a buffer source and gain node for volume control
       const source = audioContext.createBufferSource();
@@ -62,7 +74,7 @@ export function useAudio(soundSettings: SoundSettings) {
       source.buffer = decodedBuffer;
       
       // Set volume (equivalent to audio.volume = 0.8)
-      gainNode.gain.setValueAtTime(0.8, audioContext.currentTime);
+      gainNode.gain.setValueAtTime(gainValue, audioContext.currentTime);
       
       // Connect: source -> gain -> destination
       source.connect(gainNode);

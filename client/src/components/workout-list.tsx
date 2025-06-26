@@ -23,6 +23,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { Filesystem, Directory } from '@capacitor/filesystem';
 
 interface WorkoutListProps {
   onWorkoutSelect: (workout: Workout) => void;
@@ -48,7 +49,7 @@ export default function WorkoutList({ onWorkoutSelect, onNavigateToQuickCreate }
   console.log("WOrkout List WOrkout list WorkoutList");
   const [showSettings, setShowSettings] = useState(false);
   const [workoutToDelete, setWorkoutToDelete] = useState<Workout | null>(null);
-  
+  const [audioPath, setAudioPath] = useState<string | null>(null);
   const { data: workouts, isLoading, error } = useGetWorkouts();
   const reorderMutation = useReorderWorkouts();
   const sensors = useSensors(
@@ -61,18 +62,19 @@ export default function WorkoutList({ onWorkoutSelect, onNavigateToQuickCreate }
   const deleteMutation = useDeleteWorkout();
 
   const handleWorkoutClick = (workout: Workout) => {
+    console.log('in handleWorkoutClick');
     onWorkoutSelect(workout);
   };
 
-  const handleDeleteClick = (e: React.MouseEvent, workout: Workout) => {
-    e.stopPropagation(); // Prevent workout click
-    setWorkoutToDelete(workout);
-  };
-
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
+    console.log('in handleConfirmDelete');
     if (workoutToDelete) {
+      console.log('there is a workoutToDelete: ', workoutToDelete);
+      
+      
       deleteMutation.mutate(workoutToDelete.id, {
-        onSuccess: () => {
+        onSuccess: async () => {
+          
           setWorkoutToDelete(null);
         },
         onError: (error) => {

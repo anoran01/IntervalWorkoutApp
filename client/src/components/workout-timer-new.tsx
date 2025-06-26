@@ -1,10 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { formatTime } from "@/lib/workout-utils";
 import { useAudio } from "@/hooks/use-audio";
+import { useWorkoutAudioPath } from "@/hooks/use-workout-audio-path";
 import { ArrowLeft, Play, Pause, SkipForward, SkipBack } from "lucide-react";
 import { useGetTimers } from "@/lib/queryClient";
+import { liveActivityService } from "@/services/live-activity";
 import type { Workout, Timer, SoundSettings } from "@/schema";
+import {NativeAudio} from "@capacitor-community/native-audio";
+import { Filesystem, Directory } from '@capacitor/filesystem';
 
 interface WorkoutTimerProps {
   workout: Workout;
@@ -21,6 +25,76 @@ export default function WorkoutTimer({
   const [isRunning, setIsRunning] = useState(false);
   const [currentTimerIndex, setCurrentTimerIndex] = useState(0);
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
+  const [liveActivitySupported, setLiveActivitySupported] = useState(false);
+  const [activityId, setActivityId] = useState<string | null>(null);
+
+  const SILENT_AUDIO_ID = 'silentloop';
+  const SILENT_AUDIO_PATH = 'public/audio/silence.wav';
+  let isLoopPlaying = false;
+  const AUDIO_ID = 'workout-audio';
+
+  const AUDIO_PATH = useWorkoutAudioPath(workout.filePath);
+
+  async function preloadAudio(id: string, filepath: string, volume: number = 0.4) {
+    try {
+      await NativeAudio.preload({
+        assetId: id,
+        assetPath: filepath,
+        audioChannelNum: 1,
+        isUrl: true,
+      });
+      console.log(`Audio preloaded for ${id}.`);
+      await NativeAudio.setVolume({
+        assetId: id,
+        volume: volume,
+      });
+      console.log(`Audio volume set to ${volume} for ${id}.`);
+    } catch (error) {
+      console.error(`Error setting up audio for ${id}: `, error);
+    }
+  }
+
+  async function unloadAudio(id: string) {
+    try {
+      await NativeAudio.unload({ assetId: id });
+      console.log(`Audio unloaded for ${id}.`);
+    } catch (error) {
+      console.error(`Error unloading audio for ${id}: `, error);
+    }
+  }
+
+  async function stopAudio(id: string) {
+    try {
+      await NativeAudio.stop({ assetId: id });
+      if (id === SILENT_AUDIO_ID) {
+        isLoopPlaying = false;
+      }
+      console.log(`Audio stopped for ${id}.`);
+    } catch (error) {
+      console.error(`Error stopping audio for ${id}: `, error);
+    }
+  }
+
+  async function playAudioLoop(id: string) {
+    try {
+      await NativeAudio.loop({
+        assetId: id,
+      });
+      if (id === SILENT_AUDIO_ID) {
+        isLoopPlaying = true;
+      }
+      console.log(`Audio loop started for ${id}.`);
+    } catch (error) {
+      console.error(`Error playing audio loop for ${id}: `, error);
+    }
+  }
+
+  // Preload workout audio once the path is resolved
+  useEffect(() => {
+    if (AUDIO_PATH) {
+      preloadAudio(AUDIO_ID, AUDIO_PATH, 1.0);
+    }
+  }, [AUDIO_PATH]);
 
   // Initialize timeRemaining when timers are loaded
   useEffect(() => {
@@ -29,10 +103,17 @@ export default function WorkoutTimer({
     }
   }, [timers]);
 
+  // Check Live Activity support on mount
+  useEffect(() => {
+    const checkLiveActivitySupport = async () => {
+      const isAvailable = await liveActivityService.isAvailable();
+      setLiveActivitySupported(isAvailable);
+    };
+    checkLiveActivitySupport();
+  }, []);
+
   // Use the workout's sound settings
   const workoutSoundSettings = workout.soundSettings as SoundSettings;
-
-  const { playBeep, playTenSecondWarning, playHalfwayReminder, playVerbalReminder, playCompletionSound } = useAudio(workoutSoundSettings);
 
   // Show loading state if timers are still loading
   if (isLoading || !timers) {
@@ -55,81 +136,118 @@ export default function WorkoutTimer({
     );
   }
 
+  // Pre-compute total workout duration and cumulative timer end times
+  const totalDuration = useMemo(() =>
+    timers.reduce((sum, t) => sum + t.duration, 0), [timers]);
+
+  const cumulativeEnds = useMemo(() => {
+    let acc = 0;
+    return timers.map((t) => (acc += t.duration));
+  }, [timers]);
+
   const currentTimer = timers[currentTimerIndex];
   const isLastTimer = currentTimerIndex === timers.length - 1;
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
+  // Helper function to get next timer info
+  const getNextTimer = () => {
+    if (isLastTimer) return null;
+    return timers[currentTimerIndex + 1];
+  };
 
-    if (isRunning && timeRemaining > 0) {
-      interval = setInterval(() => {
-        setTimeRemaining((prev) => {
-          const newTime = prev - 1;
+  // Helper function to get timer type from database (not from name guessing)
+  const getTimerType = (timer: Timer): 'work' | 'rest' | 'prepare' | 'rest_between_cycles' => {
+    return timer.type as 'work' | 'rest' | 'prepare' | 'rest_between_cycles';
+  };
 
-          // Audio notifications
-          if (
-            newTime === Math.floor(currentTimer.duration / 2) &&
-            workoutSoundSettings.halfwayReminder
-          ) {
-            console.log('🔊 Halfway reminder audio - Timer:', currentTimer.name, 'Time:', newTime);
-            playHalfwayReminder();
-          }
-          if (newTime === 10 && workoutSoundSettings.tenSecondWarning) {
-            console.log('🔊 Ten second warning audio - Timer:', currentTimer.name, 'Time:', newTime);
-            playTenSecondWarning();
-          }
-          // Beep start functionality - beep during countdown to 1 second
-          if (newTime <= workoutSoundSettings.beepStart && newTime > 0) {
-            console.log('🔊 Beep start countdown - Timer:', currentTimer.name, 'Time:', newTime, 'BeepStart setting:', workoutSoundSettings.beepStart);
-            playBeep();
-          }
+  // Helper function to update Live Activity
+  const updateLiveActivity = async () => {
+    if (!liveActivitySupported || !activityId) return;
 
-          return newTime;
-        });
-      }, 1000);
+    const nextTimer = getNextTimer();
+    const progress = ((currentTimer.duration - timeRemaining) / currentTimer.duration);
+
+    await liveActivityService.updateActivity({
+      id: activityId,
+      contentState: {
+        currentTimerName: currentTimer.name,
+        currentTimerDuration: currentTimer.duration,
+        currentTimerTimeRemaining: timeRemaining,
+        nextTimerName: nextTimer?.name || null,
+        timerType: getTimerType(currentTimer),
+        isRunning,
+        progress,
+      },
+    });
+  };
+
+  const handleStop = async () => {
+    // End Live Activity when stopping the workout
+    if (liveActivitySupported && activityId) {
+      await liveActivityService.endActivity({
+        id: activityId,
+      });
+      console.log('🎯 Live Activity ended');
     }
+    stopAudio(AUDIO_ID);
+    unloadAudio(AUDIO_ID);
+    onStop();
+  };
+
+  // Poll NativeAudio for the current playback position while the workout is running
+  useEffect(() => {
+    if (!isRunning) return;
+
+    const interval = setInterval(async () => {
+      try {
+        // NOTE: your NativeAudio fork may expose this as `getCurrentTime` or `getCurrentTimer`
+        const { currentTime } = await (NativeAudio as any).getCurrentTime({ assetId: AUDIO_ID });
+
+        const elapsed = Math.floor(currentTime || 0);
+
+        // Guard against running past the workout duration
+        if (elapsed >= totalDuration) {
+          setTimeRemaining(0);
+          console.log('🎯 Workout complete - Audio finished');
+          
+          if (liveActivitySupported && activityId) {
+            liveActivityService.endActivity({
+              id: activityId,
+              contentState: { message: "Great workout! 🎉" }
+            });
+          }
+          
+          onComplete();
+          return;
+        }
+
+        // Determine which timer we are in
+        const idx = cumulativeEnds.findIndex((end) => elapsed < end);
+        if (idx !== -1 && idx !== currentTimerIndex) {
+          setCurrentTimerIndex(idx);
+        }
+
+        const prevEnd = idx === 0 ? 0 : cumulativeEnds[idx - 1];
+        const remaining = timers[idx].duration - (elapsed - prevEnd);
+
+        if (remaining !== timeRemaining) {
+          setTimeRemaining(remaining);
+        }
+      } catch (err) {
+        console.error('Error polling audio currentTime:', err);
+      }
+    }, 500); // 2 Hz polling is enough
 
     return () => clearInterval(interval);
-  }, [isRunning, timeRemaining, currentTimer, playBeep, workoutSoundSettings]);
+  }, [isRunning, cumulativeEnds, timers, totalDuration, currentTimerIndex, timeRemaining]);
 
+  // Update Live Activity when time changes (every second)
   useEffect(() => {
-    if (timeRemaining === 0 && currentTimer && isRunning) {
-      if (isLastTimer) {
-        console.log('🎯 Workout complete - Playing completion sound');
-        playCompletionSound();
-        onComplete();
-      } else {
-        // Move to next timer
-        const nextIndex = currentTimerIndex + 1;
-        const nextTimer = timers[nextIndex];
-        console.log('⏭️ Moving to next timer:', nextTimer.name, 'Duration:', nextTimer.duration);
-        setCurrentTimerIndex(nextIndex);
-        setTimeRemaining(nextTimer.duration);
-        
-        // Verbal reminder for the new timer
-        if (workoutSoundSettings.verbalReminder) {
-          console.log('🔊 Verbal reminder audio - Timer:', nextTimer.name, 'Type:', nextTimer.type, 'Starting with duration:', nextTimer.duration);
-          playVerbalReminder(nextTimer.type);
-        } else if (workoutSoundSettings.tenSecondWarning && nextTimer.duration === 10) {
-          console.log('🔊 Ten Second Timer Duration - Timer:', nextTimer.name, 'Time:', nextTimer.duration);
-          playTenSecondWarning();
-        }
-      }
+    if (isRunning) {
+      updateLiveActivity();
     }
-  }, [
-    timeRemaining,
-    currentTimer,
-    isLastTimer,
-    currentTimerIndex,
-    timers,
-    workoutSoundSettings.verbalReminder,
-    workoutSoundSettings.tenSecondWarning,
-    playBeep,
-    playVerbalReminder,
-    playTenSecondWarning,
-  ]);
+  }, [timeRemaining]);
 
-  const handlePlayPause = () => {
+  const handlePlayPause = async () => {
     if (
       !isRunning &&
       currentTimerIndex === 0 &&
@@ -137,10 +255,38 @@ export default function WorkoutTimer({
     ) {
       // Starting workout - verbal reminder for first timer
       console.log('▶️ Starting workout:', workout.name, 'First timer:', timers[0]?.name);
+      await playAudioLoop(AUDIO_ID);
       if (workoutSoundSettings.verbalReminder) {
         console.log('🔊 Verbal reminder audio - Timer:', timers[0]?.name, 'Type:', timers[0]?.type, 'Starting with duration:', timers[0]?.duration);
-        playVerbalReminder(timers[0]?.type);
       }
+
+      // Start Live Activity when starting the workout
+      if (liveActivitySupported) {
+        const nextTimer = getNextTimer();
+        const newActivityId = `workout-${workout.id}-${Date.now()}`;
+        setActivityId(newActivityId);
+        
+        const started = await liveActivityService.startActivity({
+          id: newActivityId,
+          attributes: {
+            workoutName: workout.name,
+          },
+          contentState: {
+            currentTimerName: currentTimer.name,
+            currentTimerDuration: currentTimer.duration,
+            currentTimerTimeRemaining: timeRemaining,
+            nextTimerName: nextTimer?.name || null,
+            timerType: getTimerType(currentTimer),
+            isRunning: true,
+            progress: 0,
+          },
+        });
+        console.log('🎯 Live Activity started:', started);
+      }
+    } else if (!isRunning){
+      await playAudioLoop(AUDIO_ID);
+    } else if (isRunning) {
+      await stopAudio(AUDIO_ID);
     }
     console.log('⏯️ Play/Pause toggled - isRunning:', !isRunning, 'Current timer:', currentTimer?.name);
     setIsRunning(!isRunning);
@@ -213,6 +359,38 @@ export default function WorkoutTimer({
     setTimeRemaining(timers[0].duration);
   };
 
+  // Listen for Live Activity actions
+  useEffect(() => {
+    const handleLiveActivityAction = (event: CustomEvent) => {
+      const { action } = event.detail;
+      console.log('🎯 Live Activity action received:', action);
+      
+      switch (action) {
+        case 'play':
+          if (!isRunning) handlePlayPause();
+          break;
+        case 'pause':
+          if (isRunning) handlePlayPause();
+          break;
+        case 'skip_forward':
+          handleSkip30Forward();
+          break;
+        case 'skip_backward':
+          handleSkip30Backward();
+          break;
+        default:
+          console.log('Unknown Live Activity action:', action);
+      }
+    };
+
+    window.addEventListener('liveActivityAction', handleLiveActivityAction as EventListener);
+    
+    // Cleanup event listener when component unmounts
+    return () => {
+      window.removeEventListener('liveActivityAction', handleLiveActivityAction as EventListener);
+    };
+  }, []); // Empty dependency array - register once on mount
+
   const progressPercentage =
     ((currentTimer.duration - timeRemaining) / currentTimer.duration) * 100;
 
@@ -233,7 +411,7 @@ export default function WorkoutTimer({
     <div className="flex flex-col h-screen bg-background">
       {/* Header */}
       <div className="flex items-center justify-between p-4 pt-16 border-b-2 border-black">
-        <Button variant="ghost" size="sm" className="p-2" onClick={onStop}>
+        <Button variant="ghost" size="sm" className="p-2" onClick={handleStop}>
           <ArrowLeft className="w-6 h-6" />
         </Button>
         <h1 className="text-2xl font-bold text-center flex-1">

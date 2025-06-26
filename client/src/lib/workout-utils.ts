@@ -150,3 +150,13 @@ export function generateUniqueWorkoutName(baseName: string, existingWorkouts: Wo
   
   return newName;
 }
+
+// Helper to extract last two levels from a path (e.g. /workouts/workout_#_full.wav)
+export function getWorkoutAudioRelativePath(filePath: string): string {
+  // Normalize slashes and split
+  const parts = filePath.split('/').filter(Boolean);
+  if (parts.length >= 2) {
+    return `/${parts.slice(-2).join('/')}`;
+  }
+  return filePath.startsWith('/') ? filePath : `/${filePath}`;
+}

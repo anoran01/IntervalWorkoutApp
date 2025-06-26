@@ -23,6 +23,7 @@ export const workoutSchema = z.object({
   soundSettings: soundSettingsSchema,
   order: z.number(),
   createdAt: z.string(),
+  filePath: z.string()
 });
 
 // Timer schema - complete record as stored in database
@@ -39,6 +40,7 @@ export const timerSchema = z.object({
 export const insertWorkoutSchema = workoutSchema.omit({
   id: true,
   createdAt: true,
+  filePath: true,
 }).extend({
   order: z.number().optional(), // Make order optional for inserts
 });
@@ -67,7 +69,8 @@ export const CREATE_WORKOUTS_TABLE = `
     restBetweenCycles INTEGER NOT NULL,
     soundSettings TEXT NOT NULL,
     "order" INTEGER NOT NULL DEFAULT 0,
-    createdAt TEXT NOT NULL
+    createdAt TEXT NOT NULL,
+    filePath TEXT
   );
 `;
 

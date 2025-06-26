@@ -93,7 +93,7 @@ class DatabaseService {
     }));
   }
 
-  async addWorkoutAndTimer(workout: InsertWorkout, timers: InsertTimer[]): Promise<number> {
+  async addWorkoutAndTimer(workout: InsertWorkout, timers: InsertTimer[], filePath?: string): Promise<number> {
     console.log('🔍 Running SQLite diagnostics before transaction...');
 
     const soundSettings = JSON.stringify(workout.soundSettings);
@@ -107,8 +107,8 @@ class DatabaseService {
       
       // Insert workout
       const workoutResult = await this.db?.run(
-        `INSERT INTO workouts (name, prepare, work, rest, rounds, cycles, restBetweenCycles, soundSettings, "order", createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [workout.name, workout.prepare, workout.work, workout.rest, workout.rounds, workout.cycles, workout.restBetweenCycles, soundSettings, workout.order ?? 0, createdAt]
+        `INSERT INTO workouts (name, prepare, work, rest, rounds, cycles, restBetweenCycles, soundSettings, "order", createdAt, filePath) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [workout.name, workout.prepare, workout.work, workout.rest, workout.rounds, workout.cycles, workout.restBetweenCycles, soundSettings, workout.order ?? 0, createdAt, filePath || null]
       );
       workoutId = workoutResult?.changes?.lastId;
       
@@ -140,8 +140,8 @@ class DatabaseService {
     const soundSettings = JSON.stringify(workout.soundSettings);
     const createdAt = new Date().toISOString();
     const result = await this.db?.run(
-      `INSERT INTO workouts (name, prepare, work, rest, rounds, cycles, restBetweenCycles, soundSettings, "order", createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [workout.name, workout.prepare, workout.work, workout.rest, workout.rounds, workout.cycles, workout.restBetweenCycles, soundSettings, workout.order ?? 0, createdAt]
+      `INSERT INTO workouts (name, prepare, work, rest, rounds, cycles, restBetweenCycles, soundSettings, "order", createdAt, filePath) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [workout.name, workout.prepare, workout.work, workout.rest, workout.rounds, workout.cycles, workout.restBetweenCycles, soundSettings, workout.order ?? 0, createdAt, workout.filePath || null]
     );
     return result?.changes?.lastId;
   }

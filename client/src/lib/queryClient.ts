@@ -15,8 +15,8 @@ export function useGetWorkouts() {
 export function useAddWorkoutAndTimer() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ workout, timers }: { workout: InsertWorkout, timers: InsertTimer[] }) => 
-      dbService.addWorkoutAndTimer(workout, timers),
+    mutationFn: ({ workout, timers, filePath }: { workout: InsertWorkout, timers: InsertTimer[], filePath?: string }) => 
+      dbService.addWorkoutAndTimer(workout, timers, filePath),
     onSuccess: (workoutId) => {
       queryClient.invalidateQueries({ queryKey: ['workouts'] });
       queryClient.invalidateQueries({ queryKey: ['timers', workoutId] });
