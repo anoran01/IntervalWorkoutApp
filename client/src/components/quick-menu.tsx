@@ -27,6 +27,7 @@ interface QuickMenuProps {
 
 export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
   console.log("📋 QuickMenu component starting");
+  const [isCreating, setIsCreating] = useState(false);
 
   const DEFAULT_SETTINGS: QuickWorkoutSettings = {
     prepare: 5,
@@ -122,6 +123,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
   };
 
   const handleCreateWorkout = async () => {
+    setIsCreating(true);
     console.log("📋 QuickMenu handleCreateWorkout");
     // Create a user-friendly name for the workout based on the current date and time
     const workoutName = `Quick Workout - ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`;
@@ -145,10 +147,12 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
     createWorkoutAndTimerMutation.mutate({workout: newWorkout, timers: timers, filePath: workoutAudioFile}, {
       onSuccess: (workoutId) => {
         console.log(`Created workout ${workoutId} with ${timers.length} timers`);
+        setIsCreating(false);
         onNavigateToWorkoutList();
       },
       onError: () => {
         console.error("Failed to create workout");
+        setIsCreating(false);
       }
     });
 
@@ -315,9 +319,18 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         <Button
           className="w-full h-12 text-lg font-bold bg-background border-2 border-black dark:border-white hover:bg-gray-100 dark:hover:bg-gray-800 text-black dark:text-white rounded-lg mt-4"
           onClick={handleCreateWorkout}
-          disabled={createWorkoutAndTimerMutation.isPending}
+          disabled={isCreating || createWorkoutAndTimerMutation.isPending}
         >
-          {createWorkoutAndTimerMutation.isPending ? "Creating..." : "Create"}
+          <div className="flex items-center justify-center gap-2">
+           {isCreating || createWorkoutAndTimerMutation.isPending ? (
+            <>
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-black dark:border-white border-t-transparent" />
+              <span>Creating...</span>
+            </>
+           ) : (
+            "Create"
+           )}
+          </div>
         </Button>
       </div>
 
