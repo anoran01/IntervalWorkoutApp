@@ -477,7 +477,7 @@ export class AudioGeneratorService {
         }
         
         // Add halfway reminder (if timer is long enough and enabled)
-        if (timer.duration > 30 && soundSettings?.halfwayReminder) {
+        if (timer.duration >= 15 && soundSettings?.halfwayReminder) {
           audioInserts.push({
             audioPath: '/audio/halfway.wav',
             insertAtTime: timerStartTime + Math.floor(timer.duration / 2)
@@ -485,7 +485,7 @@ export class AudioGeneratorService {
         }
         
         // Add 10-second warning (if timer is long enough and enabled)
-        if (timer.duration > 15 && soundSettings?.tenSecondWarning) {
+        if (timer.duration >= 15 && soundSettings?.tenSecondWarning) {
           audioInserts.push({
             audioPath: '/audio/ten-seconds.wav',
             insertAtTime: timerStartTime + timer.duration - 10
