@@ -232,7 +232,7 @@ export default function WorkoutTimer({
       } catch (err) {
         console.error('Error polling audio currentTime:', err);
       }
-    }, 500); // 2 Hz polling is enough
+    }, 50); // 20 Hz polling for smoother UI updates
 
     return () => clearInterval(interval);
   }, [isRunning, cumulativeEnds, timers, totalDuration, currentTimerIndex, timeRemaining]);
@@ -337,8 +337,11 @@ export default function WorkoutTimer({
     };
   }, []); // Empty dependency array - register once on mount
 
-  const progressPercentage =
-    ((currentTimer.duration - timeRemaining) / currentTimer.duration) * 100;
+  const progressPercentage = useMemo(() =>
+    currentTimer.duration > 0
+      ? ((currentTimer.duration - timeRemaining) / currentTimer.duration) * 100
+      : 0,
+  [currentTimer.duration, timeRemaining]);
 
   const getTimerColor = (timerName: string) => {
     const name = timerName.toLowerCase();
@@ -352,6 +355,8 @@ export default function WorkoutTimer({
       return "border-green-500 bg-green-100 dark:bg-green-900/30";
     return "border-gray-500 bg-gray-100 dark:bg-gray-900/30";
   };
+
+  const elapsedInTimer = currentTimer.duration - timeRemaining;
 
   return (
     <div className="flex flex-col h-screen bg-background">
@@ -415,7 +420,7 @@ export default function WorkoutTimer({
         >
           {/* Progress fill that depletes from right to left */}
           <div
-            className="absolute inset-0 bg-background transition-all duration-1000 ease-linear"
+            className="absolute inset-0 bg-background transition-all duration-500 ease-linear"
             style={{
               width: `${100 - progressPercentage}%`,
               right: 0,
@@ -426,9 +431,7 @@ export default function WorkoutTimer({
             <span className="text-lg font-bold">
               {formatTime(timeRemaining)}
             </span>
-            
           </div>
-          
         </div>
         <div className="border-b-2 dark:border-white border-black my-2" />
       </div>
