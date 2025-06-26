@@ -17,6 +17,7 @@ export default function Home() {
   const [currentScreen, setCurrentScreen] = useState<Screen>("quick-menu");
   const [selectedWorkoutId, setSelectedWorkoutId] = useState<number | null>(null);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [timerBool, setTimerBool] = useState<boolean>(false);
 
   const { data: workouts } = useGetWorkouts();
   const selectedWorkout = selectedWorkoutId ? workouts?.find(w => w.id === selectedWorkoutId) ?? null : null;
@@ -38,7 +39,8 @@ export default function Home() {
   };
 
   const handleWorkoutComplete = () => {
-    setShowCompleteModal(true);
+    setTimerBool(!timerBool);
+    setShowCompleteModal(false);
   };
 
   const handleCompleteModalClose = () => {
@@ -72,6 +74,7 @@ export default function Home() {
         )}
         {currentScreen === "workout-timer" && selectedWorkout && (
           <WorkoutTimer
+            key={timerBool}
             workout={selectedWorkout}
             onComplete={handleWorkoutComplete}
             onStop={handleStopWorkout}

@@ -187,6 +187,8 @@ export default function WorkoutTimer({
     }
     stopAudio(AUDIO_ID);
     unloadAudio(AUDIO_ID);
+    setIsRunning(false);
+    console.log('🎯 Workout stopped, set is running to false in handleStop, which I think only runs when the back button is pressed');
     onStop();
   };
 
@@ -212,8 +214,12 @@ export default function WorkoutTimer({
               contentState: { message: "Great workout! 🎉" }
             });
           }
-          
+          //setIsRunning(false);
+          //console.log('🎯 Workout complete, set is running to false in native audio useEffect');
+          stopAudio(AUDIO_ID);
+          unloadAudio(AUDIO_ID);
           onComplete();
+          //setIsRunning(false);
           return;
         }
 
@@ -294,7 +300,9 @@ export default function WorkoutTimer({
   const handleSkip30Forward = async () => {
     const skipTime = 30;
     const currentTime = await NativeAudio.getCurrentTime({ assetId: AUDIO_ID });
+    console.log('🎯 handleSkip30Forward, currentTime:', currentTime);
     const newTime = Math.min(duration, currentTime.currentTime + skipTime);
+    console.log('🎯 handleSkip30Forward, newTime:', newTime);
     await NativeAudio.play({ assetId: AUDIO_ID, time: newTime});
   };
 
