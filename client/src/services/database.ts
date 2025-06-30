@@ -105,10 +105,13 @@ class DatabaseService {
     try {
       //console.log('🔵 About to begin transaction...');
       
+      const newOrderResult = await this.db?.query('SELECT COALESCE(MAX("order"),-1) + 1 AS newOrder FROM workouts');
+      const newOrderNumber = newOrderResult?.values?.[0]?.newOrder ?? 0;
+
       // Insert workout
       const workoutResult = await this.db?.run(
         `INSERT INTO workouts (name, prepare, work, rest, rounds, cycles, restBetweenCycles, soundSettings, "order", createdAt, filePath) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [workout.name, workout.prepare, workout.work, workout.rest, workout.rounds, workout.cycles, workout.restBetweenCycles, soundSettings, workout.order ?? 0, createdAt, filePath || null]
+        [workout.name, workout.prepare, workout.work, workout.rest, workout.rounds, workout.cycles, workout.restBetweenCycles, soundSettings, newOrderNumber, createdAt, filePath || null]
       );
       workoutId = workoutResult?.changes?.lastId;
       
