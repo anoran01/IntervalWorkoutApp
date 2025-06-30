@@ -181,12 +181,11 @@ export default function WorkoutTimer({
 
   // Poll NativeAudio for the current playback position while the workout is running
   useEffect(() => {
-    if (!isRunning) return;
 
     const interval = setInterval(async () => {
       try {
         // NOTE: your NativeAudio fork may expose this as `getCurrentTime` or `getCurrentTimer`
-        const { currentTime } = await (NativeAudio as any).getCurrentTime({ assetId: AUDIO_ID });
+        const currentTime = (await (NativeAudio as any).getCurrentTime({ assetId: AUDIO_ID })).currentTime;
 
         const elapsed = Math.floor(currentTime || 0);
 
@@ -221,26 +220,16 @@ export default function WorkoutTimer({
     }, 50); // 20 Hz polling for smoother UI updates
 
     return () => clearInterval(interval);
-  }, [isRunning, cumulativeEnds, timers, totalDuration, currentTimerIndex, timeRemaining]);
+  }, [isRunning, cumulativeEnds, timers, totalDuration, currentTimerIndex, timeRemaining, pausedTime]);
 
   
 
   const handlePlayPause = async () => {
-    if (
-      !isRunning &&
-      currentTimerIndex === 0 &&
-      timeRemaining === timers[0]?.duration
-    ) {
-      // Starting workout - verbal reminder for first timer
-      console.log('▶️ Starting workout:', workout.name, 'First timer:', timers[0]?.name);
-      await playAudio(AUDIO_ID);
-
-      
-    } else if (!isRunning){
+    if (!isRunning){
       await playAudio(AUDIO_ID, pausedTime);
     } else if (isRunning) {
-      const currentTime = await NativeAudio.getCurrentTime({ assetId: AUDIO_ID });
-      setPausedTime(currentTime.currentTime);
+      const currentTime = (await NativeAudio.getCurrentTime({ assetId: AUDIO_ID })).currentTime;
+      setPausedTime(currentTime);
       await stopAudio(AUDIO_ID);
     }
     console.log('⏯️ Play/Pause toggled - isRunning:', !isRunning, 'Current timer:', currentTimer?.name);
@@ -249,16 +238,45 @@ export default function WorkoutTimer({
 
   const handleSkip30Forward = async () => {
     const skipTime = 30;
-    const currentTime = await NativeAudio.getCurrentTime({ assetId: AUDIO_ID });
-    const newTime = Math.min(duration, currentTime.currentTime + skipTime);
-    await NativeAudio.play({ assetId: AUDIO_ID, time: newTime});
+    const wasPlaying = (await NativeAudio.isPlaying({ assetId: AUDIO_ID })).isPlaying;
+    console.log('wasPlaying: ', wasPlaying);
+    const currentTime = (await NativeAudio.getCurrentTime({ assetId: AUDIO_ID })).currentTime;
+    console.log('currentTime: ', currentTime);
+    const newTime = Math.min(duration, currentTime + skipTime);
+    console.log('duration: ', duration);
+    console.log('newTime: ', newTime);
+    
+    // Always seek to the new position
+    await playAudio(AUDIO_ID, newTime);
+    
+    // If it wasn't playing before, stop it to maintain paused state
+    if (!wasPlaying) {
+      setPausedTime(newTime);
+      await stopAudio(AUDIO_ID);
+      const newCurrentTime = (await NativeAudio.getCurrentTime({ assetId: AUDIO_ID })).currentTime;
+      console.log('newCurrentTime: ', newCurrentTime);
+    }
   };
 
   const handleSkip30Backward = async () => {
     const skipTime = 30;
-    const currentTime = await NativeAudio.getCurrentTime({ assetId: AUDIO_ID });
-    const newTime = Math.max(0, currentTime.currentTime - skipTime);
-    await NativeAudio.play({ assetId: AUDIO_ID, time: newTime});
+    const wasPlaying = (await NativeAudio.isPlaying({ assetId: AUDIO_ID })).isPlaying;
+    console.log('wasPlaying: ', wasPlaying);
+    const currentTime = (await NativeAudio.getCurrentTime({ assetId: AUDIO_ID })).currentTime;
+    console.log('currentTime: ', currentTime);
+    const newTime = Math.max(0, currentTime - skipTime);
+    console.log('newTime: ', newTime);
+    
+    // Always seek to the new position
+    await playAudio(AUDIO_ID, newTime);
+    
+    // If it wasn't playing before, stop it to maintain paused state
+    if (!wasPlaying) {
+      setPausedTime(newTime);
+      await stopAudio(AUDIO_ID);
+      const newCurrentTime = (await NativeAudio.getCurrentTime({ assetId: AUDIO_ID })).currentTime;
+      console.log('newCurrentTime: ', newCurrentTime);
+    }
   };
 
   const handleTimerSettingsClose = (value: number) => {
