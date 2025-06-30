@@ -57,7 +57,7 @@ export default function CountPickerModal({
         <div className="flex justify-center pt-4">
           <Button
             onClick={handleConfirm}
-            className="w-full h-12 text-lg font-bold bg-background border-2 border-black dark:border-white hover:bg-gray-100 dark:hover:bg-gray-800 text-black dark:text-white rounded-lg"
+            className="w-full h-12 text-lg font-bold bg-background border-2 border-black dark:border-white text-black dark:text-white rounded-lg"
           >
             Confirm
           </Button>

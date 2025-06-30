@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import BeepStartPicker from "@/components/beep-start-picker";
 import type { SoundSettings } from "@/schema";
 import { useAudio } from "@/hooks/use-audio";
+import { Slider } from "@radix-ui/react-slider";
 
 interface WorkoutSettingsProps {
   workoutName: string;
@@ -151,7 +152,7 @@ export default function WorkoutSettings({
       <div className="p-6">
         <Button
           onClick={handleSave}
-          className="w-full h-16 text-xl font-bold bg-background border-2 border-black dark:border-white hover:bg-gray-100 dark:hover:bg-gray-800 text-black dark:text-white rounded-lg"
+          className="w-full h-16 text-xl font-bold bg-background border-2 border-black dark:border-white text-black dark:text-white rounded-lg"
         >
           Done
         </Button>

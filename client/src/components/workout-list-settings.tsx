@@ -53,7 +53,7 @@ export default function WorkoutListSettings({ onClose }: WorkoutListSettingsProp
       <div className="p-6">
         <Button
           onClick={onClose}
-          className="w-full h-16 text-xl font-bold bg-background border-2 border-black dark:border-white hover:bg-gray-100 dark:hover:bg-gray-800 text-black dark:text-white rounded-lg"
+          className="w-full h-16 text-xl font-bold bg-background border-2 border-black dark:border-white text-black dark:text-white rounded-lg"
         >
           Done
         </Button>

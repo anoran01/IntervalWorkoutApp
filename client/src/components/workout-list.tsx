@@ -14,6 +14,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  DragOverlay,
 } from "@dnd-kit/core";
 import {
   arrayMove,
@@ -53,7 +54,11 @@ export default function WorkoutList({ onWorkoutSelect, onNavigateToQuickCreate }
   const { data: workouts, isLoading, error } = useGetWorkouts();
   const reorderMutation = useReorderWorkouts();
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -161,7 +166,19 @@ export default function WorkoutList({ onWorkoutSelect, onNavigateToQuickCreate }
             <p className="text-sm text-muted-foreground">Use Quick Create to create your first workout</p>
           </div>
         ) : (
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <DndContext 
+            sensors={sensors} 
+            collisionDetection={closestCenter} 
+            onDragEnd={handleDragEnd}
+            autoScroll={{
+              enabled: true,
+              threshold: {
+                x: 0,
+                y: 0.2,
+              },
+              acceleration: 10,
+            }}
+          >
             <SortableContext items={workouts.map(w => w.id)} strategy={verticalListSortingStrategy}>
               <div className="space-y-4">
                 {workouts.map((workout) => (
@@ -214,7 +231,7 @@ export default function WorkoutList({ onWorkoutSelect, onNavigateToQuickCreate }
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmDelete}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="bg-red-600 text-white"
             >
               Delete
             </AlertDialogAction>

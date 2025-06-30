@@ -6,10 +6,11 @@ import WorkoutList from "@/components/workout-list";
 import WorkoutMenu from "@/components/workout-menu";
 import WorkoutTimer from "@/components/workout-timer-new";
 import WorkoutCompleteModal from "@/components/workout-complete-modal";
+import WorkoutEdit from "@/components/workout-edit";
 import type { Workout } from "@/schema";
 import { useGetWorkouts } from "@/lib/queryClient";
 
-type Screen = "quick-menu" | "workout-list" | "workout-menu" | "workout-timer";
+type Screen = "quick-menu" | "workout-list" | "workout-menu" | "workout-timer" | "workout-edit";
 
 export default function Home() {
   console.log("🏠 Home component starting to render");
@@ -70,14 +71,21 @@ export default function Home() {
             workout={selectedWorkout}
             onBack={handleBackToList}
             onStart={handleStartWorkout}
+            onEdit={() => setCurrentScreen("workout-edit")}
           />
         )}
         {currentScreen === "workout-timer" && selectedWorkout && (
           <WorkoutTimer
-            key={timerBool}
+            key={Number(timerBool)}
             workout={selectedWorkout}
             onComplete={handleWorkoutComplete}
             onStop={handleStopWorkout}
+          />
+        )}
+        {currentScreen === "workout-edit" && selectedWorkout && (
+          <WorkoutEdit
+            workout={selectedWorkout}
+            onDone={() => setCurrentScreen("workout-menu")}
           />
         )}
       </div>

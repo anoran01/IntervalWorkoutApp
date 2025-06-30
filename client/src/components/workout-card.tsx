@@ -51,10 +51,11 @@ export function WorkoutCard({ workout, onSelect, listeners, attributes }: Workou
   };
 
   return (
-    <div className="border-2 dark:border-white border-black rounded-lg p-6 bg-background">
+    <div className="workout-card border-2 dark:border-white border-black rounded-lg p-6 bg-background">
       <div className="flex items-center gap-3">
         <div
-          className="cursor-grab active:cursor-grabbing"
+          className="cursor-grab active:cursor-grabbing p-2 -m-2 touch-none"
+          style={{ touchAction: 'none' }}
           {...listeners}
           {...attributes}
         >
@@ -66,7 +67,7 @@ export function WorkoutCard({ workout, onSelect, listeners, attributes }: Workou
         <Button
           variant="ghost"
           size="sm"
-          className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 dark:hover:bg-red-900/20"
+          className="p-2 text-red-600"
           onClick={handleDeleteClick}
         >
           <Trash2 className="w-5 h-5" />

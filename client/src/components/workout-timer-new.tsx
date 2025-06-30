@@ -3,11 +3,13 @@ import { Button } from "@/components/ui/button";
 import { formatTime } from "@/lib/workout-utils";
 import { useAudio } from "@/hooks/use-audio";
 import { useWorkoutAudioPath } from "@/hooks/use-workout-audio-path";
-import { ArrowLeft, Play, Pause, SkipForward, SkipBack } from "lucide-react";
+import { ArrowLeft, Play, Pause, SkipForward, SkipBack, Settings } from "lucide-react";
 import { useGetTimers } from "@/lib/queryClient";
 import type { Workout, Timer, SoundSettings } from "@/schema";
 import {NativeAudio} from "@capacitor-community/native-audio";
 import { Filesystem, Directory } from '@capacitor/filesystem';
+import WorkoutTimerSettings from "@/components/workout-timer-settings";
+import { Preferences } from "@capacitor/preferences";
 
 interface WorkoutTimerProps {
   workout: Workout;
@@ -27,8 +29,9 @@ export default function WorkoutTimer({
   const [duration, setDuration] = useState<number>(0);
   const [pausedTime, setPausedTime] = useState<number>(0);
   const AUDIO_ID = 'workout-audio';
-
+  const [showSettings, setShowSettings] = useState(false);
   const AUDIO_PATH = useWorkoutAudioPath(workout.filePath);
+  const [volume, setVolume] = useState(1.0);
 
   async function preloadAudio(id: string, filepath: string, volume: number = 1.0) {
     try {
@@ -81,10 +84,21 @@ export default function WorkoutTimer({
     }
   }
 
+  async function setNativeAudioVolume(id: string, value: number) {
+    try {
+      await NativeAudio.setVolume({
+        assetId: id,
+        volume: value,
+      });
+    } catch (error) {
+      console.error(`Error setting volume for ${id}: `, error);
+    }
+  }
+
   // Preload workout audio once the path is resolved
   useEffect(() => {
     if (AUDIO_PATH) {
-      preloadAudio(AUDIO_ID, AUDIO_PATH, 1.0);
+      preloadAudio(AUDIO_ID, AUDIO_PATH, volume);
     }
   }, [AUDIO_PATH]);
 
@@ -247,6 +261,32 @@ export default function WorkoutTimer({
     await NativeAudio.play({ assetId: AUDIO_ID, time: newTime});
   };
 
+  const handleTimerSettingsClose = (value: number) => {
+    setShowSettings(false);
+    setVolume(value);
+    setNativeAudioVolume(AUDIO_ID, value);
+    //use capacitor preferences to save the volume value from WorkoutTimerSettings
+    Preferences.set({
+      key: 'workoutTimerVolume',
+      value: value.toString(),
+    });
+  };
+
+  useEffect(() => {
+    Preferences.get({ key: 'workoutTimerVolume' }).then((result) => {
+      if (result.value === null) {
+        // Key does not exist, set to default volume (1)
+        Preferences.set({
+          key: 'workoutTimerVolume',
+          value: '1.0',
+        });
+        setVolume(1.0);
+      } else {
+        setVolume(Number(result.value));
+      }
+    });
+  }, []);
+
 
   const progressPercentage = useMemo(() =>
     currentTimer.duration > 0
@@ -279,7 +319,14 @@ export default function WorkoutTimer({
         <h1 className="text-2xl font-bold text-center flex-1">
           {workout.name}
         </h1>
-        <div className="w-10" />
+        <Button
+          variant="ghost"
+          size="sm"
+          className="p-2"
+          onClick={() => setShowSettings(true)}
+        >
+          <Settings className="w-6 h-6" />
+        </Button>
       </div>
 
       {/* Control Buttons */}
@@ -287,7 +334,7 @@ export default function WorkoutTimer({
         <Button
           variant="ghost"
           size="lg"
-          className="w-20 h-20 bg-black text-white rounded-lg flex flex-col items-center justify-center"
+          className="w-20 h-20 bg-white dark:bg-black text-black dark:text-white border-2 border-black dark:border-white rounded-lg flex flex-col items-center justify-center"
           onClick={handleSkip30Backward}
         >
           <SkipBack className="w-6 h-6" />
@@ -299,8 +346,8 @@ export default function WorkoutTimer({
           size="lg"
           className={`w-20 h-20 rounded-lg flex items-center justify-center ${
             isRunning
-              ? "bg-transparent border-2 border-black dark:border-white text-black dark:text-white hover:bg-gray-800/20 dark:hover:bg-gray-200/20"
-              : "bg-white dark:bg-black text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
+              ? "bg-transparent border-2 border-black dark:border-white text-black dark:text-white"
+              : "bg-white dark:bg-black text-black dark:text-white border-2 border-black dark:border-white"
           }`}
         >
           {isRunning ? (
@@ -316,7 +363,7 @@ export default function WorkoutTimer({
         <Button
           variant="ghost"
           size="lg"
-          className="w-20 h-20 bg-black text-white rounded-lg flex flex-col items-center justify-center"
+          className="w-20 h-20 bg-white dark:bg-black text-black dark:text-white border-2 border-black dark:border-white rounded-lg flex flex-col items-center justify-center"
           onClick={handleSkip30Forward}
         >
           <SkipForward className="w-6 h-6" />
@@ -365,6 +412,15 @@ export default function WorkoutTimer({
           ))}
         </div>
       </div>
+      {/* Settings Modal */}
+      {showSettings && (  
+        <div className="fixed inset-0 z-50">
+          <WorkoutTimerSettings
+            onClose={handleTimerSettingsClose}
+            initialVolume={volume}
+          />
+        </div>
+      )}
     </div>
   );
 }

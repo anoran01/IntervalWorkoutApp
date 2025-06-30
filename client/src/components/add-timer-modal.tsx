@@ -68,7 +68,7 @@ export default function AddTimerModal({ isOpen, onClose, onConfirm }: AddTimerMo
             <button
               key={type.id}
               onClick={() => handleTypeSelect(type.id)}
-              className="w-full p-4 rounded-lg border-2 border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 transition-colors flex items-center gap-3"
+              className="w-full p-4 rounded-lg border-2 border-gray-300 dark:border-gray-600 transition-colors flex items-center gap-3"
             >
               <div className={`w-4 h-4 rounded-full ${type.color}`}></div>
               <span className="text-lg font-medium">{type.label}</span>

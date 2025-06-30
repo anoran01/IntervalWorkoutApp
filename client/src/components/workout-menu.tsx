@@ -1,29 +1,18 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Settings, Play, GripVertical, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Play, Pencil } from "lucide-react";
 import { formatTime } from "@/lib/workout-utils";
-import WorkoutSettings from "@/components/workout-settings";
-import AddTimerModal from "@/components/add-timer-modal";
-import TimePickerModal from "@/components/time-picker-modal";
-import { useGetTimers, useInsertTimer, useReorderTimers, useUpdateWorkout, useGetWorkouts, useUpdateTimer, useDeleteTimer } from "@/lib/queryClient";
+import { useGetTimers, useUpdateWorkout, useGetWorkouts } from "@/lib/queryClient";
 import type { Workout, Timer, SoundSettings, InsertTimer, InsertWorkout } from "@/schema";
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
-import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 
 interface WorkoutMenuProps {
   workout: Workout;
   onBack: () => void;
   onStart: () => void;
+  onEdit: () => void;
 }
 
-function SortableTimerItem({ timer, onEditTimerName, onEditTimerDuration, onDeleteTimer }: { timer: Timer; onEditTimerName: (id: number, name: string) => void; onEditTimerDuration: (id: number, duration: number) => void; onDeleteTimer: (id: number) => void; }) {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: timer.id });
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
+function TimerItem({ timer }: { timer: Timer }) {
   const getTimerColor = (timerName: string) => {
     const name = timerName.toLowerCase();
     if (name.includes('prepare')) return 'border-yellow-500 bg-yellow-100 dark:bg-yellow-900/30';
@@ -33,36 +22,18 @@ function SortableTimerItem({ timer, onEditTimerName, onEditTimerDuration, onDele
     return 'border-gray-500 bg-gray-100 dark:bg-gray-900/30';
   };
 
-  const handleDeleteClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent any parent click handlers
-    if (window.confirm(`Are you sure you want to delete the "${timer.name}" timer?`)) {
-      onDeleteTimer(timer.id);
-    }
-  };
-
   return (
-    <div ref={setNodeRef} style={style} {...attributes} className={`border-2 rounded-lg p-4 ${getTimerColor(timer.name)}`}>
+    <div className={`border-2 rounded-lg p-4 ${getTimerColor(timer.name)}`}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <button {...listeners} className="cursor-grab active:cursor-grabbing">
-            <GripVertical className="w-5 h-5 text-gray-500" />
-          </button>
-          <span className="text-lg font-bold cursor-pointer" onClick={() => onEditTimerName(timer.id, timer.name)}>
+          <span className="text-lg font-bold">
             {timer.name}
           </span>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-lg font-bold cursor-pointer" onClick={() => onEditTimerDuration(timer.id, timer.duration)}>
+          <span className="text-lg font-bold">
             {formatTime(timer.duration)}
           </span>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 dark:hover:bg-red-900/20"
-            onClick={handleDeleteClick}
-          >
-            <Trash2 className="w-5 h-5" />
-          </Button>
         </div>
       </div>
     </div>
@@ -73,35 +44,19 @@ export default function WorkoutMenu({
   workout, 
   onBack, 
   onStart,
+  onEdit,
 }: WorkoutMenuProps) {
   const [isEditingWorkoutName, setIsEditingWorkoutName] = useState(false);
   const [workoutNameInput, setWorkoutNameInput] = useState(workout.name);
-  const [showSettings, setShowSettings] = useState(false);
-  const [showAddTimer, setShowAddTimer] = useState(false);
-  const [showTimerDurationPicker, setShowTimerDurationPicker] = useState(false);
-  const [editingTimerId, setEditingTimerId] = useState<number | null>(null);
-  const [editingTimerDuration, setEditingTimerDuration] = useState(0);
-  const [insertPosition, setInsertPosition] = useState(0);
-  const [draggedItem, setDraggedItem] = useState<number | null>(null);
-  const [draggedOver, setDraggedOver] = useState<number | null>(null);
   const [headerHeight, setHeaderHeight] = useState(80); // Default fallback
-  const [lineAngle, setLineAngle] = useState(0); // Line angle in degrees
-  const [lineLength, setLineLength] = useState(200); // Line length in pixels
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const timerListRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
-  const addTimerButtonRef = useRef<HTMLButtonElement>(null);
-  const addTimerLineRef = useRef<SVGSVGElement>(null);
-  //const timerRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const { data: timers, isLoading, error } = useGetTimers(workout.id);
   const { data: workouts } = useGetWorkouts();
   const currentWorkout = workouts?.find(w => w.id === workout.id) || workout;
-  const reorderTimersMutation = useReorderTimers();
-  const insertTimerMutation = useInsertTimer();
   const updateWorkoutMutation = useUpdateWorkout();
-  const updateTimerMutation = useUpdateTimer();
-  const deleteTimerMutation = useDeleteTimer();
 
   // Debug logging for timer loading
   useEffect(() => {
@@ -115,12 +70,6 @@ export default function WorkoutMenu({
       console.error(`Failed to load timers for workout ${workout.id}:`, error);
     }
   }, [error, workout.id]);
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
 
   const handleWorkoutNameSave = () => {
     if (workoutNameInput.trim() && workoutNameInput !== workout.name) {
@@ -128,348 +77,6 @@ export default function WorkoutMenu({
     }
     setIsEditingWorkoutName(false);
   };
-
-  // Calculate the nearest gap between timers and angle the line to point there
-  const updateLineAngle = () => {
-    if (!addTimerButtonRef.current || !timerListRef.current) return;
-
-    const buttonRect = addTimerButtonRef.current.getBoundingClientRect();
-    const buttonCenterY = buttonRect.top + buttonRect.height / 2;
-    const buttonCenterX = buttonRect.left + buttonRect.width / 2;
-
-    // Get all timer elements
-    //const timerElements = timerRefs.current.filter(ref => ref !== null);
-    const timerElements = Array.from(timerListRef.current.children) as HTMLElement[]
-    
-    if (timerElements.length === 0) {
-      // No timers, point to the timer list area
-      const listRect = timerListRef.current.getBoundingClientRect();
-      const targetY = listRect.top + 50; // Point to beginning of list area
-      const targetX = listRect.left + listRect.width / 2;
-      
-      const deltaX = targetX - buttonCenterX;
-      const deltaY = targetY - buttonCenterY;
-      const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
-      const length = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-      
-      setLineAngle(angle);
-      setLineLength(length);
-      setInsertPosition(0);
-      return;
-    }
-
-    // Find the gap closest to the button's Y position
-    let closestGapY = 0;
-    let closestDistance = Infinity;
-    let closestPosition = 0;
-
-    // Check gap before first timer
-    const firstTimerRect = timerElements[0].getBoundingClientRect();
-    const gapBeforeFirst = firstTimerRect.top - 15; // 15px above first timer
-    const distanceToFirst = Math.abs(buttonCenterY - gapBeforeFirst);
-    
-    if (distanceToFirst < closestDistance) {
-      closestDistance = distanceToFirst;
-      closestGapY = gapBeforeFirst;
-      closestPosition = 0;
-    }
-
-    // Check gaps between timers
-    for (let i = 0; i < timerElements.length - 1; i++) {
-      const currentRect = timerElements[i].getBoundingClientRect();
-      const nextRect = timerElements[i + 1].getBoundingClientRect();
-      const gapY = currentRect.bottom + ((nextRect.top - currentRect.bottom) / 2);
-      const distance = Math.abs(buttonCenterY - gapY);
-      
-      if (distance < closestDistance) {
-        closestDistance = distance;
-        closestGapY = gapY;
-        closestPosition = i + 1;
-      }
-    }
-
-    // Check gap after last timer
-    const lastTimerRect = timerElements[timerElements.length - 1].getBoundingClientRect();
-    const gapAfterLast = lastTimerRect.bottom + 15; // 15px below last timer
-    const distanceToLast = Math.abs(buttonCenterY - gapAfterLast);
-    
-    if (distanceToLast < closestDistance) {
-      closestDistance = distanceToLast;
-      closestGapY = gapAfterLast;
-      closestPosition = timerElements.length;
-    }
-
-    // Calculate angle from button to closest gap
-    const listRect = timerListRef.current.getBoundingClientRect();
-    const targetX = listRect.left + 0*listRect.width / 2;
-    
-    const deltaX = targetX - buttonCenterX;
-    const deltaY = closestGapY - buttonCenterY;
-    const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
-    const length = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-    
-    setLineAngle(angle);
-    setLineLength(Math.min(length, 300)); // Cap length at 300px
-    setInsertPosition(closestPosition);
-  };
-
-  // Update line angle when timers change or on scroll
-  useEffect(() => {
-    updateLineAngle();
-    
-    const handleScroll = () => {
-      updateLineAngle();
-    };
-    
-    const handleResize = () => {
-      updateLineAngle();
-    };
-    
-    const scrollContainer = scrollContainerRef.current;
-    if (scrollContainer) {
-      scrollContainer.addEventListener('scroll', handleScroll);
-    }
-    
-    window.addEventListener('resize', handleResize);
-    
-    // Update angle after a short delay to ensure DOM is settled
-    const timer = setTimeout(updateLineAngle, 100);
-    
-    return () => {
-      if (scrollContainer) {
-        scrollContainer.removeEventListener('scroll', handleScroll);
-      }
-      window.removeEventListener('resize', handleResize);
-      clearTimeout(timer);
-    };
-  }, [timers?.length, showAddTimer]); // Re-run when timer count changes
-
-  const handleDragStart = (e: React.DragEvent, timerId: number) => {
-    setDraggedItem(timerId);
-    e.dataTransfer.effectAllowed = 'move';
-  };
-
-  const handleDragOver = (e: React.DragEvent, timerId: number) => {
-    e.preventDefault();
-    setDraggedOver(timerId);
-  };
-
-  const handleDragLeave = () => {
-    setDraggedOver(null);
-  };
-
-  const handleDrop = (e: React.DragEvent, targetTimerId: number) => {
-    e.preventDefault();
-    
-    if (!draggedItem || draggedItem === targetTimerId) {
-      setDraggedItem(null);
-      setDraggedOver(null);
-      return;
-    }
-
-    // Find the indices of the dragged and target items
-    const draggedIndex = timers?.findIndex(t => t.id === draggedItem);
-    const targetIndex = timers?.findIndex(t => t.id === targetTimerId);
-    
-    if (draggedIndex === -1 || targetIndex === -1) {
-      setDraggedItem(null);
-      setDraggedOver(null);
-      return;
-    }
-
-    // Create new order by moving the dragged item to the target position
-    const newTimers = [...(timers || [])];
-    const [draggedTimer] = newTimers.splice(draggedIndex!, 1);
-    newTimers.splice(targetIndex!, 0, draggedTimer);
-
-    // Update orders based on new positions
-    const timerOrders = newTimers.map((timer, index) => ({
-      id: timer.id,
-      order: index
-    }));
-
-    // Submit the reorder request
-    const timerIds = newTimers.map(t => t.id);
-    reorderTimersMutation.mutate({ workoutId: workout.id, timerIds });
-    
-    setDraggedItem(null);
-    setDraggedOver(null);
-  };
-
-  const handleAddTimer = (position: number) => {
-    setInsertPosition(position);
-    setShowAddTimer(true);
-  };
-
-  const handleAddTimerConfirm = async (type: string, duration: number) => {
-    if (!timers) return;
-    
-    // Sort timers by order to understand current sequence  
-    const sortedTimers = [...timers].sort((a, b) => a.order - b.order);
-    
-    try {
-      // Step 1: Insert the new timer with a temporary high order to avoid conflicts
-      const tempOrder = sortedTimers.length > 0 
-        ? Math.max(...sortedTimers.map(t => t.order)) + 1000
-        : 0;
-        
-      const newTimerId = await insertTimerMutation.mutateAsync({
-        workoutId: workout.id,
-        name: type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' '),
-        duration,
-        type,
-        order: tempOrder
-      });
-      
-      if (!newTimerId) {
-        throw new Error('Failed to insert timer - no ID returned');
-      }
-      
-      // Step 2: Build the final desired order with the new timer in the correct position
-      const currentTimerIds = sortedTimers.map(t => t.id);
-      const finalTimerIds = [
-        ...currentTimerIds.slice(0, insertPosition),
-        newTimerId,
-        ...currentTimerIds.slice(insertPosition)
-      ];
-      
-      // Step 3: Reorder all timers to sequential positions (0, 1, 2, 3...)
-      await reorderTimersMutation.mutateAsync({
-        workoutId: workout.id,
-        timerIds: finalTimerIds
-      });
-      
-    } catch (error) {
-      console.error('Failed to insert timer with positional reordering:', error);
-    }
-    
-    setShowAddTimer(false);
-  };
-
-  const handleTimerDurationClick = (timerId: number, currentDuration: number) => {
-    setEditingTimerId(timerId);
-    setEditingTimerDuration(currentDuration);
-    setShowTimerDurationPicker(true);
-  };
-
-  const handleTimerDurationConfirm = (newDuration: number) => {
-    if (editingTimerId !== null && newDuration > 0) {
-      updateTimerMutation.mutate({ 
-        id: editingTimerId, 
-        updates: { duration: newDuration } 
-      });
-    }
-    setShowTimerDurationPicker(false);
-    setEditingTimerId(null);
-  };
-
-  const handleTimerDurationPickerClose = () => {
-    setShowTimerDurationPicker(false);
-    setEditingTimerId(null);
-  };
-
-  const handleDeleteTimer = (timerId: number) => {
-    deleteTimerMutation.mutate(timerId);
-  };
-
-  // Snap scroll to position the horizontal bar between timers
-  const snapToPosition = () => {
-    if (!scrollContainerRef.current || !timerListRef.current || !timers || timers.length === 0) return;
-
-    const container = scrollContainerRef.current;
-    const containerRect = container.getBoundingClientRect();
-    const containerHeight = containerRect.height;
-    const middleY = containerHeight / 3.9;
-
-    // Get all timer elements
-    const timerElements = timerListRef.current.children;
-    if (timerElements.length === 0) return;
-
-    let bestPosition = 0;
-    let minDistance = Infinity;
-
-    // Check positions between timers
-    for (let i = 0; i <= timerElements.length; i++) {
-      let targetY: number;
-
-      if (i === 0) {
-        // Before first timer
-        const firstTimer = timerElements[0] as HTMLElement;
-        const firstTimerRect = firstTimer.getBoundingClientRect();
-        targetY = firstTimerRect.top - containerRect.top - 24; // 24px spacing
-      } else if (i === timerElements.length) {
-        // After last timer
-        const lastTimer = timerElements[timerElements.length - 1] as HTMLElement;
-        const lastTimerRect = lastTimer.getBoundingClientRect();
-        targetY = lastTimerRect.bottom - containerRect.top + 24; // 24px spacing
-      } else {
-        // Between timers
-        const prevTimer = timerElements[i - 1] as HTMLElement;
-        const nextTimer = timerElements[i] as HTMLElement;
-        const prevRect = prevTimer.getBoundingClientRect();
-        const nextRect = nextTimer.getBoundingClientRect();
-        targetY = (prevRect.bottom + nextRect.top) / 2 - containerRect.top;
-      }
-
-      const distance = Math.abs(targetY - middleY);
-      if (distance < minDistance) {
-        minDistance = distance;
-        bestPosition = i;
-      }
-    }
-
-    // Calculate the scroll adjustment needed
-    let targetScrollTop: number;
-
-    if (bestPosition === 0) {
-      // Before first timer
-      const firstTimer = timerElements[0] as HTMLElement;
-      const firstTimerRect = firstTimer.getBoundingClientRect();
-      targetScrollTop = container.scrollTop + (firstTimerRect.top - containerRect.top - 24) - middleY;
-    } else if (bestPosition === timerElements.length) {
-      // After last timer
-      const lastTimer = timerElements[timerElements.length - 1] as HTMLElement;
-      const lastTimerRect = lastTimer.getBoundingClientRect();
-      targetScrollTop = container.scrollTop + (lastTimerRect.bottom - containerRect.top + 24) - middleY;
-    } else {
-      // Between timers
-      const prevTimer = timerElements[bestPosition - 1] as HTMLElement;
-      const nextTimer = timerElements[bestPosition] as HTMLElement;
-      const prevRect = prevTimer.getBoundingClientRect();
-      const nextRect = nextTimer.getBoundingClientRect();
-      const betweenY = (prevRect.bottom + nextRect.top) / 2 - containerRect.top;
-      targetScrollTop = container.scrollTop + betweenY - middleY;
-    }
-
-    // Smooth scroll to the target position
-    container.scrollTo({
-      top: Math.max(0, targetScrollTop),
-      behavior: 'smooth'
-    });
-
-    setInsertPosition(bestPosition);
-  };
-
-  // Handle scroll events
-  useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    let scrollTimeout: NodeJS.Timeout;
-
-    const handleScroll = () => {
-      clearTimeout(scrollTimeout);
-      scrollTimeout = setTimeout(() => {
-        //snapToPosition();
-      }, 150); // Debounce scroll events
-    };
-
-    container.addEventListener('scroll', handleScroll);
-    return () => {
-      container.removeEventListener('scroll', handleScroll);
-      clearTimeout(scrollTimeout);
-    };
-  }, [timers?.length]);
 
   // Measure header height on mount and when workout name changes
   useEffect(() => {
@@ -486,70 +93,6 @@ export default function WorkoutMenu({
 
     return () => window.removeEventListener('resize', measureHeaderHeight);
   }, [workout.name, isEditingWorkoutName]);
-  
-  // Initial snap on mount and when timers change
-  /*useEffect(() => {
-    setTimeout(() => snapToPosition(), 100);
-  }, [timers.length]);*/
-
-  const getTimerColor = (timerName: string, index: number) => {
-    const name = timerName.toLowerCase();
-    if (name.includes('prepare')) return 'border-yellow-500 bg-yellow-100 dark:bg-yellow-900/30';
-    if (name.includes('work')) return 'border-orange-500 bg-orange-100 dark:bg-orange-900/30';
-    if (name.includes('rest') && !name.includes('cycle')) return 'border-blue-500 bg-blue-100 dark:bg-blue-900/30';
-    if (name.includes('cycle')) return 'border-green-500 bg-green-100 dark:bg-green-900/30';
-    
-    // Fallback color cycling
-    const colors = [
-      'border-yellow-500 bg-yellow-100 dark:bg-yellow-900/30',
-      'border-orange-500 bg-orange-100 dark:bg-orange-900/30', 
-      'border-blue-500 bg-blue-100 dark:bg-blue-900/30',
-      'border-green-500 bg-green-100 dark:bg-green-900/30'
-    ];
-    return colors[index % colors.length];
-  };
-
-  const defaultSoundSettings: SoundSettings = {
-    beepTone: "standard",
-    beepStart: 10,
-    tenSecondWarning: true,
-    halfwayReminder: true,
-    verbalReminder: true,
-    vibrate: true
-  };
-
-  const handleDragEnd = (event: any) => {
-    const { active, over } = event;
-
-    if (active.id !== over.id) {
-      if (!timers) return;
-      const oldIndex = timers.findIndex((t) => t.id === active.id);
-      const newIndex = timers.findIndex((t) => t.id === over.id);
-      const newTimersOrder = arrayMove(timers, oldIndex, newIndex);
-      const timerIds = newTimersOrder.map((t) => t.id);
-
-      reorderTimersMutation.mutate({ workoutId: workout.id, timerIds });
-    }
-  };
-
-
-
-  const handleSoundSettingsChange = (newSoundSettings: SoundSettings) => {
-    updateSettings(newSoundSettings);
-  };
-
-  // Update sound settings in the database for this specific workout
-  const updateSettings = (newSoundSettings: SoundSettings) => {
-    const workoutUpdate: Partial<InsertWorkout> = {
-      soundSettings: newSoundSettings
-    };
-    console.log("🔵 updateSettings:", workoutUpdate);
-    
-    updateWorkoutMutation.mutate({ 
-      id: workout.id, 
-      workout: workoutUpdate 
-    });
-  };
 
   return (
     <div className="flex flex-col h-screen bg-background relative">
@@ -593,52 +136,10 @@ export default function WorkoutMenu({
           variant="ghost"
           size="sm"
           className="p-2"
-          onClick={() => setShowSettings(true)}
+          onClick={onEdit}
         >
-          <Settings className="w-6 h-6" />
+          <Pencil className="w-6 h-6" />
         </Button>
-      </div>
-
-      {/* Fixed Add Timer Button */}
-      <div className="fixed left-4 right-4 z-30 flex items-center" style={{ 
-        top: '50vh',
-        pointerEvents: 'none'
-      }}>
-        <button ref={addTimerButtonRef} 
-          onClick={() => handleAddTimer(insertPosition)}
-          className="w-8 h-8 rounded-full border-2 border-black dark:border-white bg-background flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shadow-lg"
-          style={{ pointerEvents: 'auto' }}
-        >
-          <Plus className="w-4 h-4" />
-        </button>
-        <svg 
-          ref={addTimerLineRef}
-          className="ml-3" 
-          width={lineLength} 
-          height="100" 
-          style={{ 
-            position: 'absolute',
-            left: '44px', // Position after button (32px + 12px margin)
-            top: '50%',
-            transform: 'translateY(-50%)',
-            pointerEvents: 'none',
-            zIndex: 25
-          }}
-        >
-          <line
-            x1="0"
-            y1="50"
-            x2={lineLength}
-            y2="50"
-            stroke="currentColor"
-            strokeWidth="2"
-            className="text-black dark:text-white"
-            style={{
-              transform: `rotate(${lineAngle}deg)`,
-              transformOrigin: '0 50px'
-            }}
-          />
-        </svg>
       </div>
 
       {/* Scrollable Content */}
@@ -648,75 +149,26 @@ export default function WorkoutMenu({
         style={{ scrollBehavior: 'auto',
                paddingTop: `${headerHeight}px` }}
       >
-        <div className="pl-16 pr-4 py-4 space-y-6">
+        <div className="pl-4 pr-4 py-4 space-y-6">
           {/* Play Button */}
           <Button
             onClick={onStart}
-            className="w-full h-16 text-xl font-bold bg-background border-2 border-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 text-black dark:text-white rounded-lg"
+            className="w-full h-16 text-xl font-bold bg-background border-2 border-gray-300 text-black dark:text-white rounded-lg"
           >
             Play
           </Button>
 
           {/* Timer List */}
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={timers?.map(t => t.id) || []} strategy={verticalListSortingStrategy}>
-              <div ref={timerListRef} className="space-y-3">
-                {timers?.map((timer) => (
-                  <SortableTimerItem 
-                    key={timer.id} 
-                    timer={timer}
-                    onEditTimerName={(id, name) => {
-                      const newName = prompt('Enter timer name:', name);
-                      if (newName && newName.trim()) {
-                        // You'll need a mutation for updating a timer's name
-                      }
-                    }}
-                    onEditTimerDuration={(id, duration) => {
-                      handleTimerDurationClick(id, duration);
-                    }}
-                    onDeleteTimer={handleDeleteTimer}
-                  />
-                ))}
-              </div>
-            </SortableContext>
-          </DndContext>
+          <div ref={timerListRef} className="space-y-3">
+            {timers?.map((timer) => (
+              <TimerItem 
+                key={timer.id} 
+                timer={timer}
+              />
+            ))}
+          </div>
         </div>
       </div>
-
-      {/* Settings Modal */}
-      {showSettings && (
-        <div className="fixed inset-0 z-50">
-          <WorkoutSettings
-            workoutName={currentWorkout.name}
-            soundSettings={currentWorkout.soundSettings as SoundSettings || defaultSoundSettings}
-            onSave={(settings) => {
-              handleSoundSettingsChange(settings);
-            }}
-            onClose={() => setShowSettings(false)}
-          />
-        </div>
-      )}
-
-      {/* Add Timer Modal */}
-      {showAddTimer && (
-        <AddTimerModal
-          isOpen={showAddTimer}
-          onClose={() => setShowAddTimer(false)}
-          onConfirm={handleAddTimerConfirm}
-        />
-      )}
-
-      {/* Timer Duration Picker Modal */}
-      {showTimerDurationPicker && (
-        <TimePickerModal
-          isOpen={showTimerDurationPicker}
-          onClose={handleTimerDurationPickerClose}
-          onConfirm={handleTimerDurationConfirm}
-          title="Edit Timer Duration"
-          initialSeconds={editingTimerDuration}
-          showHours={true}
-        />
-      )}
     </div>
   );
 }
