@@ -55,7 +55,7 @@ export default function QuickCreateSettings({
           variant="ghost"
           size="sm"
           className="p-2"
-          onClick={onClose}
+          onClick={handleSave}
         >
           <ArrowLeft className="w-6 h-6" />
         </Button>
@@ -165,16 +165,6 @@ export default function QuickCreateSettings({
             )}
           </div>
         </div>
-      </div>
-
-      {/* Done Button */}
-      <div className="p-6">
-        <Button
-          onClick={handleSave}
-          className="w-full h-16 text-xl font-bold bg-background border-2 border-black dark:border-white text-black dark:text-white rounded-lg"
-        >
-          Done
-        </Button>
       </div>
 
       {/* Beep Start Picker Modal */}

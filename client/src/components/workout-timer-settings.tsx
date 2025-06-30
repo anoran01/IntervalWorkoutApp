@@ -53,15 +53,6 @@ export default function WorkoutTimerSettings({
                     <span className="w-6 text-right">{Math.round(volume * 10)}</span>
                 </div>
             </div>
-            {/* Done Button */}
-            <div className="p-6">
-                <Button
-                    onClick={handleClose}
-                    className="w-full h-16 text-xl font-bold bg-background border-2 border-black dark:border-white text-black dark:text-white rounded-lg"
-                >
-                    Done
-                </Button>
-            </div>
         </div>
     );
 }
