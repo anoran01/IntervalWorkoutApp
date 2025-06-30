@@ -176,7 +176,7 @@ export default function WorkoutEdit({ workout, onDone }: WorkoutEditProps) {
       });
       if (!newTimerId) throw new Error("Failed to insert timer - no ID returned");
       const currentTimerIds = sortedTimers.map((t) => t.id);
-      const finalTimerIds = [...currentTimerIds, newTimerId];
+      const finalTimerIds = [newTimerId, ...currentTimerIds];
       await reorderTimersMutation.mutateAsync({ workoutId: workout.id, timerIds: finalTimerIds });
     } catch (error) {
       console.error("Failed to insert timer with positional reordering:", error);
