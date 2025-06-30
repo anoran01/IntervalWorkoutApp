@@ -224,6 +224,13 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
     return isNaN(value) ? 0 : value;
   };
 
+  // ----- Total duration calculation -----
+  const totalMinutes =
+    ((settings.work + settings.rest) * settings.rounds * settings.cycles +
+      (settings.cycles - 1) * settings.restBetweenCycles) /
+    60;
+  const exceedsLimit = totalMinutes > 240;
+
   console.log("📋 QuickMenu about to return JSX");
   // Show loading state while settings are being loaded
   if (isLoadingSettings) {
@@ -319,7 +326,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         <Button
           className="w-full h-12 text-lg font-bold bg-background border-2 border-black dark:border-white text-black dark:text-white rounded-lg mt-4"
           onClick={handleCreateWorkout}
-          disabled={isCreating || createWorkoutAndTimerMutation.isPending}
+          disabled={isCreating || createWorkoutAndTimerMutation.isPending || exceedsLimit}
         >
           <div className="flex items-center justify-center gap-2">
            {isCreating || createWorkoutAndTimerMutation.isPending ? (
@@ -332,6 +339,13 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
            )}
           </div>
         </Button>
+
+        {/* Duration warning */}
+        {exceedsLimit && (
+          <p className="mt-2 text-red-600 font-bold text-center">
+            Workout duration ({Math.ceil(totalMinutes)}&nbsp;min) exceeds the 240-minute limit.
+          </p>
+        )}
       </div>
 
       {/* Fixed Bottom Navigation */}

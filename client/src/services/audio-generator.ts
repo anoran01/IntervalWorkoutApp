@@ -442,6 +442,59 @@ export class AudioGeneratorService {
   }
 
   /**
+   * Builds the list of audio inserts that should play **within** a single timer.
+   * All insertAtTime values are relative to the start (0 s) of that timer.
+   */
+  private buildAudioInsertsForTimer(
+    timer: InsertTimer,
+    soundSettings?: any
+  ): AudioInsert[] {
+    const audioInserts: AudioInsert[] = [];
+
+    // Verbal reminder at the start
+    if (soundSettings?.verbalReminder) {
+      if (timer.type === 'work') {
+        audioInserts.push({ audioPath: '/audio/work.wav', insertAtTime: 0 });
+      } else if (timer.type === 'rest' || timer.type === 'rest_between_cycles') {
+        audioInserts.push({ audioPath: '/audio/rest.wav', insertAtTime: 0 });
+      }
+    }
+
+    // Half-way reminder
+    if (timer.duration >= 15 && soundSettings?.halfwayReminder) {
+      audioInserts.push({
+        audioPath: '/audio/halfway.wav',
+        insertAtTime: Math.floor(timer.duration / 2),
+      });
+    }
+
+    // 10-second warning
+    if (timer.duration >= 15 && soundSettings?.tenSecondWarning) {
+      audioInserts.push({
+        audioPath: '/audio/ten-seconds.wav',
+        insertAtTime: timer.duration - 10,
+      });
+    }
+
+    // Beep countdown before timer finishes
+    if (soundSettings?.beepStart > 0) {
+      let beepAudioFile = '/audio/beep500.wav'; // default
+      if (soundSettings?.beepTone === 'low_pitch') beepAudioFile = '/audio/beep300.wav';
+      else if (soundSettings?.beepTone === 'high_pitch') beepAudioFile = '/audio/beep700.wav';
+
+      const beepStartTime = Math.min(soundSettings.beepStart, timer.duration - 1);
+      for (let bt = beepStartTime; bt > 0; bt--) {
+        audioInserts.push({
+          audioPath: beepAudioFile,
+          insertAtTime: timer.duration - bt,
+        });
+      }
+    }
+
+    return audioInserts;
+  }
+
+  /**
    * Generates a single audio file for an entire workout sequence
    */
   async generateFullWorkoutAudioFile(
@@ -449,6 +502,93 @@ export class AudioGeneratorService {
     soundSettings?: any,
     format: 'wav' | 'mp3' = 'wav'
   ): Promise<string> {
+    // New streaming path when MP3 is requested
+    if (format === 'mp3') {
+      try {
+        // Prepare MP3 encoder once
+        const encoder = await createMp3Encoder();
+        encoder.configure({
+          sampleRate: 44100,
+          channels: 1,
+          vbrQuality: 8,
+        });
+
+        const mp3Chunks: Uint8Array[] = [];
+        const frameSize = 1152;
+
+        // Encode each timer individually
+        for (const timer of timers) {
+          const inserts = this.buildAudioInsertsForTimer(timer, soundSettings);
+          const buffer = await this.createCompositeBuffer(timer.duration, inserts);
+
+          const totalSamples = buffer.length;
+          const channelData = buffer.getChannelData(0);
+          for (let i = 0; i < totalSamples; i += frameSize) {
+            const slice = channelData.subarray(i, Math.min(i + frameSize, totalSamples));
+            const encoded = encoder.encode([slice]);
+            if (encoded.length) mp3Chunks.push(new Uint8Array(encoded));
+          }
+
+          // Yield to the event loop to keep UI responsive
+          await new Promise<void>((resolve) => setTimeout(resolve, 0));
+        }
+
+        // Add the final "done" cue (2 s buffer)
+        const doneBuffer = await this.createCompositeBuffer(2, [
+          { audioPath: '/audio/done.wav', insertAtTime: 0 },
+        ]);
+        const doneSamples = doneBuffer.length;
+        const doneChannelData = doneBuffer.getChannelData(0);
+        for (let i = 0; i < doneSamples; i += frameSize) {
+          const slice = doneChannelData.subarray(i, Math.min(i + frameSize, doneSamples));
+          const encoded = encoder.encode([slice]);
+          if (encoded.length) mp3Chunks.push(new Uint8Array(encoded));
+        }
+
+        // Finalise encoder
+        const last = encoder.finalize();
+        if (last.length) mp3Chunks.push(new Uint8Array(last));
+
+        // Merge chunks
+        const totalLength = mp3Chunks.reduce((len, c) => len + c.length, 0);
+        const merged = new Uint8Array(totalLength);
+        let offset = 0;
+        for (const chunk of mp3Chunks) {
+          merged.set(chunk, offset);
+          offset += chunk.length;
+        }
+
+        const base64Data = this.arrayBufferToBase64(merged.buffer);
+
+        // Determine filename / path
+        await this.ensureDirectoryExists('workouts');
+        const workoutsDir = await Filesystem.readdir({ path: 'workouts', directory: Directory.Data });
+        const pattern = /^workout_\d+_full\.mp3$/;
+        const workoutFiles =
+          workoutsDir.files?.filter((f) => {
+            const filename = typeof f === 'string' ? f : f.name;
+            return pattern.test(filename);
+          }) || [];
+
+        let nextNumber = workoutFiles.length + 1;
+        let filename = `workout_${nextNumber}_full.mp3`;
+        let filepath = `workouts/${filename}`;
+        filepath = await this.pathCheck(filepath, nextNumber, 'mp3');
+
+        await Filesystem.writeFile({ path: filepath, data: base64Data, directory: Directory.Data });
+
+        console.log(`✅ Generated full workout MP3: ${filepath}`);
+        const { uri } = await Filesystem.getUri({ path: filepath, directory: Directory.Data });
+        return uri;
+      } catch (error: any) {
+        console.error('❌ Failed to generate full workout MP3 (streaming):', error);
+        if (error && typeof error === 'object') {
+          console.error('Error details:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
+        }
+        throw error;
+      }
+    }
+
     try {
       // Calculate total workout duration
       const totalDuration = timers.reduce((sum, timer) => sum + timer.duration, 0);
@@ -524,15 +664,8 @@ export class AudioGeneratorService {
       const buffer = await this.createCompositeBuffer(totalDuration, audioInserts);
       console.log('✅ Composite buffer created.');
       
-      // Convert and save
-      let audioData: ArrayBuffer;
-      if (format === 'mp3') {
-        console.log('Converting to MP3...');
-        audioData = await this.audioBufferToMp3(buffer);
-        console.log('✅ Converted to MP3.');
-      } else {
-        audioData = this.audioBufferToWav(buffer);
-      }
+      // Convert and save (only WAV expected in this branch)
+      const audioData: ArrayBuffer = this.audioBufferToWav(buffer);
       const base64Data = this.arrayBufferToBase64(audioData);
       
       // Read the 'workouts/' directory to determine the next available workout audio file number
