@@ -40,9 +40,8 @@ export default function WorkoutTimerSettings({
             {/* Settings Content */}
             <div className="flex-1 p-6 space-y-8">
                 {/* Volume Control */}
-                <div className="flex items-center justify-between">
-                <span className="text-xl font-bold">Volume</span>
-                <div className="w-32 flex items-center">
+                <div className="flex items-center space-x-4">
+                    <span className="text-xl font-bold">Volume</span>
                     <Slider
                         min={0}
                         max={10}
@@ -51,8 +50,7 @@ export default function WorkoutTimerSettings({
                         onValueChange={(value) => setVolume(value[0] / 10)}
                         className="flex-1"
                     />
-                    <span className="ml-2 w-6 text-right">{Math.round(volume * 10)}</span>
-                </div>
+                    <span className="w-6 text-right">{Math.round(volume * 10)}</span>
                 </div>
             </div>
             {/* Done Button */}
