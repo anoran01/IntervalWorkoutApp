@@ -256,61 +256,61 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         {/* Prepare */}
         <Button
           variant="outline"
-          className="w-full h-10 flex justify-between items-center px-6 text-base font-medium border-2 border-black dark:border-white rounded-lg"
+          className="w-full h-12 flex justify-between items-center px-6 text-base font-medium border-2 border-black dark:border-white rounded-lg"
           onClick={() => handleTimerClick("prepare")}
         >
-          <span>Prepare</span>
-          <span className="font-mono">{formatTime(settings.prepare)}</span>
+          <span className="text-4xl">Prepare</span>
+          <span className="text-4xl font-mono">{formatTime(settings.prepare)}</span>
         </Button>
 
         {/* Work */}
         <Button
           variant="outline"
-          className="w-full h-10 flex justify-between items-center px-6 text-base font-medium border-2 border-black dark:border-white rounded-lg"
+          className="w-full h-12 flex justify-between items-center px-6 text-base font-medium border-2 border-black dark:border-white rounded-lg"
           onClick={() => handleTimerClick("work")}
         >
-          <span>Work</span>
-          <span className="font-mono">{formatTime(settings.work)}</span>
+          <span className="text-4xl">Work</span>
+          <span className="text-4xl font-mono">{formatTime(settings.work)}</span>
         </Button>
 
         {/* Rest */}
         <Button
           variant="outline"
-          className="w-full h-10 flex justify-between items-center px-6 text-base font-medium border-2 border-black dark:border-white rounded-lg"
+          className="w-full h-12 flex justify-between items-center px-6 text-base font-medium border-2 border-black dark:border-white rounded-lg"
           onClick={() => handleTimerClick("rest")}
         >
-          <span>Rest</span>
-          <span className="font-mono">{formatTime(settings.rest)}</span>
+          <span className="text-4xl">Rest</span>
+          <span className="text-4xl font-mono">{formatTime(settings.rest)}</span>
         </Button>
 
         {/* Rounds */}
         <Button
           variant="outline"
-          className="w-full h-10 flex justify-between items-center px-6 text-base font-medium border-2 border-black dark:border-white rounded-lg"
+          className="w-full h-12 flex justify-between items-center px-6 text-base font-medium border-2 border-black dark:border-white rounded-lg"
           onClick={() => handleTimerClick("rounds")}
         >
-          <span>Rounds</span>
-          <span className="font-mono">{formatCount(settings.rounds)}</span>
+          <span className="text-4xl">Rounds</span>
+          <span className="text-4xl font-mono">{formatCount(settings.rounds)}</span>
         </Button>
 
         {/* Cycles */}
         <Button
           variant="outline"
-          className="w-full h-10 flex justify-between items-center px-6 text-base font-medium border-2 border-black dark:border-white rounded-lg"
+          className="w-full h-12 flex justify-between items-center px-6 text-base font-medium border-2 border-black dark:border-white rounded-lg"
           onClick={() => handleTimerClick("cycles")}
         >
-          <span>Cycles</span>
-          <span className="font-mono">{formatCount(settings.cycles)}</span>
+          <span className="text-4xl">Cycles</span>
+          <span className="text-4xl font-mono">{formatCount(settings.cycles)}</span>
         </Button>
 
         {/* Rest Between Cycles */}
         <Button
           variant="outline"
-          className="w-full h-10 flex justify-between items-center px-6 text-base font-medium border-2 border-black dark:border-white rounded-lg"
+          className="w-full h-12 flex justify-between items-center px-6 text-base font-medium border-2 border-black dark:border-white rounded-lg"
           onClick={() => handleTimerClick("restBetweenCycles")}
         >
-          <span>Rest between Cycles</span>
-          <span className="font-mono">
+          <span className="text-4xl">Cycle Rest</span>
+          <span className="text-4xl font-mono">
             {formatTime(settings.restBetweenCycles)}
           </span>
         </Button>
