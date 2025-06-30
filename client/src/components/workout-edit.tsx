@@ -53,10 +53,51 @@ function SortableTimerItem({
   onEditTimerDuration: (id: number, duration: number) => void;
   onDeleteTimer: (id: number) => void;
 }) {
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState(timer.name);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: timer.id });
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+  };
+
+  // Focus and select text when entering edit mode
+  useEffect(() => {
+    if (isEditingName && nameInputRef.current) {
+      nameInputRef.current.focus();
+      nameInputRef.current.select();
+    }
+  }, [isEditingName]);
+
+  // Update local state when timer name changes from outside
+  useEffect(() => {
+    setNameInput(timer.name);
+  }, [timer.name]);
+
+  const handleNameClick = () => {
+    setIsEditingName(true);
+  };
+
+  const handleNameSave = () => {
+    if (nameInput.trim() && nameInput.trim() !== timer.name) {
+      onEditTimerName(timer.id, nameInput.trim());
+    }
+    setIsEditingName(false);
+  };
+
+  const handleNameCancel = () => {
+    setNameInput(timer.name);
+    setIsEditingName(false);
+  };
+
+  const handleNameKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleNameSave();
+    } else if (e.key === "Escape") {
+      handleNameCancel();
+    }
   };
 
   const getTimerColor = (timerName: string) => {
@@ -87,12 +128,24 @@ function SortableTimerItem({
           <button {...listeners} className="cursor-grab active:cursor-grabbing">
             <GripVertical className="w-5 h-5 text-gray-500" />
           </button>
-          <span
-            className="text-lg font-bold cursor-pointer"
-            onClick={() => onEditTimerName(timer.id, timer.name)}
-          >
-            {timer.name}
-          </span>
+          {isEditingName ? (
+            <input
+              ref={nameInputRef}
+              type="text"
+              value={nameInput}
+              onChange={(e) => setNameInput(e.target.value)}
+              onBlur={handleNameSave}
+              onKeyDown={handleNameKeyDown}
+              className="text-lg font-bold bg-transparent border-none outline-none flex-1 min-w-0"
+            />
+          ) : (
+            <span
+              className="text-lg font-bold cursor-pointer"
+              onClick={handleNameClick}
+            >
+              {timer.name}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-3">
           <span
@@ -132,6 +185,7 @@ export default function WorkoutEdit({ workout, onDone }: WorkoutEditProps) {
   const timerListRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const addTimerButtonRef = useRef<HTMLButtonElement>(null);
+  const workoutNameInputRef = useRef<HTMLInputElement>(null);
 
   const { data: timers } = useGetTimers(workout.id);
   const { data: workouts } = useGetWorkouts();
@@ -160,6 +214,14 @@ export default function WorkoutEdit({ workout, onDone }: WorkoutEditProps) {
     }
     setIsEditingWorkoutName(false);
   };
+
+  // Focus and select text when entering edit mode
+  useEffect(() => {
+    if (isEditingWorkoutName && workoutNameInputRef.current) {
+      workoutNameInputRef.current.focus();
+      workoutNameInputRef.current.select();
+    }
+  }, [isEditingWorkoutName]);
 
   /* ------------------- TIMER EDIT HELPERS (same as WorkoutMenu) ------------------- */
   const handleAddTimerConfirm = async (type: string, duration: number) => {
@@ -313,9 +375,11 @@ export default function WorkoutEdit({ workout, onDone }: WorkoutEditProps) {
             <Check className="w-6 h-6" />
           )}
         </Button>
+        <div style={{ width: "1.5rem" }} />
         
         {isEditingWorkoutName ? (
           <input
+            ref={workoutNameInputRef}
             type="text"
             value={workoutNameInput}
             onChange={(e) => setWorkoutNameInput(e.target.value)}
@@ -328,7 +392,6 @@ export default function WorkoutEdit({ workout, onDone }: WorkoutEditProps) {
               }
             }}
             className="text-2xl font-bold text-center bg-transparent border-none outline-none flex-1"
-            autoFocus
           />
         ) : (
           <h1
@@ -394,10 +457,7 @@ export default function WorkoutEdit({ workout, onDone }: WorkoutEditProps) {
                     key={timer.id}
                     timer={timer}
                     onEditTimerName={(id, name) => {
-                      const newName = prompt("Enter timer name:", name);
-                      if (newName && newName.trim()) {
-                        updateTimerMutation.mutate({ id, updates: { name: newName.trim() } });
-                      }
+                      updateTimerMutation.mutate({ id, updates: { name } });
                     }}
                     onEditTimerDuration={handleTimerDurationClick}
                     onDeleteTimer={handleDeleteTimer}

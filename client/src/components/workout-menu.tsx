@@ -52,6 +52,7 @@ export default function WorkoutMenu({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const timerListRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
+  const workoutNameInputRef = useRef<HTMLInputElement>(null);
 
   const { data: timers, isLoading, error } = useGetTimers(workout.id);
   const { data: workouts } = useGetWorkouts();
@@ -77,6 +78,14 @@ export default function WorkoutMenu({
     }
     setIsEditingWorkoutName(false);
   };
+
+  // Focus and select text when entering edit mode
+  useEffect(() => {
+    if (isEditingWorkoutName && workoutNameInputRef.current) {
+      workoutNameInputRef.current.focus();
+      workoutNameInputRef.current.select();
+    }
+  }, [isEditingWorkoutName]);
 
   // Measure header height on mount and when workout name changes
   useEffect(() => {
@@ -106,9 +115,11 @@ export default function WorkoutMenu({
         >
           <ArrowLeft className="w-6 h-6" />
         </Button>
+        <div style={{ width: "1.5rem" }} />
         
         {isEditingWorkoutName ? (
           <input
+            ref={workoutNameInputRef}
             type="text"
             value={workoutNameInput}
             onChange={(e) => setWorkoutNameInput(e.target.value)}
@@ -121,7 +132,6 @@ export default function WorkoutMenu({
               }
             }}
             className="text-2xl font-bold text-center bg-transparent border-none outline-none"
-            autoFocus
           />
         ) : (
           <h1 
