@@ -33,6 +33,11 @@ export default function WorkoutTimer({
   const AUDIO_PATH = useWorkoutAudioPath(workout.filePath);
   const [volume, setVolume] = useState(1.0);
 
+  // Calculate expected duration from timer data
+  const expectedDuration = useMemo(() => {
+    return timers?.reduce((total, timer) => total + timer.duration, 0) || 0;
+  }, [timers]);
+
   async function preloadAudio(id: string, filepath: string, volume: number = 1.0) {
     try {
       await NativeAudio.preload({
@@ -49,6 +54,7 @@ export default function WorkoutTimer({
       console.log(`Audio volume set to ${volume} for ${id}.`);
       const duration = await NativeAudio.getDuration({ assetId: id });
       setDuration(duration.duration);
+      console.log('Audio duration: ', duration.duration);
     } catch (error) {
       console.error(`Error setting up audio for ${id}: `, error);
     }
@@ -95,11 +101,32 @@ export default function WorkoutTimer({
     }
   }
 
+  async function getAudioDuration(id: string) {
+    try {
+      const duration = await NativeAudio.getDuration({ assetId: id });
+      return duration.duration;
+    } catch (error) {
+      console.error(`Error getting duration for ${id}: `, error);
+      return 0;
+    }
+  }
+
+  async function getAudioIsPlaying(id: string) {
+    try {
+      const result = await NativeAudio.isPlaying({ assetId: id });
+      return result.isPlaying;
+    } catch (error) {
+      console.error(`Error getting isPlaying for ${id}: `, error);
+      return false;
+    }
+  }
+
   // Preload workout audio once the path is resolved
   useEffect(() => {
     if (AUDIO_PATH) {
       preloadAudio(AUDIO_ID, AUDIO_PATH, volume);
     }
+    console.log('AUDIO_PATH preloaded: ', AUDIO_PATH);
   }, [AUDIO_PATH]);
 
   // Initialize timeRemaining when timers are loaded
@@ -108,9 +135,6 @@ export default function WorkoutTimer({
       setTimeRemaining(timers[0]?.duration || 0);
     }
   }, [timers]);
-
-  // Use the workout's sound settings
-  const workoutSoundSettings = workout.soundSettings as SoundSettings;
 
   // Show loading state if timers are still loading
   if (isLoading || !timers) {
@@ -133,44 +157,12 @@ export default function WorkoutTimer({
     );
   }
 
-  // Pre-compute total workout duration and cumulative timer end times
-  const totalDuration = useMemo(() =>
-    timers.reduce((sum, t) => sum + t.duration, 0), [timers]);
-
   const cumulativeEnds = useMemo(() => {
     let acc = 0;
     return timers.map((t) => (acc += t.duration));
   }, [timers]);
 
   const currentTimer = timers[currentTimerIndex];
-  const isLastTimer = currentTimerIndex === timers.length - 1;
-
-  // Helper function to get next timer info
-  const getNextTimer = () => {
-    if (isLastTimer) return null;
-    return timers[currentTimerIndex + 1];
-  };
-
-  // Helper function to get timer type from database (not from name guessing)
-  const getTimerType = (timer: Timer): 'work' | 'rest' | 'prepare' | 'rest_between_cycles' => {
-    return timer.type as 'work' | 'rest' | 'prepare' | 'rest_between_cycles';
-  };
-
-  // Pre-compute total workout duration and cumulative timer end times
-  // JSON string representing the full timer sequence so the Live Activity can continue updating when the app is backgrounded
-  const timerMapString = useMemo(
-    () =>
-      JSON.stringify(
-        timers.map((t) => ({
-          name: t.name,
-          duration: t.duration,
-          type: t.type,
-        })),
-      ),
-    [timers],
-  );
-
-  
 
   const handleStop = async () => {
     stopAudio(AUDIO_ID);
@@ -184,13 +176,25 @@ export default function WorkoutTimer({
 
     const interval = setInterval(async () => {
       try {
+        console.log('isRunning at top of polling: ', isRunning);
+        if (!(await getAudioIsPlaying(AUDIO_ID)) && isRunning) {
+          console.log('Audio is not playing, stopping workout, probably workout completed');
+          setIsRunning(false);
+          stopAudio(AUDIO_ID);
+          unloadAudio(AUDIO_ID);
+          onComplete();
+          return;
+        }
         // NOTE: your NativeAudio fork may expose this as `getCurrentTime` or `getCurrentTimer`
         const currentTime = (await (NativeAudio as any).getCurrentTime({ assetId: AUDIO_ID })).currentTime;
+        console.log('currentTime in polling function: ', currentTime);
+        console.log('duration: ', duration);
 
         const elapsed = Math.floor(currentTime || 0);
+        console.log('elapsed: ', elapsed);
 
         // Guard against running past the workout duration
-        if (elapsed >= totalDuration) {
+        if (elapsed >= expectedDuration) {
           setTimeRemaining(0);
           
           // Reset play/pause state so the button shows the play icon after completion
@@ -217,18 +221,22 @@ export default function WorkoutTimer({
       } catch (err) {
         console.error('Error polling audio currentTime:', err);
       }
-    }, 50); // 20 Hz polling for smoother UI updates
+    }, 1000); // 20 Hz (50 ms) polling for smoother UI updates, 1000 ms for easier logging
 
     return () => clearInterval(interval);
-  }, [isRunning, cumulativeEnds, timers, totalDuration, currentTimerIndex, timeRemaining, pausedTime]);
+  }, [isRunning, cumulativeEnds, timers, currentTimerIndex, timeRemaining, expectedDuration, pausedTime]);
 
-  
+  useEffect(() => {
+    console.log('duration changed: ', duration);
+  }, [duration]);
 
   const handlePlayPause = async () => {
     if (!isRunning){
       await playAudio(AUDIO_ID, pausedTime);
+      console.log('Time At Play or Resume: ', pausedTime);
     } else if (isRunning) {
       const currentTime = (await NativeAudio.getCurrentTime({ assetId: AUDIO_ID })).currentTime;
+      console.log('currentTime at pause: ', currentTime);
       setPausedTime(currentTime);
       await stopAudio(AUDIO_ID);
     }
@@ -236,14 +244,25 @@ export default function WorkoutTimer({
     setIsRunning(!isRunning);
   };
 
-  const handleSkip30Forward = async () => {
-    const skipTime = 30;
+  const handleSkipForward = async () => {
+    const skipTime = 40;
     const wasPlaying = (await NativeAudio.isPlaying({ assetId: AUDIO_ID })).isPlaying;
-    console.log('wasPlaying: ', wasPlaying);
+    console.log('Forward skip wasPlaying: ', wasPlaying);
     const currentTime = (await NativeAudio.getCurrentTime({ assetId: AUDIO_ID })).currentTime;
     console.log('currentTime: ', currentTime);
-    const newTime = Math.min(duration, currentTime + skipTime);
-    console.log('duration: ', duration);
+    
+    // Check if we're trying to skip past the end
+    if (currentTime + skipTime >= expectedDuration) {
+      console.log('Skip forward would exceed workout duration, completing workout');
+      setIsRunning(false);
+      stopAudio(AUDIO_ID);
+      unloadAudio(AUDIO_ID);
+      onComplete();
+      return;
+    }
+    
+    const newTime = Math.min(expectedDuration, currentTime + skipTime);
+    console.log('expectedDuration: ', expectedDuration);
     console.log('newTime: ', newTime);
     
     // Always seek to the new position
@@ -258,10 +277,10 @@ export default function WorkoutTimer({
     }
   };
 
-  const handleSkip30Backward = async () => {
+  const handleSkipBackward = async () => {
     const skipTime = 30;
     const wasPlaying = (await NativeAudio.isPlaying({ assetId: AUDIO_ID })).isPlaying;
-    console.log('wasPlaying: ', wasPlaying);
+    console.log('skip backward wasPlaying: ', wasPlaying);
     const currentTime = (await NativeAudio.getCurrentTime({ assetId: AUDIO_ID })).currentTime;
     console.log('currentTime: ', currentTime);
     const newTime = Math.max(0, currentTime - skipTime);
@@ -325,8 +344,6 @@ export default function WorkoutTimer({
     return "border-gray-500 bg-gray-100 dark:bg-gray-900/30";
   };
 
-  const elapsedInTimer = currentTimer.duration - timeRemaining;
-
   return (
     <div className="flex flex-col h-screen bg-background">
       {/* Header */}
@@ -353,7 +370,7 @@ export default function WorkoutTimer({
           variant="ghost"
           size="lg"
           className="w-20 h-20 bg-white dark:bg-black text-black dark:text-white border-2 border-black dark:border-white rounded-lg flex flex-col items-center justify-center"
-          onClick={handleSkip30Backward}
+          onClick={handleSkipBackward}
         >
           <SkipBack className="w-6 h-6" />
           <span className="text-xs mt-1">30</span>
@@ -382,10 +399,10 @@ export default function WorkoutTimer({
           variant="ghost"
           size="lg"
           className="w-20 h-20 bg-white dark:bg-black text-black dark:text-white border-2 border-black dark:border-white rounded-lg flex flex-col items-center justify-center"
-          onClick={handleSkip30Forward}
+          onClick={handleSkipForward}
         >
           <SkipForward className="w-6 h-6" />
-          <span className="text-xs mt-1">30</span>
+          <span className="text-xs mt-1">40</span>
         </Button>
       </div>
 

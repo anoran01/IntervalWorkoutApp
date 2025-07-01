@@ -231,6 +231,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
     60;
   const exceedsLimit = totalMinutes > 240;
   const isZeroTime = totalMinutes === 0;
+  console.log("📋 QuickMenu totalMinutes:", totalMinutes);
 
   console.log("📋 QuickMenu about to return JSX");
   // Show loading state while settings are being loaded
