@@ -193,12 +193,12 @@ export default function WorkoutTimer({
         if (elapsed >= totalDuration) {
           setTimeRemaining(0);
           
-          //setIsRunning(false);
+          // Reset play/pause state so the button shows the play icon after completion
+          setIsRunning(false);
           console.log('🎯 Workout complete');
           stopAudio(AUDIO_ID);
           unloadAudio(AUDIO_ID);
           onComplete();
-          //setIsRunning(false);
           return;
         }
 
