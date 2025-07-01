@@ -8,7 +8,6 @@ interface TimePickerModalProps {
   onConfirm: (totalSeconds: number) => void;
   title: string;
   initialSeconds: number;
-  showHours?: boolean;
 }
 
 export default function TimePickerModal({
@@ -17,7 +16,6 @@ export default function TimePickerModal({
   onConfirm,
   title,
   initialSeconds,
-  showHours = true,
 }: TimePickerModalProps) {
   const [hours, setHours] = useState(0);
   const [minutes, setMinutes] = useState(0);
@@ -53,15 +51,6 @@ export default function TimePickerModal({
         </div>
 
         <div className="flex gap-4 py-4">
-          {showHours && (
-            <TimePickerWheel
-              value={hours}
-              maxValue={23}
-              onValueChange={setHours}
-              name="Hours"
-              containerHeight={244}
-            />
-          )}
           <TimePickerWheel
             value={minutes}
             maxValue={59}

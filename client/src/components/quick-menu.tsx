@@ -230,6 +230,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
       (settings.cycles - 1) * settings.restBetweenCycles) /
     60;
   const exceedsLimit = totalMinutes > 240;
+  const isZeroTime = totalMinutes === 0;
 
   console.log("📋 QuickMenu about to return JSX");
   // Show loading state while settings are being loaded
@@ -326,7 +327,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         <Button
           className="w-full h-12 text-lg font-bold bg-background border-2 border-black dark:border-white text-black dark:text-white rounded-lg mt-4"
           onClick={handleCreateWorkout}
-          disabled={isCreating || createWorkoutAndTimerMutation.isPending || exceedsLimit}
+          disabled={isCreating || createWorkoutAndTimerMutation.isPending || exceedsLimit || isZeroTime}
         >
           <div className="flex items-center justify-center gap-2">
            {isCreating || createWorkoutAndTimerMutation.isPending ? (
@@ -344,6 +345,12 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         {exceedsLimit && (
           <p className="mt-2 text-red-600 font-bold text-center">
             Workout duration ({Math.ceil(totalMinutes)}&nbsp;min) exceeds the 240-minute limit.
+          </p>
+        )}
+
+        {isZeroTime && (
+          <p className="mt-2 text-red-600 font-bold text-center">
+            Workout duration is 0 minutes.
           </p>
         )}
       </div>
@@ -378,7 +385,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         onConfirm={handleTimePickerConfirm}
         title={getModalTitle()}
         initialSeconds={getCurrentValue()}
-        showHours={currentEditingField === "restBetweenCycles"}
+
       />
 
       <CountPickerModal

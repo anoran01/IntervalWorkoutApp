@@ -3,6 +3,10 @@ import { useState, useEffect, useRef } from "react";
 interface TimePickerWheelProps {
   value: number;
   maxValue: number;
+  /**
+   * The minimum selectable value (inclusive). Defaults to 0 for backwards compatibility.
+   */
+  minValue?: number;
   onValueChange: (value: number) => void;
   name: string;
   itemHeight?: number;
@@ -12,6 +16,7 @@ interface TimePickerWheelProps {
 export default function TimePickerWheel({ 
   value, 
   maxValue, 
+  minValue = 0,
   onValueChange, 
   name,
   itemHeight = 48,
@@ -20,14 +25,14 @@ export default function TimePickerWheel({
   const scrollRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout>();
 
-  const values = Array.from({ length: maxValue + 1 }, (_, i) => i);
+  const values = Array.from({ length: maxValue - minValue + 1 }, (_, i) => i + minValue);
 
   useEffect(() => {
     if (scrollRef.current) {
-      const scrollPosition = value * itemHeight;
+      const scrollPosition = (value - minValue) * itemHeight;
       scrollRef.current.scrollTop = scrollPosition;
     }
-  }, [value, itemHeight]);
+  }, [value, itemHeight, minValue]);
 
   const handleScroll = () => {
     if (!scrollRef.current) return;
@@ -40,7 +45,7 @@ export default function TimePickerWheel({
     const itemIndex = Math.round(scrollTop / itemHeight);
     const clampedIndex = Math.max(0, Math.min(values.length - 1, itemIndex));
 
-    onValueChange(clampedIndex);
+    onValueChange(values[clampedIndex]);
 
     scrollTimeoutRef.current = setTimeout(() => {
       if (!scrollRef.current) return;
