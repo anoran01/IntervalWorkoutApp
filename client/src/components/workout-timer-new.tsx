@@ -1,13 +1,11 @@
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { formatTime } from "@/lib/workout-utils";
-import { useAudio } from "@/hooks/use-audio";
 import { useWorkoutAudioPath } from "@/hooks/use-workout-audio-path";
-import { ArrowLeft, Play, Pause, SkipForward, SkipBack, Settings } from "lucide-react";
+import { ArrowLeft, Play, SkipForward, SkipBack, Settings } from "lucide-react";
 import { useGetTimers } from "@/lib/queryClient";
-import type { Workout, Timer, SoundSettings } from "@/schema";
+import type { Workout } from "@/schema";
 import {NativeAudio} from "@capacitor-community/native-audio";
-import { Filesystem, Directory } from '@capacitor/filesystem';
 import WorkoutTimerSettings from "@/components/workout-timer-settings";
 import { Preferences } from "@capacitor/preferences";
 
@@ -121,6 +119,34 @@ export default function WorkoutTimer({
     }
   }
 
+  async function pauseAudio(id: string) {
+    try {
+      await NativeAudio.pause({ assetId: id });
+    } catch (error) {
+      console.error(`Error pausing audio for ${id}: `, error);
+    }
+  }
+
+  async function resumeAudio(id: string) {
+    try {
+      await NativeAudio.resume({ assetId: id });
+    } catch (error) {
+      console.error(`Error resuming audio for ${id}: `, error);
+    }
+  }
+
+  async function getCurrentAudioTime(id: string) {
+    try {
+      const result = await NativeAudio.getCurrentTime({ assetId: id });
+      return result.currentTime;
+    } catch (error) {
+      console.error(`Error getting current time for ${id}: `, error);
+      return 0;
+    }
+  }
+
+
+
   // Preload workout audio once the path is resolved
   useEffect(() => {
     if (AUDIO_PATH) {
@@ -177,16 +203,8 @@ export default function WorkoutTimer({
     const interval = setInterval(async () => {
       try {
         console.log('isRunning at top of polling: ', isRunning);
-        if (!(await getAudioIsPlaying(AUDIO_ID)) && isRunning) {
-          console.log('Audio is not playing, stopping workout, probably workout completed');
-          setIsRunning(false);
-          stopAudio(AUDIO_ID);
-          unloadAudio(AUDIO_ID);
-          onComplete();
-          return;
-        }
         // NOTE: your NativeAudio fork may expose this as `getCurrentTime` or `getCurrentTimer`
-        const currentTime = (await (NativeAudio as any).getCurrentTime({ assetId: AUDIO_ID })).currentTime;
+        const currentTime = await getCurrentAudioTime(AUDIO_ID);
         console.log('currentTime in polling function: ', currentTime);
         console.log('duration: ', duration);
 
@@ -221,7 +239,7 @@ export default function WorkoutTimer({
       } catch (err) {
         console.error('Error polling audio currentTime:', err);
       }
-    }, 1000); // 20 Hz (50 ms) polling for smoother UI updates, 1000 ms for easier logging
+    }, 100); // 20 Hz (50 ms) polling for smoother UI updates, 1000 ms for easier logging
 
     return () => clearInterval(interval);
   }, [isRunning, cumulativeEnds, timers, currentTimerIndex, timeRemaining, expectedDuration, pausedTime]);
@@ -235,7 +253,7 @@ export default function WorkoutTimer({
       await playAudio(AUDIO_ID, pausedTime);
       console.log('Time At Play or Resume: ', pausedTime);
     } else if (isRunning) {
-      const currentTime = (await NativeAudio.getCurrentTime({ assetId: AUDIO_ID })).currentTime;
+      const currentTime = await getCurrentAudioTime(AUDIO_ID);
       console.log('currentTime at pause: ', currentTime);
       setPausedTime(currentTime);
       await stopAudio(AUDIO_ID);
@@ -246,9 +264,9 @@ export default function WorkoutTimer({
 
   const handleSkipForward = async () => {
     const skipTime = 40;
-    const wasPlaying = (await NativeAudio.isPlaying({ assetId: AUDIO_ID })).isPlaying;
+    const wasPlaying = await getAudioIsPlaying(AUDIO_ID);
     console.log('Forward skip wasPlaying: ', wasPlaying);
-    const currentTime = (await NativeAudio.getCurrentTime({ assetId: AUDIO_ID })).currentTime;
+    const currentTime = await getCurrentAudioTime(AUDIO_ID);
     console.log('currentTime: ', currentTime);
     
     // Check if we're trying to skip past the end
@@ -272,16 +290,15 @@ export default function WorkoutTimer({
     if (!wasPlaying) {
       setPausedTime(newTime);
       await stopAudio(AUDIO_ID);
-      const newCurrentTime = (await NativeAudio.getCurrentTime({ assetId: AUDIO_ID })).currentTime;
-      console.log('newCurrentTime: ', newCurrentTime);
+      console.log('newCurrentTime: ', newTime);
     }
   };
 
   const handleSkipBackward = async () => {
     const skipTime = 30;
-    const wasPlaying = (await NativeAudio.isPlaying({ assetId: AUDIO_ID })).isPlaying;
+    const wasPlaying = await getAudioIsPlaying(AUDIO_ID);
     console.log('skip backward wasPlaying: ', wasPlaying);
-    const currentTime = (await NativeAudio.getCurrentTime({ assetId: AUDIO_ID })).currentTime;
+    const currentTime = await getCurrentAudioTime(AUDIO_ID);
     console.log('currentTime: ', currentTime);
     const newTime = Math.max(0, currentTime - skipTime);
     console.log('newTime: ', newTime);
@@ -293,8 +310,7 @@ export default function WorkoutTimer({
     if (!wasPlaying) {
       setPausedTime(newTime);
       await stopAudio(AUDIO_ID);
-      const newCurrentTime = (await NativeAudio.getCurrentTime({ assetId: AUDIO_ID })).currentTime;
-      console.log('newCurrentTime: ', newCurrentTime);
+      console.log('newCurrentTime: ', newTime);
     }
   };
 
