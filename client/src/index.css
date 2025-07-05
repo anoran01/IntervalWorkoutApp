@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: "banana";
+  src: url("../public/assets/fonts/Chalkduster.ttf")
+}
+
 :root {
   --background: hsl(0, 0%, 100%);
   --foreground: hsl(20, 14.3%, 4.1%);
@@ -11,7 +16,7 @@
   --popover-foreground: hsl(20, 14.3%, 4.1%);
   --card: hsl(0, 0%, 100%);
   --card-foreground: hsl(20, 14.3%, 4.1%);
-  --border: hsl(20, 5.9%, 90%);
+  --border: hsl(20, 5.9%, 20%);
   --input: hsl(20, 5.9%, 90%);
   --primary: hsl(207, 90%, 54%);
   --primary-foreground: hsl(211, 100%, 99%);
@@ -35,14 +40,14 @@
 
 .dark {
   --background: hsl(0, 0%, 0%);
-  --foreground: hsl(0, 0%, 98%);
+  --foreground: hsl(0, 0%, 85%);
   --muted: hsl(0, 0%, 20%);
   --muted-foreground: hsl(0, 0%, 65%);
   --popover: hsl(0, 0%, 0%);
   --popover-foreground: hsl(0, 0%, 98%);
   --card: hsl(0, 0%, 0%);
   --card-foreground: hsl(0, 0%, 98%);
-  --border: hsl(0, 0%, 20%);
+  --border: hsl(0, 78%, 53%);
   --input: hsl(0, 0%, 20%);
   --primary: hsl(207, 90%, 54%);
   --primary-foreground: hsl(211, 100%, 99%);

@@ -12,7 +12,7 @@ export default function WorkoutListSettings({ onClose }: WorkoutListSettingsProp
   return (
     <div className="flex flex-col h-screen bg-background border-2 border-gray-300 dark:border-gray-600 rounded-lg">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 pt-16 border-b-2 border-black">
+      <div className="flex items-center justify-between p-4 pt-16 border-b-2 border-foreground">
         <Button
           variant="ghost"
           size="sm"
@@ -40,9 +40,9 @@ export default function WorkoutListSettings({ onClose }: WorkoutListSettingsProp
               className={`w-16 h-16 ${theme === 'dark' ? 'text-white' : 'text-black'}`}
             >
               {theme === 'dark' ? (
-                <ToggleRight size={64} />
+                <ToggleRight size={64} className="text-foreground" />
               ) : (
-                <ToggleLeft size={64} />
+                <ToggleLeft size={64} className="text-foreground"/>
               )}
             </Button>
           </div>

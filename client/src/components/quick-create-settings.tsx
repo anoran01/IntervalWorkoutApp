@@ -50,7 +50,7 @@ export default function QuickCreateSettings({
   return (
     <div className="flex flex-col h-screen bg-background border-2 border-gray-300 dark:border-gray-600 rounded-lg">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 pt-16 border-b-2 border-black">
+      <div className="flex items-center justify-between p-4 pt-16 border-b-2 border-foreground">
         <Button
           variant="ghost"
           size="sm"
@@ -78,9 +78,9 @@ export default function QuickCreateSettings({
               className={`w-16 h-8 ${theme === 'dark' ? 'text-white' : 'text-black'}`}
             >
               {theme === 'dark' ? (
-                <ToggleRight size={32} />
+                <ToggleRight size={32} className="text-foreground" />
               ) : (
-                <ToggleLeft className="w-16 h-8" />
+                <ToggleLeft className="w-16 h-8 text-foreground" />
               )}
             </Button>
           </div>
@@ -88,20 +88,20 @@ export default function QuickCreateSettings({
         {/* Beep Tone */}
         <div className="flex items-center justify-between">
           <span className="text-xl font-bold">Beep Tone</span>
-          <div className="w-32">
+          <div className="w-32 border-foreground">
             <Select
               value={settings.beepTone}
               onValueChange={(value: "standard" | "high_pitch" | "low_pitch") => 
                 updateSetting("beepTone", value)
               }
             >
-              <SelectTrigger className="border-2 border-black dark:border-white rounded-lg">
+              <SelectTrigger className="border-2 border-foreground rounded-lg">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="standard">Standard</SelectItem>
-                <SelectItem value="high_pitch">High</SelectItem>
-                <SelectItem value="low_pitch">Low</SelectItem>
+              <SelectContent className="border-2 border-foreground rounded-1g">
+                <SelectItem value="standard" className="text-foreground">Standard</SelectItem>
+                <SelectItem value="high_pitch" className="text-foreground">High</SelectItem>
+                <SelectItem value="low_pitch" className="text-foreground">Low</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -113,7 +113,7 @@ export default function QuickCreateSettings({
           <div className="w-32">
             <Button
               variant="outline"
-              className="w-full border-2 border-black dark:border-white rounded-lg text-left justify-start"
+              className="w-full border-2 border-foreground rounded-lg text-left justify-start"
               onClick={() => setShowBeepStartPicker(true)}
             >
               {settings.beepStart}
@@ -125,7 +125,7 @@ export default function QuickCreateSettings({
         <div className="flex items-center justify-between">
           <span className="text-xl font-bold">Halfway Reminder</span>
           <div 
-            className="w-8 h-8 border-2 border-black dark:border-white rounded flex items-center justify-center cursor-pointer"
+            className="w-8 h-8 border-2 border-foreground rounded flex items-center justify-center cursor-pointer"
             onClick={() => updateSetting("halfwayReminder", !settings.halfwayReminder)}
           >
             {settings.halfwayReminder && (
@@ -140,7 +140,7 @@ export default function QuickCreateSettings({
         <div className="flex items-center justify-between">
           <span className="text-xl font-bold">10 second Reminder</span>
           <div 
-            className="w-8 h-8 border-2 border-black dark:border-white rounded flex items-center justify-center cursor-pointer"
+            className="w-8 h-8 border-2 border-foreground rounded flex items-center justify-center cursor-pointer"
             onClick={() => updateSetting("tenSecondWarning", !settings.tenSecondWarning)}
           >
             {settings.tenSecondWarning && (
@@ -155,7 +155,7 @@ export default function QuickCreateSettings({
         <div className="flex items-center justify-between">
           <span className="text-xl font-bold">Verbal Reminder</span>
           <div 
-            className="w-8 h-8 border-2 border-black dark:border-white rounded flex items-center justify-center cursor-pointer"
+            className="w-8 h-8 border-2 border-foreground rounded flex items-center justify-center cursor-pointer"
             onClick={() => updateSetting("verbalReminder", !settings.verbalReminder)}
           >
             {settings.verbalReminder && (

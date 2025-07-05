@@ -106,7 +106,7 @@ export default function WorkoutMenu({
   return (
     <div className="flex flex-col h-screen bg-background relative">
       {/* Fixed Header */}
-      <div ref={headerRef} className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between p-4 pt-16 border-b-2 border-black bg-background">
+      <div ref={headerRef} className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between p-4 pt-16 border-b-2 border-foreground bg-background">
         <Button
           variant="ghost"
           size="sm"
@@ -163,7 +163,7 @@ export default function WorkoutMenu({
           {/* Play Button */}
           <Button
             onClick={onStart}
-            className="w-full h-16 text-xl font-bold bg-background border-2 border-gray-300 text-black dark:text-white rounded-lg"
+            className="w-full h-16 text-xl text-foreground font-bold bg-background border-2 border-foreground rounded-lg"
           >
             Play
           </Button>

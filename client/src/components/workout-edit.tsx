@@ -360,7 +360,7 @@ export default function WorkoutEdit({ workout, onDone }: WorkoutEditProps) {
       {/* Header with Done button */}
       <div
         ref={headerRef}
-        className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between p-4 pt-16 border-b-2 border-black bg-background"
+        className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between p-4 pt-16 border-b-2 border-foreground bg-background"
       >
         <Button
           variant="ghost"
@@ -370,7 +370,7 @@ export default function WorkoutEdit({ workout, onDone }: WorkoutEditProps) {
           disabled={isProcessing}
         >
           {isProcessing ? (
-            <div className="h-5 w-5 animate-spin rounded-full border-2 border-black dark:border-white border-t-transparent" />
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-foreground border-t-transparent" />
           ) : (
             <Check className="w-6 h-6" />
           )}
@@ -422,7 +422,7 @@ export default function WorkoutEdit({ workout, onDone }: WorkoutEditProps) {
           {/* Add Timer Button */}
           <Button
             onClick={() => setShowAddTimer(true)}
-            className="w-full h-16 text-xl font-bold bg-background border-2 border-gray-300 text-black dark:text-white rounded-lg"
+            className="w-full h-16 text-xl font-bold bg-background border-2 text-foreground border-foreground rounded-lg"
           >
             <Plus className="w-6 h-6 mr-2" />
             Add Timer

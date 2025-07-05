@@ -23,9 +23,9 @@ export default function WorkoutTimerSettings({
     };
 
     return (
-        <div className="flex flex-col h-screen bg-background border-2 border-gray-300 dark:border-gray-600 rounded-lg">
+        <div className="flex flex-col h-screen bg-background border-2 border-foreground rounded-lg">
             {/* Header */}
-            <div className="flex items-center justify-between p-4 pt-16 border-b-2 border-black">
+            <div className="flex items-center justify-between p-4 pt-16 border-b-2 border-foreground">
                 <Button
                     variant="ghost"
                     size="sm"
@@ -48,9 +48,9 @@ export default function WorkoutTimerSettings({
                         step={1}
                         value={[Math.round(volume * 10)]}
                         onValueChange={(value) => setVolume(value[0] / 10)}
-                        className="flex-1"
+                        className="flex-1 bg-foreground"
                     />
-                    <span className="w-6 text-right">{Math.round(volume * 10)}</span>
+                    <span className="w-6 text-right text-xl">{Math.round(volume * 10)}</span>
                 </div>
             </div>
         </div>

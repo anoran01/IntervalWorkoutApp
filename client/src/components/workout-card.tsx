@@ -51,7 +51,7 @@ export function WorkoutCard({ workout, onSelect, listeners, attributes }: Workou
   };
 
   return (
-    <div className="workout-card border-2 dark:border-white border-black rounded-lg p-6 bg-background">
+    <div className="workout-card border-2 border-foreground rounded-lg p-6 bg-background">
       <div className="flex items-center gap-3">
         <div
           className="cursor-grab active:cursor-grabbing p-2 -m-2 touch-none"

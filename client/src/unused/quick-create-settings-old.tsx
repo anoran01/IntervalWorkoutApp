@@ -37,7 +37,7 @@ export default function QuickCreateSettings({
     <>
       <div className="flex flex-col h-screen bg-background border-2 border-gray-300 dark:border-gray-600 rounded-lg">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b-2 border-black">
+        <div className="flex items-center justify-between p-4 border-b-2 border-foreground">
           <Button
             variant="ghost"
             size="sm"
@@ -60,13 +60,13 @@ export default function QuickCreateSettings({
                 {theme === 'dark' ? 'Dark' : 'Light'}
               </span>
               <div 
-                className={`w-16 h-8 rounded-full border-2 border-black cursor-pointer transition-colors ${
+                className={`w-16 h-8 rounded-full border-2 border-foreground cursor-pointer transition-colors ${
                   theme === 'dark' ? 'bg-gray-600' : 'bg-gray-200'
                 }`}
                 onClick={toggleTheme}
               >
                 <div 
-                  className={`w-6 h-6 bg-white rounded-full border-2 border-black transition-transform duration-200 ${
+                  className={`w-6 h-6 bg-white rounded-full border-2 border-foreground transition-transform duration-200 ${
                     theme === 'dark' ? 'translate-x-8' : 'translate-x-0'
                   }`}
                 />
@@ -79,7 +79,7 @@ export default function QuickCreateSettings({
             <span className="text-xl font-bold">Beep Tone</span>
             <Button
               variant="outline"
-              className="min-w-20 h-10 border-2 border-black rounded-lg font-bold text-base bg-white hover:bg-gray-100 text-black"
+              className="min-w-20 h-10 border-2 border-foreground rounded-lg font-bold text-base bg-white hover:bg-gray-100 text-black"
               onClick={() => setShowBeepToneMenu(true)}
             >
               {soundSettings.beepTone === "standard" ? "Standard" :
@@ -93,7 +93,7 @@ export default function QuickCreateSettings({
             <div className="w-32">
               <Button
                 variant="outline"
-                className="w-full border-2 border-black rounded-lg text-left justify-start"
+                className="w-full border-2 border-foreground rounded-lg text-left justify-start"
                 onClick={() => setShowBeepStartPicker(true)}
               >
                 {soundSettings.beepStart}
@@ -105,7 +105,7 @@ export default function QuickCreateSettings({
           <div className="flex items-center justify-between">
             <span className="text-xl font-bold">Halfway Reminder</span>
             <div 
-              className="w-8 h-8 border-2 border-black dark:border-white rounded flex items-center justify-center cursor-pointer"
+              className="w-8 h-8 border-2  rounded flex items-center justify-center cursor-pointer"
               onClick={() => updateSoundSetting('halfwayReminder', !soundSettings.halfwayReminder)}
             >
               {soundSettings.halfwayReminder && (
@@ -120,7 +120,7 @@ export default function QuickCreateSettings({
           <div className="flex items-center justify-between">
             <span className="text-xl font-bold">10 second Reminder</span>
             <div 
-              className="w-8 h-8 border-2 border-black dark:border-white rounded flex items-center justify-center cursor-pointer"
+              className="w-8 h-8 border-2  rounded flex items-center justify-center cursor-pointer"
               onClick={() => updateSoundSetting('tenSecondWarning', !soundSettings.tenSecondWarning)}
             >
               {soundSettings.tenSecondWarning && (
@@ -135,7 +135,7 @@ export default function QuickCreateSettings({
           <div className="flex items-center justify-between">
             <span className="text-xl font-bold">Verbal Reminder</span>
             <div 
-              className="w-8 h-8 border-2 border-black dark:border-white rounded flex items-center justify-center cursor-pointer"
+              className="w-8 h-8 border-2  rounded flex items-center justify-center cursor-pointer"
               onClick={() => updateSoundSetting('verbalReminder', !soundSettings.verbalReminder)}
             >
               {soundSettings.verbalReminder && (
@@ -151,7 +151,7 @@ export default function QuickCreateSettings({
         <div className="p-6">
           <Button
             onClick={onClose}
-            className="w-full h-16 text-xl font-bold bg-background border-2 border-black dark:border-white hover:bg-gray-100 dark:hover:bg-gray-800 text-black dark:text-white rounded-lg"
+            className="w-full h-16 text-xl font-bold bg-background border-2  hover:bg-gray-100 dark:hover:bg-gray-800  rounded-lg"
           >
             Done
           </Button>
@@ -185,7 +185,7 @@ export default function QuickCreateSettings({
             
             <Button
               onClick={() => setShowBeepToneMenu(false)}
-              className="w-full mt-4 border-2 border-black dark:border-white"
+              className="w-full mt-4 border-2 "
             >
               Done
             </Button>

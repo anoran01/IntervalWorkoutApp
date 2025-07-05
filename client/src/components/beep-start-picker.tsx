@@ -84,7 +84,7 @@ export default function BeepStartPicker({ isOpen, onClose, onConfirm, initialVal
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-background border-2 border-black rounded-lg p-6 w-80 max-w-sm mx-4">
+      <div className="bg-background border-2 border-foreground rounded-lg p-6 w-80 max-w-sm mx-4">
         <h2 className="text-2xl font-bold text-center mb-4">Beep Start</h2>
         <p className="text-center mb-6">sec</p>
         
@@ -93,7 +93,7 @@ export default function BeepStartPicker({ isOpen, onClose, onConfirm, initialVal
           <div className="relative">
             {/* Selection Bar */}
             <div 
-              className="absolute left-0 right-0 border-2 border-black dark:border-white rounded-lg z-10 pointer-events-none"
+              className="absolute left-0 right-0 border-2 border-foreground rounded-lg z-10 pointer-events-none"
               style={{ 
                 top: `${containerHeight / 2 - itemHeight / 2}px`,
                 height: `${itemHeight}px`,
@@ -104,7 +104,7 @@ export default function BeepStartPicker({ isOpen, onClose, onConfirm, initialVal
             {/* Scrollable Container */}
             <div 
               ref={scrollRef}
-              className="border-2 border-black rounded-lg overflow-y-auto scrollbar-hide"
+              className="border-2 border-foreground rounded-lg overflow-y-auto scrollbar-hide"
               style={{ height: `${containerHeight}px`, width: '120px' }}
               onScroll={handleScroll}
             >
@@ -130,7 +130,7 @@ export default function BeepStartPicker({ isOpen, onClose, onConfirm, initialVal
 
         <Button
           onClick={handleConfirm}
-          className="w-full h-12 text-lg font-bold bg-background border-2 border-black dark:border-white text-black dark:text-white rounded-lg"
+          className="w-full h-12 text-lg text-foreground font-bold bg-background border-2 border-foreground rounded-lg"
         >
           Done
         </Button>

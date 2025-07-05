@@ -247,7 +247,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
     <div className="flex flex-col h-screen bg-background">
       {console.log("📋 Inside QuickMenu JSX")}
       {/* Fixed Header */}
-      <div className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between p-4 pt-16 border-b-2 border-black bg-background">
+      <div className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between p-4 pt-16 border-b-2 border-foreground  bg-background">
         <div className="w-10" />
         <h1 className="text-2xl font-bold text-center flex-1">Quick Create</h1>
         <Button
@@ -265,7 +265,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         {/* Prepare */}
         <Button
           variant="outline"
-          className="w-full h-12 flex justify-between items-center px-6 text-base font-medium border-2 border-black dark:border-white rounded-lg"
+          className="w-full h-12 flex justify-between items-center px-2 text-base font-medium border-2 border-foreground rounded-lg"
           onClick={() => handleTimerClick("prepare")}
         >
           <span className="text-4xl">Prepare</span>
@@ -275,7 +275,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         {/* Work */}
         <Button
           variant="outline"
-          className="w-full h-12 flex justify-between items-center px-6 text-base font-medium border-2 border-black dark:border-white rounded-lg"
+          className="w-full h-12 flex justify-between items-center px-2 text-base font-medium border-2 border-foreground rounded-lg"
           onClick={() => handleTimerClick("work")}
         >
           <span className="text-4xl">Work</span>
@@ -285,7 +285,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         {/* Rest */}
         <Button
           variant="outline"
-          className="w-full h-12 flex justify-between items-center px-6 text-base font-medium border-2 border-black dark:border-white rounded-lg"
+          className="w-full h-12 flex justify-between items-center px-2 text-base font-medium border-2 border-foreground rounded-lg"
           onClick={() => handleTimerClick("rest")}
         >
           <span className="text-4xl">Rest</span>
@@ -295,7 +295,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         {/* Rounds */}
         <Button
           variant="outline"
-          className="w-full h-12 flex justify-between items-center px-6 text-base font-medium border-2 border-black dark:border-white rounded-lg"
+          className="w-full h-12 flex justify-between items-center px-2 text-base font-medium border-2 border-foreground rounded-lg"
           onClick={() => handleTimerClick("rounds")}
         >
           <span className="text-4xl">Rounds</span>
@@ -305,7 +305,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         {/* Cycles */}
         <Button
           variant="outline"
-          className="w-full h-12 flex justify-between items-center px-6 text-base font-medium border-2 border-black dark:border-white rounded-lg"
+          className="w-full h-12 flex justify-between items-center px-2 text-base font-medium border-2 border-foreground rounded-lg"
           onClick={() => handleTimerClick("cycles")}
         >
           <span className="text-4xl">Cycles</span>
@@ -315,7 +315,7 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
         {/* Rest Between Cycles */}
         <Button
           variant="outline"
-          className="w-full h-12 flex justify-between items-center px-6 text-base font-medium border-2 border-black dark:border-white rounded-lg"
+          className="w-full h-12 flex justify-between items-center px-2 text-base font-medium border-2 border-foreground rounded-lg"
           onClick={() => handleTimerClick("restBetweenCycles")}
         >
           <span className="text-4xl">Cycle Rest</span>
@@ -326,18 +326,18 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
 
         {/* Create Button */}
         <Button
-          className="w-full h-12 text-lg font-bold bg-background border-2 border-black dark:border-white text-black dark:text-white rounded-lg mt-4"
+          className="w-full h-12 text-lg font-bold bg-background border-2 text-foreground border-foreground rounded-lg mt-4"
           onClick={handleCreateWorkout}
           disabled={isCreating || createWorkoutAndTimerMutation.isPending || exceedsLimit || isZeroTime}
         >
           <div className="flex items-center justify-center gap-2">
            {isCreating || createWorkoutAndTimerMutation.isPending ? (
             <>
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-black dark:border-white border-t-transparent" />
-              <span>Creating...</span>
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-foreground border-t-transparent" />
+              <span className="text-2xl">Creating...</span>
             </>
            ) : (
-            "Create"
+            <span className="text-2xl">Create</span>
            )}
           </div>
         </Button>
@@ -357,18 +357,18 @@ export default function QuickMenu({ onNavigateToWorkoutList }: QuickMenuProps) {
       </div>
 
       {/* Fixed Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 z-20 border-t-2 border-black bg-background">
+      <div className="fixed bottom-0 left-0 right-0 z-20 border-t-2 border-foreground  bg-background">
         <div className="flex">
           <button className="flex-1 py-6 px-4 text-center bg-gray-300 dark:bg-gray-600">
-            <div className="text-lg font-bold text-black dark:text-white">
+            <div className="text-lg font-bold ">
               Quick Create
             </div>
           </button>
           <button
-            className="flex-1 py-6 px-4 text-center transition-colors duration-200 bg-white dark:bg-gray-900"
+            className="flex-1 py-6 px-4 text-center transition-colors duration-200 bg-white dark:bg-black"
             onClick={onNavigateToWorkoutList}
           >
-            <div className="text-lg font-bold text-black dark:text-white">
+            <div className="text-lg font-bold ">
               Workout List
             </div>
           </button>

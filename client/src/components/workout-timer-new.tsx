@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { formatTime } from "@/lib/workout-utils";
 import { useWorkoutAudioPath } from "@/hooks/use-workout-audio-path";
-import { ArrowLeft, Play, SkipForward, SkipBack, Settings } from "lucide-react";
+import { ArrowLeft, Play, SkipForward, SkipBack, Settings, Pause } from "lucide-react";
 import { useGetTimers } from "@/lib/queryClient";
 import type { Workout } from "@/schema";
 import {NativeAudio} from "@capacitor-community/native-audio";
@@ -203,6 +203,7 @@ export default function WorkoutTimer({
     const interval = setInterval(async () => {
       try {
         console.log('isRunning at top of polling: ', isRunning);
+
         // NOTE: your NativeAudio fork may expose this as `getCurrentTime` or `getCurrentTimer`
         const currentTime = await getCurrentAudioTime(AUDIO_ID);
         console.log('currentTime in polling function: ', currentTime);
@@ -363,7 +364,7 @@ export default function WorkoutTimer({
   return (
     <div className="flex flex-col h-screen bg-background">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 pt-16 border-b-2 border-black">
+      <div className="flex items-center justify-between p-4 pt-16 border-b-2 border-foreground">
         <Button variant="ghost" size="sm" className="p-2" onClick={handleStop}>
           <ArrowLeft className="w-6 h-6" />
         </Button>
@@ -385,7 +386,7 @@ export default function WorkoutTimer({
         <Button
           variant="ghost"
           size="lg"
-          className="w-20 h-20 bg-white dark:bg-black text-black dark:text-white border-2 border-black dark:border-white rounded-lg flex flex-col items-center justify-center"
+          className="w-20 h-20 border-2 border-foreground  rounded-lg flex flex-col items-center justify-center"
           onClick={handleSkipBackward}
         >
           <SkipBack className="w-6 h-6" />
@@ -395,26 +396,23 @@ export default function WorkoutTimer({
         <Button
           onClick={handlePlayPause}
           size="lg"
-          className={`w-20 h-20 rounded-lg flex items-center justify-center ${
+          className={`w-20 h-20 border-foreground rounded-lg flex items-center justify-center ${
             isRunning
-              ? "bg-transparent border-2 border-black dark:border-white text-black dark:text-white"
-              : "bg-white dark:bg-black text-black dark:text-white border-2 border-black dark:border-white"
+              ? "bg-transparent border-2  "
+              : "bg-transparent border-2 "
           }`}
         >
           {isRunning ? (
-            <div className="flex space-x-1">
-              <div className="w-2 h-8 bg-black dark:bg-white rounded"></div>
-              <div className="w-2 h-8 bg-black dark:bg-white rounded"></div>
-            </div>
+            <Pause className="w-12 h-12 ml-1 text-foreground" />
           ) : (
-            <Play className="w-12 h-12 ml-1" fill="currentColor" />
+            <Play className="w-12 h-12 ml-1 text-foreground" />
           )}
         </Button>
 
         <Button
           variant="ghost"
           size="lg"
-          className="w-20 h-20 bg-white dark:bg-black text-black dark:text-white border-2 border-black dark:border-white rounded-lg flex flex-col items-center justify-center"
+          className="w-20 h-20 bg-white dark:bg-black  border-2 border-foreground rounded-lg flex flex-col items-center justify-center"
           onClick={handleSkipForward}
         >
           <SkipForward className="w-6 h-6" />
@@ -442,7 +440,7 @@ export default function WorkoutTimer({
             </span>
           </div>
         </div>
-        <div className="border-b-2 dark:border-white border-black my-2" />
+        <div className="border-b-2 border-foreground my-2" />
       </div>
 
       {/* Future Timer List */}

@@ -66,11 +66,11 @@ export default function TimePickerWheel({
 
   return (
     <div className="flex flex-col items-center flex-1">
-      <div className="text-sm font-medium mb-2 text-muted-foreground">{name}</div>
+      <div className="text-sm font-medium mb-2 text-foreground">{name}</div>
       <div className="relative">
         {/* Selection Bar */}
         <div 
-          className="absolute left-0 right-0 border-2 border-black dark:border-white rounded-lg z-10 pointer-events-none"
+          className="absolute left-0 right-0 border-2 border-foreground rounded-lg z-10 pointer-events-none"
           style={{ 
             top: `${containerHeight / 2 - itemHeight / 2}px`,
             height: `${itemHeight}px`,
@@ -81,7 +81,7 @@ export default function TimePickerWheel({
         {/* Scrollable Container */}
         <div 
           ref={scrollRef}
-          className="border-2 border-black rounded-lg overflow-y-auto scrollbar-hide"
+          className="border-2 border-foreground rounded-lg overflow-y-auto scrollbar-hide"
           style={{ height: `${containerHeight}px`, width: '80px' }}
           onScroll={handleScroll}
         >

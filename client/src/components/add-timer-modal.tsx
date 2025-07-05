@@ -55,10 +55,10 @@ export default function AddTimerModal({ isOpen, onClose, onConfirm }: AddTimerMo
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-lg w-full max-w-md">
+    <div className="fixed inset-0 flex items-center justify-center z-50 p-4 bg-background">
+      <div className=" rounded-lg w-full max-w-md">
         {/* Header */}
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+        <div className="p-6 border-b border-foreground">
           <h2 className="text-xl font-bold text-center">Add Timer</h2>
         </div>
 
@@ -68,7 +68,7 @@ export default function AddTimerModal({ isOpen, onClose, onConfirm }: AddTimerMo
             <button
               key={type.id}
               onClick={() => handleTypeSelect(type.id)}
-              className="w-full p-4 rounded-lg border-2 border-gray-300 dark:border-gray-600 transition-colors flex items-center gap-3"
+              className="w-full p-4 rounded-lg border-2 border-foreground transition-colors flex items-center gap-3"
             >
               <div className={`w-4 h-4 rounded-full ${type.color}`}></div>
               <span className="text-lg font-medium">{type.label}</span>
@@ -77,11 +77,11 @@ export default function AddTimerModal({ isOpen, onClose, onConfirm }: AddTimerMo
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-gray-200 dark:border-gray-700">
+        <div className="p-6">
           <Button
             onClick={onClose}
             variant="outline"
-            className="w-full border-2 border-black dark:border-white"
+            className="w-full border-2 border-foreground"
           >
             Cancel
           </Button>
