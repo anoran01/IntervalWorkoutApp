@@ -41,14 +41,20 @@ export function generateTimersFromWorkout(workout: Workout | InsertWorkout | { i
         order: order++
       });
 
-      // Rest timer after each work timer
-      timers.push({
-        workoutId: workoutId,
-        name: "Rest",
-        duration: workout.rest,
-        type: "rest",
-        order: order++
-      });
+
+      if (cycle === workout.cycles -1 &&  round === workout.rounds -1) {
+        //skip the last rest timer if its the last round of the last cycle
+        continue;
+      } else {
+        // Rest timer after each work timer
+        timers.push({
+          workoutId: workoutId,
+          name: "Rest",
+          duration: workout.rest,
+          type: "rest",
+          order: order++
+        });
+      }
     }
 
     // Rest between cycles (except after the last cycle)

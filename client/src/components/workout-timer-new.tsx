@@ -213,7 +213,7 @@ export default function WorkoutTimer({
         console.log('elapsed: ', elapsed);
 
         // Guard against running past the workout duration
-        if (elapsed >= expectedDuration) {
+        if (elapsed >= expectedDuration + 1) {
           setTimeRemaining(0);
           
           // Reset play/pause state so the button shows the play icon after completion

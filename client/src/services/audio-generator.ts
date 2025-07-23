@@ -247,7 +247,7 @@ export class AudioGeneratorService {
         await new Promise<void>((resolve) => setTimeout(resolve, 0));
       }
 
-      // Add the final "done" cue (2 s buffer)
+      // Add the final "done" cue (1 s buffer)
       const doneBuffer = await this.createCompositeBuffer(1, [
         { audioPath: '/audio/done_louder.wav', insertAtTime: 0 },
       ]);

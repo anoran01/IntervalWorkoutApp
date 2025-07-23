@@ -2,14 +2,6 @@ import { useCallback, useRef } from "react";
 import type { SoundSettings } from "@/schema";
 import { NativeAudio } from "@capacitor-community/native-audio";
 
-// Import audio files
-import tenSecondsWav from "@/audio/ten-seconds.wav";
-import halfwayWav from "@/audio/halfway.wav";
-import workWav from "@/audio/work.wav";
-import restWav from "@/audio/rest.wav";
-import doneWav from "@/audio/done.wav";
-import greatWorkoutWav from "@/audio/great-workout.wav";
-
 // This state is shared across all instances of the useAudio hook
 const beepPreloadedState: { [key: string]: boolean } = {};
 
